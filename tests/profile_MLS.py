@@ -5,34 +5,31 @@ Created on Thu Jun 16 12:39:18 2022
 @author: pmetz1
 """
 import numpy as np
-from gist_contrast_factor import MLSLattice, Martinez
+
+# package
+from pymls import Lattice, Dislocation, Stroh, MLS
+from pymls.elastic import cij_from_group
+from pymls.toolbox import abt
 
 
-# 1. crystal details
-C = np.eye(3) * 3.25
-spacegroup = "Im-3m"
-c11 = 131.4 # GPa
-c44 = 28.8 # GPa
-c12 = 98.2 # GPa
-dia = (c11,)*3 + (c44,)*3
-cij = np.eye(6) * dia
-cij[0,1] = cij[1,0] = cij[0,2] = cij[2,0] = cij[1,2] = cij[2,1] = c12
+# - 1. crystal lattice
+lattice_scalar = (3.3065,) * 3 + (90,) * 3
 
-# 2. slip system details
-o   = np.array((0,0,0)) # origin
+# - 2. slip system
 hkl = np.array((1,1,0))  # BCC slip plane
 uvw = np.array((-1,1,1)) # burgers vector
 l   = np.cross(uvw, hkl) # defines edge dislocation
-phi = 90 #  abt(uvw, l, degrees=True)
+phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 
-# 3. constituents
-L = MLSLattice(C, hkl, uvw, phi) # captures geometric aspects
-# s = Stroh(cij) # captures elastic eigenproblem
-# _ = L.Gijmn(uvw)
+# - 3. elastic constituents
+C = cij_from_group(131.4, 98.2, 28.2, group='m-3m')
 
-# 4. interface
-MLS = Martinez(cij, L) # captures sum computation
+# - 4. class instances
+L = Lattice.from_scalar( lattice_scalar )
+D = Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi, SGno=None)
+S = Stroh(C) # captures characteristic elastic matrix and eigensolution
+I = MLS(dislocation=D, cij=C) # captures sum computation
 
 # 5. compute
 # _ = MLS.Eijmn
-_ = MLS.Chkl((-1,1,0))
+rv = I.Chkl((-1,1,0)) # compute contrast factor
