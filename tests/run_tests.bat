@@ -1,0 +1,1 @@
+pytest -v test_lattice.py test_geometric.py test_elastic.py test_contrast.py
