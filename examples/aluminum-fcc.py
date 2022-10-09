@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun 29 12:47:13 2022
+Created on Tue Sep 13 11:51:30 2022
 
 @author: pmetz1
 """
+
 # 3rd party
 import numpy as np
 
@@ -14,16 +15,16 @@ from pymls.toolbox import abt
 
 
 # - 1. crystal lattice
-lattice_scalar = (3.3065,) * 3 + (90,) * 3
+lattice_scalar = (4.03,) * 3 + (90,) * 3
 
 # - 2. slip system
-hkl = np.array((1,1,0))  # BCC slip plane
-uvw = np.array((-1,1,1)) # burgers vector
+hkl = np.array((1,1,1))  # BCC slip plane
+uvw = np.array((1,1,-2)) # burgers vector
 l   = np.cross(uvw, hkl) # defines edge dislocation
 phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 
 # - 3. elastic constituents
-C = cij_from_group(131.4, 98.2, 28.2, group='m-3m')
+C = cij_from_group(116.3, 64.8, 30.9, group='m-3m') # GPa
 
 # - 4. class instances
 L = Lattice.from_scalar( lattice_scalar )
@@ -32,9 +33,11 @@ S = Stroh(C) # captures characteristic elastic matrix and eigensolution
 I = MLS(dislocation=D, cij=C) # captures sum computation
 
 # - 5. compute values
-# Anzic
-# b[-1,1,1]; n[1,1,0]; l[-1,1-2]; g[-1,1,1]
-Canzic = 0.44387384
+# Anizc
+# b[1,1,-2]; n[1,1,1]; l[3,-3,0]; g[1,1,-2]
+Canzic = 0.51053827
 Cmls = I.Chkl(uvw)
 print(f'Anzic: {Canzic:.6f}; this work: {Cmls:.6f}')
 print(f'Differs by Canzic / Cmls == {Canzic / Cmls:.6f}')
+
+# %%

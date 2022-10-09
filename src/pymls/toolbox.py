@@ -66,6 +66,7 @@ def is_symmetric(X: np.ndarray) -> bool:
     """ X == X.T """
     return float_tol(X, X.T)
 
+
 def orthogonal(fn):
     @functools.wraps(fn)
     def dec(*args, **kwargs):
