@@ -139,6 +139,19 @@ class Test_N3:
 
 
 @pytest.mark.parametrize('thisFixture', stroh_suite)
+def test_N_by_definition(thisFixture, request):
+    s = request.getfixturevalue(thisFixture)
+    # Q1
+    assert tbx.float_tol(s.N[:3, :3], s.N1)
+    # Q2
+    assert tbx.float_tol(s.N[:3, 3:], s.N2)
+    # Q3
+    assert tbx.float_tol(s.N[3:, :3], s.N3)
+    # Q4
+    assert tbx.float_tol(s.N[3:, 3:], s.N1.T)
+    
+
+@pytest.mark.parametrize('thisFixture', stroh_suite)
 def test_N_not_symmetric(thisFixture, request):
     s = request.getfixturevalue(thisFixture)
     assert not tbx.float_tol(s.N, s.N.T)
