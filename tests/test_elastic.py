@@ -157,6 +157,14 @@ def test_N_not_symmetric(thisFixture, request):
 
 
 @pytest.mark.parametrize('thisFixture', stroh_suite)
+def test_eig_by_definition(thisFixture, request):
+    s = request.getfixturevalue(thisFixture)
+    A = s.N @ s.xi
+    B = s.p * s.xi
+    assert tbx.complex_tol(A, B)
+
+
+@pytest.mark.parametrize('thisFixture', stroh_suite)
 def test_a_ordering(thisFixture, request):
     s = request.getfixturevalue(thisFixture)
     A = s.a[:, ::2]

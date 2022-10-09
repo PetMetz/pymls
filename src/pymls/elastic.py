@@ -434,7 +434,7 @@ class Stroh():
         if self._flag_eig:
             self._p, self._xi = LA.eig(self.N)
             self._flag_eig = 0
-        return self._xi.round(tbx._PREC)
+        return self._xi # .round(tbx._PREC)
     
     @functools.cached_property
     def eta(self):
@@ -451,7 +451,7 @@ class Stroh():
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
         # return np.row_stack((self.l, self.a)) # "... the left eigenvector... are in the reverse order"""
-        return (self.conI @ self.xi).round(tbx._PREC) # this is equivalent
+        return (self.conI @ self.xi) # .round(tbx._PREC) # this is equivalent
         # return self.xi[::-1] # apparently Ting means the former, not reversal by index
     
     @functools.cached_property
