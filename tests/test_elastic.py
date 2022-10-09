@@ -149,7 +149,7 @@ def test_N_by_definition(thisFixture, request):
     assert tbx.float_tol(s.N[3:, :3], s.N3)
     # Q4
     assert tbx.float_tol(s.N[3:, 3:], s.N1.T)
-    
+
 
 @pytest.mark.parametrize('thisFixture', stroh_suite)
 def test_N_not_symmetric(thisFixture, request):

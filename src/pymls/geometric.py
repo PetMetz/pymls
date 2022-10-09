@@ -236,7 +236,7 @@ class Dislocation(lattice.Lattice):
             self.t1(s),
             self.t2(s),
             self.t3(s)
-            ), dtype=float).round(tbx._PREC)
+            ), dtype=float) # .round(tbx._PREC)
 
     def Gijmn(self, s) -> np.ndarray:
         r"""
@@ -253,7 +253,7 @@ class Dislocation(lattice.Lattice):
         #     a[tuple(index)] = np.product([tau[i] for i in index])
         # return a
         rv = np.product(tau[I], axis=1) # NB this works because tau is 1D, hence I is treated as an integer mask
-        return rv.reshape((3,2,3,2)).round(tbx._PREC)
+        return rv.reshape((3,2,3,2)) # .round(tbx._PREC)
     
     def visualize(self):
         from .toolbox import plot_cell

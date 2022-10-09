@@ -123,7 +123,7 @@ class Lattice():
     
     @matrix.setter
     def matrix(self, x:np.ndarray):
-        self._matrix = x.round(tbx._PREC)
+        self._matrix = x # .round(tbx._PREC)
         self._G = None
         self._reciprocal = None
     
@@ -141,7 +141,7 @@ class Lattice():
     def G(self):
         """ metric tensor """
         if self._G is None:
-            self._G = (self.M @ self.M.T).round(tbx._PREC)
+            self._G = (self.M @ self.M.T) # .round(tbx._PREC)
         return self._G
 
     @property

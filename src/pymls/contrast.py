@@ -280,7 +280,7 @@ class MLS():
 #         ...  
 # =============================================================================
         # - contract
-        rv = np.einsum('ijamnb->ijmn', rv).round(tbx._PREC)
+        rv = np.einsum('ijamnb->ijmn', rv)# .round(tbx._PREC)
         return rv
         
     def Chkl(self, s):
