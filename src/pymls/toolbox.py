@@ -16,8 +16,8 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 
 
-_SMALL = 1e-11
-_PREC  = 12
+_SMALL = 1e-6
+_PREC  = 9
 
 
 def abt(a: np.ndarray, b: np.ndarray, degrees=False):
@@ -40,7 +40,7 @@ def float_tol(a, b, sig=None):
     sig = sig or _SMALL
     a = np.asarray(a, dtype=float)
     b = np.asarray(b, dtype=float)
-    return all(abs(a - b).ravel() <= sig)
+    return all(abs(a - b).ravel() < sig)
 
 
 def complex_tol(a, b, sig=None):
@@ -48,8 +48,8 @@ def complex_tol(a, b, sig=None):
     a = np.asarray(a, dtype=complex)
     b = np.asarray(b, dtype=complex)
     d = (a - b).ravel()
-    m = np.sqrt(d * np.conjugate(d))
-    return all(m <= sig)
+    m = np.sqrt(d * np.conjugate(d)).real
+    return all(m < sig)
 
     
 def is_orthogonal(X:np.ndarray) -> bool:
