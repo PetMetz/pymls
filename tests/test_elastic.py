@@ -136,19 +136,7 @@ class Test_N3:
     def test_positive_semidefinite(self):
         x = np.ones((3,))
         assert x.T @ -self.s.N3 @ x >= 0
-        
-        
-@pytest.mark.parametrize('thisFixture', stroh_suite)
-def test_N_nontrivial(thisFixture, request):
-    r""" 
-    given :math:`A x = \lambda x` then for non-trivial solutions of x,
-    :math:`|A - \lambda I| = 0`.
-    """
-    s = request.getfixturevalue(thisFixture)
-    A = LA.det(s.N - s.p * np.eye(6))
-    B = 0
-    assert tbx.complex_tol(A, B)
-    
+
 
 @pytest.mark.parametrize('thisFixture', stroh_suite)
 def test_N_not_symmetric(thisFixture, request):
@@ -161,6 +149,18 @@ def test_eig_by_definition(thisFixture, request):
     s = request.getfixturevalue(thisFixture)
     A = s.N @ s.xi
     B = s.p * s.xi
+    assert tbx.complex_tol(A, B)
+
+
+@pytest.mark.parametrize('thisFixture', stroh_suite)
+def test_eig_nontrivial(thisFixture, request):
+    r"""
+    given :math:`A x = \lambda x` then for non-trivial solutions of x,
+    :math:`|A - \lambda I| = 0`.
+    """
+    s = request.getfixturevalue(thisFixture)
+    A = LA.det(s.N - s.p * np.eye(6))
+    B = 0 + 0j
     assert tbx.complex_tol(A, B)
 
 
@@ -199,7 +199,7 @@ class TestTingOrthogonalityClosure:
     def _s_class_fixture(self, thisFixture, request):
         self.s = request.getfixturevalue(thisFixture)
 
-    # FIXME failing for non-cubic fixture
+    # FIXME failing for triclinic fixture (possibly a float tolerance issue)
     def test_Ting_5110(self):
         r"""
         :math:`\left|Q + p(R + R^{T}) + p^2T \right| = 0` (Ting eqn. 5.1-10)

@@ -384,9 +384,14 @@ class Stroh():
         
         """
         if self._flag_N:
-            self._N = np.column_stack((
-                np.concatenate((self.N1, self.N2 )),
-                np.concatenate((self.N3, self.N1.T))
+            # NB 20221009 this was incorrectly ordered
+            # self._N = np.column_stack((
+            #     np.concatenate((self.N1, self.N2 )),
+            #     np.concatenate((self.N3, self.N1.T))
+            #     ))
+            self._N = tbx.square((  # list(map(np.column_stack, X))
+                (self.N1, self.N2  ),
+                (self.N3, self.N1.T)
                 ))
             self._flag_N = 0
         return self._N
