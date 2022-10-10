@@ -94,7 +94,7 @@ class MLS():
         returns (a,a`) -> (3,3) (radians)
         """
         p3 = self.stroh.P * np.ones((3,3))
-        return np.arctan( (p3.real.T - p3.real) * LA.inv(p3.imag.T - p3.imag) )
+        return np.arctan( (p3.real.T - p3.real) * LA.inv(p3.imag.T + p3.imag) )
     
     @functools.cached_property
     def z(self):
