@@ -166,6 +166,14 @@ def test_eig_by_definition(thisFixture, request):
 
 
 @pytest.mark.parametrize('thisFixture', stroh_suite)
+def test_eig_by_trace(thisFixture, request):
+    s = request.getfixturevalue(thisFixture)
+    A = np.trace(s.N)
+    B = np.sum(s.p)
+    assert tbx.complex_tol(A, B)
+
+
+@pytest.mark.parametrize('thisFixture', stroh_suite)
 def test_eig_nontrivial(thisFixture, request):
     r"""
     given :math:`A x = \lambda x` then for non-trivial solutions of x,
@@ -218,7 +226,7 @@ class TestTingOrthogonalityClosure:
         :math:`\left|Q + p(R + R^{T}) + p^2T \right| = 0` (Ting eqn. 5.1-10)
         """
         A = LA.det(self.s.Q + self.s.P*(self.s.R + self.s.R.T) + self.s.P**2 * self.s.T)
-        B = 0
+        B = 0 + 0j
         assert tbx.complex_tol(A, B)
 
     # FIXME failing
@@ -249,14 +257,14 @@ class TestTingOrthogonalityClosure:
         # x = np.row_stack((self.s.a, self.s.l))
         x = self.s.xi
         p = self.s.p
-        A = tbx.square([(-self.s.Q              , O),
+        L = tbx.square([(-self.s.Q              , O),
                         (-np.transpose(self.s.R), I)
                         ])
-        A = A @ x
-        B = tbx.square([(self.s.R, I),
+        R = tbx.square([(self.s.R, I),
                         (self.s.T, O)
                         ])
-        B = p * B @ x
+        A = L @ x
+        B = p * R @ x
         assert tbx.complex_tol(A, B)
 
     def test_Ting_552(self):
@@ -313,7 +321,7 @@ class TestTingOrthogonalityClosure:
         # for i in range(6):
         #     for j in range(6):
         #         rv[i,j] = self.s.eta[i] @ self.s.xi[j]
-        A = self.s.eta.T @ self.s.xi
+        A = self.s.eta @ self.s.xi
         B = np.eye(6)
         assert tbx.complex_tol(A, B)
 
@@ -324,14 +332,14 @@ class TestTingOrthogonalityClosure:
         | [BT       AT      ] [A conj(A)] == [I O]
         | [conj(BT) conj(AT)] [B conj(B)]    [O I]
         """
-        L = tbx.square([(self.s.L.T,               self.s.A.T),
+        L = tbx.square([(             self.s.L.T,               self.s.A.T),
                         (np.conjugate(self.s.L.T), np.conjugate(self.s.A.T))
                         ])
         R = tbx.square([(self.s.A, np.conjugate(self.s.A)),
                         (self.s.L, np.conjugate(self.s.L))
                         ])
         A = L @ R
-        B = tbx.square([(I, O), (O, I)])
+        B = np.eye(6) # tbx.square([(I, O), (O, I)])
         assert tbx.complex_tol(A, B)
 
     # FIXME failing
