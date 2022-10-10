@@ -18,7 +18,7 @@ lattice_scalar = (4.775, 10.190, 5.978, 90, 90, 90)
 
 # - 2. slip system
 hkl = np.array((0,1,0))
-uvw = np.array((0,0,1))
+uvw = np.array((1,0,0))
 l   = np.cross(hkl, uvw)
 phi = 90
 
@@ -43,3 +43,6 @@ I = MLS(dislocation=D, cij=C) # captures sum computation
 
 # - 5. compute values
 Cmls = I.Chkl(uvw)
+print(Cmls)
+# print(f'Anzic: {Canzic:.6f}; this work: {Cmls:.6f}')
+# print(f'Differs by Canzic / Cmls == {Canzic / Cmls:.6f}')

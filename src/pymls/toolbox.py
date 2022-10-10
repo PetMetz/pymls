@@ -54,7 +54,7 @@ def complex_tol(a, b, sig=None):
     
 def is_orthogonal(X:np.ndarray) -> bool:
     """ det| X(N,N) | == 1 """
-    return abs(LA.det(X) - 1) <= _SMALL
+    return abs(LA.det(X)**2 - 1) <= _SMALL
 
 
 def is_unit_vector(x: np.ndarray) -> bool:
@@ -71,7 +71,7 @@ def orthogonal(fn):
     @functools.wraps(fn)
     def dec(*args, **kwargs):
         rv = fn(*args, **kwargs)
-        if abs(LA.det(rv) - 1) >= _SMALL:
+        if abs(LA.det(rv)**2 - 1) >= _SMALL:
             n  = fn.__name__
             print(f'Warning: {n} not orthogonal with det|{n}| = {LA.det(rv):.6f}')
         return rv

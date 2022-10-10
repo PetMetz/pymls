@@ -231,9 +231,9 @@ class MLS():
         returns (i,j,a,m,n,a`) == (3,2,3,3,2,3) 
         """
         # - alias
-        modA = (self.stroh.A * np.conjugate(self.stroh.A).T).real ** 0.5  # |A_ai|
-        modD = (self.D * np.conjugate(self.D)).real ** 0.5                # |D_a|  
-        modP = (self.stroh.P * np.conjugate(self.stroh.P).T).real ** 0.5  # |P_a| 
+        modA = np.sqrt(self.stroh.A * np.conjugate(self.stroh.A).T).real  # |A_ai|
+        modD = np.sqrt(self.D * np.conjugate(self.D)).real                # |D_a|  
+        modP = np.sqrt(self.stroh.P * np.conjugate(self.stroh.P).T).real  # |P_a| 
         # - setup
         rv = np.zeros((3,2,3,3,2,3), dtype=float) # <--- note this is a real valued tensor
         I = np.indices(rv.shape).T

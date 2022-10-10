@@ -8,6 +8,7 @@ Created on Mon Jun 27 15:18:33 2022
 
 # 3rd party
 import numpy as np
+from numpy import linalg as LA
 import pytest
 
 # package
@@ -54,6 +55,7 @@ def test_dislocation_instance(thisFixture, request):
     assert result
 
 
+# FIXME this is mostly incomplete and needs to separate tests from expected values
 
 # --- classes
 @pytest.mark.parametrize('thisFixture', dislocation_suite)
@@ -65,31 +67,31 @@ class TestOrthogonal:
 
     def test_M(self):
         """ """
-        assert tbx.is_orthogonal(self.d.M)
+        assert tbx.is_orthogonal(LA.inv(self.d.M) * self.d.M)
 
     def test_G(self):
         """ """
-        assert tbx.is_orthogonal(self.d.G)
+        assert tbx.is_orthogonal(LA.inv(self.d.G) * self.d.G)
     
     def test_reciprocal_M(self):
         """ """
-        assert tbx.is_orthogonal(self.d.reciprocal.M)
+        assert tbx.is_orthogonal(LA.inv(self.d.reciprocal.M) * self.d.reciprocal.M)
     
     def test_reciprocal_G(self):
         """ """
-        assert tbx.is_orthogonal(self.d.reciprocal.G)
+        assert tbx.is_orthogonal(LA.inv(self.d.reciprocal.G) * self.d.reciprocal.G)
 
     def test_P(self):
         """ """
-        assert tbx.is_orthogonal(self.d.P)
+        assert tbx.is_orthogonal(LA.inv(self.d.P) * self.d.P)
     
     def test_e(self):
         """ """
-        assert tbx.is_orthogonal(self.d.e)
+        assert tbx.is_orthogonal(LA.inv(self.d.e) * self.d.e)
     
     def test_rp2(self):
         """ """
-        assert tbx.is_orthogonal(self.d.Rp2)
+        assert tbx.is_orthogonal(LA.inv(self.d.Rp2) * self.d.Rp2)
     
     # end TestOrthogonal
 

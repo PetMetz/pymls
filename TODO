@@ -1,13 +1,13 @@
 PyMLS 0.0.0
 ==========================================================
 [ ] Refactor Lattice out of Dislocation (subclass)
-[ ] Refactor mandel/voigt reduction schemes out of Stroh class to toolbox
+[ ] Refactor mandel/voigt reduction schemes out of Stroh class to toolbox (e.g. reduction of Eijmn tensor -> Eij matrix)
 [ ] Refactor reduction schemes as an index mapping (i.e. generalize to any input indices)
 [ ] Needs to support Miller-Bravais indices for hexagonal systems? (will effect averaging)
 [ ] correct failing Stroh class tests
 [X] write test suite for geometric quantities
 [ ] write test suite for MLS interface
 [ ] expand test fixtures to remaining crystal classes (trigonal, tetragonal, orthorhombic, monoclinic)
-[ ] rewrite tests using testcfg to separate fixture sets and expectations from tests
+[ ] rewrite tests using testcfg to separate fixture sets and expectations from tests (e.g. testing orthogonality of monoclinic lattice fails, but it should, so it should pass)
 [ ] write several examples demonstrating application to known systems
 [ ] figure out how to collect tests across multiple modules and execute
