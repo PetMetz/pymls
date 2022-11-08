@@ -110,37 +110,13 @@ class MLS():
         return np.arctan(self.gamma1 * LA.inv(self.gamma2)) # real
         
     @functools.cached_property
-    def gamma1(self):
-        r"""
-        .. math::
-            
-            \Gamma_1( \alpha ) = Im[p_{\alpha}] Im[p_{\alpha^`}] [tan(x_{\alpha}) + tan(x_{\alpha^`})]
-            
-        returns (a,a`) -> (3,3) (radians)
-        """
-        p3 = self.stroh.P * np.ones((3,3)) # complex
-        x3 = self.x * np.ones((3,3)) # real
-        return p3.imag * p3.imag.T * ( np.tan(x3) + np.tan(x3.T) ) # real
-        
-    @functools.cached_property
-    def gamma2(self):
-        r"""
-        .. math::
-            
-            \Gamma_2( \alpha ) = |p_{\alpha}|^2 - Re[p_{\alpha}] Re[_{\alpha^`}] + Im[p_{\alpha}] Im[p_{\alpha^`}]
-        
-        returns (a,a`) -> (3,3) (radians)
-        """
-        p3 = self.stroh.P * np.ones((3,3))
-        mod2 = np.abs(self.stroh.P)**2 # np.diag(p3 * np.conjugate(p3)).real
-        return mod2 - (p3.real * p3.real.T) + (p3.imag * p3.imag.T) # real
-
-    @functools.cached_property
     def F(self):
         r"""
         .. math::
             
             F(p_{\alpha}) = ( Re[p_{\alpha}] - Re[p_{\alpha}^`] )^2 + ( Im[p_{\alpha}] - Im[p_{\alpha}^`] )^2
+        
+        Martinez-Garcia, Leoni, Scardi (2009) eqn. 26
         
         return (3,3)
         """
@@ -155,6 +131,8 @@ class MLS():
             
             Q(p_{\alpha}) = (|p_{\alpha}|^2 - |p_{\alpha^`}|^2 )^2 + 4 (Re[p_{\alpha}] - Re[p_{\alpha^`}]) (|p_{\alpha^`}|^2 Re[p_{\alpha}] - |p_{\alpha}|^2 Re[p_{\alpha^`}])
         
+        Martinez-Garcia, Leoni, Scardi (2009) eqn. 26
+        
         return (3,3)
         """
         p     = self.stroh.P
@@ -164,10 +142,10 @@ class MLS():
         q1 = (mod2 - mod2.T)**2
         q2 = 4 * (p3 - p3.T).real
         q3 = mod23.T * p3.real - mod23 * p3.real.T
-        return q1 + q2 * q3
+        return q1 + q2 * q3 # real
 
     # - indexed on alpha & ij(mn)
-    # must reduce such that Arg(z) -> scalar and z = complex scalar
+    # must reduce such that Arg(z) -> scalar and z = complex
     @functools.cached_property
     def delta(self):
         r"""
@@ -180,25 +158,57 @@ class MLS():
             \alpha \in 1,2,3, m \in 1,2,3, n \in 1,2
             
         NB (n-1) is an *exponent* (rather than an index) resulting from
-        evaluation of the partial differentials 
+        evaluation of the partial differentials (Martinez-Garcia et al. eqn. 15)
         
         .. math::
             
             \frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)
         
-        returns (a,i,j) -> (3,3,2) radians
+        Martinez-Garcia, Leoni, Scardi (2009) eqn. 26
+        
+        returns (a,m,n) -> (3,3,2) radians
         """
-        rv= np.zeros((3,3,2), dtype=complex)
-        I = np.indices(rv.shape).T # len, 3, 3, 2 - > 3, 3, 2 ,len
-        I = I.reshape((-1, len(rv.shape)))
-        A = self.stroh.A # A_ai
-        D = self.D # D_a
-        P = self.stroh.P # P_a
+        rv = np.zeros((3,3,2), dtype=complex)
+        I  = np.indices(rv.shape).T # len, 3, 3, 2 - > 2, 3, 3, len
+        I  = I.reshape((-1, len(rv.shape))) # -> N x (a,i,j)
+        A  = self.stroh.A # A_ai
+        D  = self.D # D_a
+        P  = self.stroh.P # P_a
         for index in I:
             a, i, j = index
             rv[tuple(index)] = A[a, i] * D[a] * P[a]**int(j-1)
         # return np.arctan(k.imag / k.real) # https://en.wikipedia.org/wiki/Argument
         return np.angle(rv)
+
+    @functools.cached_property
+    def gamma1(self):
+        r"""
+        .. math::
+            
+            \Gamma_1( \alpha ) = Im[p_{\alpha}] Im[p_{\alpha^`}] [tan(x_{\alpha}) + tan(x_{\alpha^`})]
+        
+        Martinez-Garcia, Leoni, Scardi (2009) eqn. 27
+        
+        returns (a,a`) -> (3,3) (radians)
+        """
+        p3 = self.stroh.P * np.ones((3,3)) # complex
+        x3 = self.x * np.ones((3,3)) # real
+        return p3.imag * p3.imag.T * ( np.tan(x3) + np.tan(x3.T) ) # real
+        
+    @functools.cached_property
+    def gamma2(self):
+        r"""
+        .. math::
+            
+            \Gamma_2( \alpha ) = |p_{\alpha}|^2 - Re[p_{\alpha}] Re[_{\alpha^`}] + Im[p_{\alpha}] Im[p_{\alpha^`}]
+        
+        Martinez-Garcia, Leoni, Scardi (2009) eqn. 27
+        
+        returns (a,a`) -> (3,3) (radians)
+        """
+        p3 = self.stroh.P * np.ones((3,3))
+        mod2 = np.abs(self.stroh.P)**2 # np.diag(p3 * np.conjugate(p3)).real
+        return mod2 - (p3.real * p3.real.T) + (p3.imag * p3.imag.T) # real
     
     # FIXME corrected but unvalidated
     @functools.cached_property
@@ -213,9 +223,12 @@ class MLS():
         returns (a, a`) -> (3,3)
         """
         p = self.stroh.P # p_a
-        modp = (p * np.conjugate(p).T).real # |p_a|**2 
-        a = np.eye(3) * modp**0.5 / (2 * p.imag**2) # a == a`
-        b = modp**0.5 / p.imag * (self.F * LA.inv(self.Q))**0.5 # a != a`
+        modp = np.abs(p) # |p_a|
+        a = np.eye(3) * modp / (2 * p.imag**2) # a == a`
+        b = np.zeros(self.F.shape) # a != a`
+        m = ~np.eye(3, dtype=bool)
+        b[m] = ( self.F[m] / self.Q[m] ) ** 0.5
+        b *= modp / p.imag
         return a + b
         
     # FIXME corrected but unvalidated
@@ -237,9 +250,12 @@ class MLS():
         returns (i,j,a,m,n,a`) == (3,2,3,3,2,3) 
         """
         # - alias
-        modA = np.sqrt(self.stroh.A * np.conjugate(self.stroh.A).T).real  # |A_ai|
-        modD = np.sqrt(self.D * np.conjugate(self.D)).real                # |D_a|  
-        modP = np.sqrt(self.stroh.P * np.conjugate(self.stroh.P).T).real  # |P_a| 
+        # modA = np.sqrt(self.stroh.A * np.conjugate(self.stroh.A).T).real  # |A_ai|
+        # modD = np.sqrt(self.D * np.conjugate(self.D)).real                # |D_a|  
+        # modP = np.sqrt(self.stroh.P * np.conjugate(self.stroh.P).T).real  # |P_a| 
+        modA = np.abs(self.stroh.A) # |A_ia| == | stroh eigen vectors |
+        modD = np.abs(self.D) # |D_a|  == | quantity containing direction cosines |
+        modP = np.abs(self.stroh.P) # |P_a|  == | stroh eigen values |
         # - setup
         rv = np.zeros((3,2,3,3,2,3), dtype=float) # <--- note this is a real valued tensor
         I = np.indices(rv.shape).T
@@ -257,6 +273,9 @@ class MLS():
         """
         Should be real valued and positive with shape (3,2,3,2)
         Contracts over alpha, alpha`.
+        (i,j,a,m,n,a`) == (3,2,3,3,2,3) 
+        to
+        (i,j,m,n) == (3,2,3,2)
         """
         # - setup return array
         rv = np.zeros((3,2,3,3,2,3), dtype=float) # <--- note this is a real valued tensor
@@ -286,7 +305,8 @@ class MLS():
 #         ...  
 # =============================================================================
         # - contract
-        rv = np.einsum('ijamnb->ijmn', rv)# .round(tbx._PREC)
+        # equivalent to rv.sum(axis=2).sum(axis=-1)
+        rv = np.einsum('ijamnb->ijmn', rv) # .round(tbx._PREC)
         return rv
         
     def Chkl(self, s):
