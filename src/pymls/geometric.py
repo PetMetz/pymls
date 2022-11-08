@@ -132,17 +132,20 @@ class Dislocation(lattice.Lattice):
         if self._Rp2 is None:
             # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
             #       e2 = 1/|n| M @ [h,k,l]
-            xi2 = self.reciprocal.M @ self.hkl / np.sqrt( self.hkl @ self.reciprocal.G @ self.hkl)
+            xi2 = self.reciprocal.M @ self.hkl / self.reciprocal.length(self.hkl)
             # - (b1)
             sinp = np.sin(np.radians(self.phi))
             cosp = np.cos(np.radians(self.phi))
             sinp2 = np.sin(np.radians(self.phi/2)) ** 2
             xi21, xi22, xi23 = xi2
-            m1 = 2 * sinp2 * np.array((
-                (xi21*xi21,  xi21*xi22, xi21*xi23),
-                (xi22*xi21,  xi22*xi22, xi22*xi23), 
-                (xi23*xi21,  xi23*xi22, xi23*xi23)
-                ))
+            # m1 = 2 * sinp2 * np.array((
+            #     (xi21*xi21,  xi21*xi22, xi21*xi23),
+            #     (xi22*xi21,  xi22*xi22, xi22*xi23), 
+            #     (xi23*xi21,  xi23*xi22, xi23*xi23)
+            #     ))
+            XI2 = xi2 * np.ones((3,3))
+            m1 = 2 * sinp2 * XI2 * XI2.T
+            
             m2 = np.array((
                 (1,   xi23, xi22),
                 (xi23,   1, xi21),     
@@ -156,7 +159,7 @@ class Dislocation(lattice.Lattice):
             self._Rp2 = m1 + (m2 * m3)
         return self._Rp2
     
-    
+    # FIXME there's some confusion here in the printed paper, not sure if they're correct or were sloppy...
     @property
     @tbx.orthogonal
     @tbx.unit_vectors
@@ -165,9 +168,11 @@ class Dislocation(lattice.Lattice):
         if self._P is None:
             # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
             #       e2 = 1/|n| M @ [h,k,l]
-            xi2 = self.M @ self.hkl / np.sqrt( self.hkl @ self.G @ self.hkl)
+            modn = self.reciprocal.length(self.hkl)
+            xi2 = 1 / modn * self.reciprocal.M @ self.hkl # np.sqrt( self.hkl @ self.reciprocal.G @ self.hkl)
             # - (b) e3 := R(phi, e2) @ [b1, b2, b3]
-            xib = self.M @ self.uvw / np.sqrt(self.uvw @ self.G @ self.uvw)
+            modb = self.reciprocal.length(self.uvw)
+            xib = 1 / modb * self.reciprocal.M @ self.uvw #  / np.sqrt(self.uvw @ self.G @ self.uvw)
             xi3 = self.Rp2 @ xib
             # - (c) e1 := e2 x e3
             xi1 = np.cross(xi2, xi3)
@@ -208,26 +213,61 @@ class Dislocation(lattice.Lattice):
     # @functools.lru_cache(maxsize=100)  # this isn't a substantial gain, and limits arguments to hashable inputs
     def t1(self, s:tuple) -> float:
         """ direction cosines. s == diffracting plane. returns (1,) """
-        return np.sqrt(1 - self.t2(s)**2 - self.t3(s)**2)
+        # version 1
+        # return np.sqrt(1 - self.t2(s)**2 - self.t3(s)**2)
+        # version 2
+        v1 = s / self.reciprocal.length(s)
+        v2 = self.e1 / self.length(self.e1)
+        return v1 @ v2
     
     # @functools.lru_cache(maxsize=100)
     def t2(self, s:tuple) -> float:
-        """ direction cosines. s == diffracting plane. returns (1,) """
+        r"""
+        direction cosines
+        
+        .. math::
+            
+            \tau_i = \frac{\vec{d}^*}{d^*} \cdot \vec{e}_i
+        
+        where math:`\vec{d}^*` is coincident with the diffraction vector and 
+        :math:`\vec{e}_i` is a vector in the dislocation reference frame
+        
+        returns (1,)
+        """
         # return self.reciprocal.angle(s, self.hkl)
-        Gstar = self.reciprocal.G
-        n = s @ Gstar @ self.hkl  # vector @ transform @ vector -> scalar
-        d = (self.hkl @ Gstar @ self.hkl)**0.5 * (s @ Gstar @ s)**0.5 # length * length
-        return n / d
+        # Gstar = self.reciprocal.G
+        # version 1
+        # n = s @ Gstar @ self.hkl  # vector @ transform @ vector -> scalar
+        # d = (self.hkl @ Gstar @ self.hkl)**0.5 * (s @ Gstar @ s)**0.5 # length * length
+        # return n / d
+        # version 2
+        # v1 = s / self.reciprocal.length(s)
+        # v2 = self.hkl / self.reciprocal.length(self.hkl)
+        # return v1 @ Gstar @ v2
+        # version 3
+        v1 = s / self.reciprocal.length(s)
+        v2 = self.e2 / self.length(self.e2)
+        return v1 @ v2
     
     # @functools.lru_cache(maxsize=100)
     def t3(self, s:tuple) -> float:
         """ direction cosines. s == diffracting plane. returns (1,) """
-        M = self.M
-        G = self.G
-        Gstar = self.reciprocal.G
-        n = s @ M.T @ self.Rp2 @ LA.inv(M.T) @ self.uvw # vector @ transform @ vector -> scalar
-        d = (self.uvw @ G @ self.uvw )**0.5 * (s @ Gstar @ s)**0.5  # length * length
-        return n / d
+        # M = self.M
+        # Gstar = self.reciprocal.G
+        # G = self.G # typo in eqn 11?
+        # version 1
+        # n = s @ M.T @ self.Rp2 @ LA.inv(M.T) @ self.uvw # vector @ transform @ vector -> scalar
+        # d = (self.uvw @ Gstar @ self.uvw )**0.5 * (s @ Gstar @ s)**0.5  # length * length
+        # return n / d
+        # version 2
+        # v1 = s / self.reciprocal.length(s)
+        # v2 = self.uvw / self.reciprocal.length(self.uvw)
+        # T  = self.M.T @ self.Rp2 @ LA.inv(self.M.T)
+        # return v1 @ T @ v2
+        # version 3
+        v1 = s / self.reciprocal.length(s)
+        v2 = self.e3 / self.length(self.e3)
+        return v1 @ v2
 
     # @functools.lru_cache(maxsize=100)
     def tau(self, s:tuple) -> np.ndarray:

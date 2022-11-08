@@ -317,7 +317,7 @@ class MLS():
             
         returns (1,) real scalar
         """
-        return np.einsum('ijmn->', self.Gijmn(s) * self.Eijmn)
+        return np.einsum('ijmn,ijmn->', self.Gijmn(s) ,self.Eijmn)
         
     # End Martinez
 
