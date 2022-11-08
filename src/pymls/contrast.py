@@ -86,7 +86,7 @@ class MLS():
         Martinez-Garcia, Leoni, Scardi (2009) eqn. 26
         returns (a,) -> (3,) (radians)
         """        
-        return np.arctan(self.stroh.P.real / self.stroh.P.imag)
+        return np.arctan(self.stroh.P.real / self.stroh.P.imag) # real
     
     @functools.cached_property
     def y(self):
@@ -98,7 +98,7 @@ class MLS():
         p3 = self.stroh.P * np.ones((3,3))
         A = (p3 - p3.T).real
         B = (p3 + p3.T).imag
-        return np.arctan( A / B )
+        return np.arctan( A / B ) # real
     
     @functools.cached_property
     def z(self):
@@ -107,7 +107,7 @@ class MLS():
         Martinez-Garcia, Leoni, Scardi (2009) eqn. 26
         returns (a,a`) -> (3,3) (radians)
         """
-        return np.arctan(self.gamma1 * LA.inv(self.gamma2))
+        return np.arctan(self.gamma1 * LA.inv(self.gamma2)) # real
         
     @functools.cached_property
     def gamma1(self):
@@ -120,7 +120,7 @@ class MLS():
         """
         p3 = self.stroh.P * np.ones((3,3)) # complex
         x3 = self.x * np.ones((3,3)) # real
-        return p3.imag * p3.imag.T * (np.tan(x3) + np.tan(x3.T)) # real
+        return p3.imag * p3.imag.T * ( np.tan(x3) + np.tan(x3.T) ) # real
         
     @functools.cached_property
     def gamma2(self):
@@ -132,8 +132,8 @@ class MLS():
         returns (a,a`) -> (3,3) (radians)
         """
         p3 = self.stroh.P * np.ones((3,3))
-        mod = np.diag(p3 * np.conjugate(p3)).real
-        return mod - (p3.real.T * p3.real) + (p3.imag.T * p3.imag)
+        mod2 = np.abs(self.stroh.P)**2 # np.diag(p3 * np.conjugate(p3)).real
+        return mod2 - (p3.real * p3.real.T) + (p3.imag * p3.imag.T) # real
 
     @functools.cached_property
     def F(self):
@@ -145,7 +145,8 @@ class MLS():
         return (3,3)
         """
         p3 = self.stroh.P * np.ones((3,3))
-        return (p3.real - p3.real.T)**2 + (p3.imag - p3.imag.T)**2
+        A = p3 - p3.T
+        return A.real**2 + A.imag**2 # (p3.real - p3.real.T)**2 + (p3.imag - p3.imag.T)**2
     
     @functools.cached_property
     def Q(self):
@@ -157,12 +158,12 @@ class MLS():
         return (3,3)
         """
         p     = self.stroh.P
-        modp  = (p * np.conjugate(p).T).real 
+        mod2  = np.abs(self.stroh.P)**2 # (p * np.conjugate(p).T).real 
         p3    = p * np.ones((3,3))
-        modp3 = modp * np.ones((3,3))
-        q1 = (modp3 - modp3.T)**2
-        q2 = 4 * (p3.real - p3.real.T)
-        q3 = modp3.T * p3.real - modp3 * p3.real.T
+        mod23 = mod2 * np.ones((3,3))
+        q1 = (mod2 - mod2.T)**2
+        q2 = 4 * (p3 - p3.T).real
+        q3 = mod23.T * p3.real - mod23 * p3.real.T
         return q1 + q2 * q3
 
     # - indexed on alpha & ij(mn)
