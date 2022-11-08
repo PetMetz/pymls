@@ -83,6 +83,7 @@ class MLS():
     def x(self):
         """
         arctan(Re{p}/Im{p})
+        Martinez-Garcia, Leoni, Scardi (2009) eqn. 26
         returns (a,) -> (3,) (radians)
         """        
         return np.arctan(self.stroh.P.real / self.stroh.P.imag)
@@ -90,16 +91,20 @@ class MLS():
     @functools.cached_property
     def y(self):
         """
-        arctan(Re{p_i} - Re{p_j} / Im{p_i} - Im{p_j})
+        arctan(Re{p_i} - Re{p_j} / Im{p_i} + Im{p_j})
+        Martinez-Garcia, Leoni, Scardi (2009) eqn. 26
         returns (a,a`) -> (3,3) (radians)
         """
         p3 = self.stroh.P * np.ones((3,3))
-        return np.arctan( (p3.real.T - p3.real) * LA.inv(p3.imag.T + p3.imag) )
+        A = (p3 - p3.T).real
+        B = (p3 + p3.T).imag
+        return np.arctan( A / B )
     
     @functools.cached_property
     def z(self):
         """
         arctan(\Gamma_1(\alpha) / \Gamma_2(\alpha))
+        Martinez-Garcia, Leoni, Scardi (2009) eqn. 26
         returns (a,a`) -> (3,3) (radians)
         """
         return np.arctan(self.gamma1 * LA.inv(self.gamma2))
@@ -113,9 +118,9 @@ class MLS():
             
         returns (a,a`) -> (3,3) (radians)
         """
-        p3 = self.stroh.P * np.ones((3,3))
-        x3 = self.x * np.ones((3,3))
-        return p3.imag.T * p3.imag * (np.tan(x3.T) + np.tan(x3))
+        p3 = self.stroh.P * np.ones((3,3)) # complex
+        x3 = self.x * np.ones((3,3)) # real
+        return p3.imag * p3.imag.T * (np.tan(x3) + np.tan(x3.T)) # real
         
     @functools.cached_property
     def gamma2(self):

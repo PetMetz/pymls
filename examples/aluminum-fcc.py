@@ -19,7 +19,7 @@ lattice_scalar = (4.03,) * 3 + (90,) * 3
 
 # - 2. slip system
 hkl = np.array((1,1,1))  # BCC slip plane
-uvw = np.array((1,1,-2)) # burgers vector
+uvw = np.array((1,1,0)) # burgers vector
 l   = np.cross(uvw, hkl) # defines edge dislocation
 phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 
@@ -34,8 +34,8 @@ I = MLS(dislocation=D, cij=C) # captures sum computation
 
 # - 5. compute values
 # Anizc
-# b[1,1,-2]; n[1,1,1]; l[3,-3,0]; g[1,1,-2]
-Canzic = 0.51053827
+# b[1,1,0]; n[1,1,1]; l[1,-1,0]; g[1,1,0]
+Canzic = 0.55027571
 Cmls = I.Chkl(uvw)
 print(f'Anzic: {Canzic:.6f}; this work: {Cmls:.6f}')
 print(f'Differs by Canzic / Cmls == {Canzic / Cmls:.6f}')
