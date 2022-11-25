@@ -141,7 +141,7 @@ def plot_cell(L, o=None, ax=None):
                         o+(1,1,1),
                         o+(0,1,1),
                         ))
-    corners = np.transpose(L.matrix @ corners.T)
+    corners = np.transpose(L.matrix.T @ corners.T)
     index = np.arange(len(corners))
     # - brute force
     segments = []
