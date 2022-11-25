@@ -6,7 +6,8 @@ PyMLS 0.0.0
 [ ] Needs to support Miller-Bravais indices for hexagonal systems? (will effect averaging)
 [ ] correct failing Stroh class tests
 [X] write test suite for geometric quantities
-[ ] write test suite for MLS interface
+[ ] write test suite for transformations between crystal and dislocation reference frames (possible math errors in MLS paper?
+[X] write test suite for MLS interface
 [ ] expand test fixtures to remaining crystal classes (trigonal, tetragonal, orthorhombic, monoclinic)
 [ ] rewrite tests using testcfg to separate fixture sets and expectations from tests (e.g. testing orthogonality of monoclinic lattice fails, but it should, so it should pass)
 [ ] write several examples demonstrating application to known systems

@@ -164,7 +164,16 @@ class Dislocation(lattice.Lattice):
     @tbx.orthogonal
     @tbx.unit_vectors
     def P(self):
-        """ """
+        r""" 
+        .. math::
+            
+            \left[e_1 e_2 e_3 \right] = P left[i j k \right]
+            
+            and
+            
+            P = \xi_{ij}
+        
+        """
         if self._P is None:
             # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
             #       e2 = 1/|n| M @ [h,k,l]
