@@ -174,3 +174,43 @@ class TestSymmetry:
         assert tbx.is_symmetric(self.d.Rp2)
     
     # end TestSymmetric
+    
+    
+@pytest.mark.parametrize('thisFixture', dislocation_suite)
+class TestComputation:
+    """ ... description ... """
+    @pytest.fixture(autouse=True)
+    def _instantiate_class_fixture(self, thisFixture, request):
+        self.d = request.getfixturevalue(thisFixture)
+
+    @staticmethod
+    def _vol_from_scalar(a,b,c,al,be,ga):
+        cosa = np.cos(al*np.pi/180)
+        cosb = np.cos(be*np.pi/180)
+        cosg = np.cos(ga*np.pi/180)
+        return a*b*c*np.sqrt(1 + 2*cosa*cosb*cosg - cosa**2 - cosb**2 - cosg**2)
+
+    def test_volume(self):
+        """ """
+        V1 = self._vol_from_scalar(*self.d.scalar)
+        V2 = LA.det(self.d.M)
+        assert tbx.float_tol(V1, V2)
+
+    def test_reciprocal_construction(self):
+        """ """
+        V = LA.det(self.d.M)
+        x1, x2, x3 = self.d.M
+        b1 = np.cross(x2, x3) / V
+        b2 = np.cross(x1, x3) / V
+        b3 = np.cross(x1, x2) / V
+        a1, a2, a3 = self.d.reciprocal.M
+        assert tbx.float_tol(a1, b1)
+        assert tbx.float_tol(a2, b2)
+        assert tbx.float_tol(a3, b3)
+        
+    def test_reciprocal_metric(self):
+        """ will result in same volume but different element-wise """
+        A = LA.det( self.d.reciprocal.G )
+        B = LA.det( LA.inv(self.d.G) )
+        assert tbx.float_tol(A, B)
+    # end TestSymmetric

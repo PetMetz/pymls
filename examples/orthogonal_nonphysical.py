@@ -7,6 +7,7 @@ Created on Sat Nov 19 16:27:19 2022
 
 # 3rd party
 import numpy as np
+from numpy import linalg as LA
 
 # package
 from pymls import Lattice, Dislocation, Stroh, MLS
@@ -34,3 +35,20 @@ calc = MLS(dislocation=dislocation, cij=C) # captures sum computation
 
 # - 5. viz
 fig, ax = dislocation.visualize()
+
+
+
+# - direct calc
+h, k, l = 1, 1, 1
+x1, x2, x3 = M
+a, b, c = np.diag(M)
+d111 = [
+        np.sqrt(3)/3 * a,
+        lattice.length((h, k, l)) / (h**2 + k**2 + l **2)
+        ]
+
+# - reciprocal calc
+q111 = [
+        2 * np.pi / (np.sqrt(3)/3 * a),
+        2 * np.pi * lattice.reciprocal.length((1,1,1))
+        ]

@@ -34,3 +34,33 @@ calc = MLS(dislocation=dislocation, cij=C) # captures sum computation
 
 # - 5. viz
 fig, ax = dislocation.visualize()
+
+
+
+
+# - 
+def MLS_M(lattice):
+    """ eqn. 1 """
+    D = lattice
+    R = lattice.reciprocal
+    cos = np.cos(D.angles * np.pi/180)
+    sin = np.sin(D.angles * np.pi/180)
+    cosstar = np.cos(R.angles * np.pi/180)
+    M = np.array((
+        (1/D.a                 , 0                 , 0  ),
+        (-cos[2] / (D.a*sin[2]), 1 / (D.b * sin[2]), 0  ),
+        (R.a * cosstar[1]      , R.b * cosstar[0]  , R.c)
+        ))
+    return M
+    
+
+
+def vol_from_scalar(a,b,c,al,be,ga):
+    cosa = np.cos(al*np.pi/180)
+    cosb = np.cos(be*np.pi/180)
+    cosg = np.cos(ga*np.pi/180)
+    return a*b*c*np.sqrt(1 + 2*cosa*cosb*cosg - cosa**2 - cosb**2 - cosg**2)
+
+
+
+M = MLS_M(lattice)

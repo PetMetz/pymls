@@ -105,6 +105,10 @@ class Dislocation(lattice.Lattice):
         return self.uvw
     
     @property
+    def line(self):
+        ...
+    
+    @property
     def phi(self):
         return self._phi
     
@@ -114,12 +118,17 @@ class Dislocation(lattice.Lattice):
         Angle between dislocation line and Burgers vector describes
         dislocation character, :math:`\phi`. [1]
         
+        "The vector l is obtained by rotating the Burgers vector b clockwise by
+        an angle phi (dislocation character) around e2." [2]
+
         Reference
         ---------
         [1] Wilkens, M. (1970). The determination of density and distribution of
                 dislocations in deformed single crystals from broadened X‐ray
                 diffraction profiles. Physica Status Solidi (A), 2(2), 359–370.
                 https://doi.org/10.1002/pssa.19700020224
+        [2] Martinez-Garcia, Leoni, and Scardi (2009). Diffraction contrast
+                factor of dislocations. Acta Cryst. A65, 109–119.
         """
         self._reset()
         self._phi = x
@@ -132,7 +141,7 @@ class Dislocation(lattice.Lattice):
         if self._Rp2 is None:
             # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
             #       e2 = 1/|n| M @ [h,k,l]
-            xi2 = self.reciprocal.M @ self.hkl / self.reciprocal.length(self.hkl)
+            xi2 = self.reciprocal.M.T @ self.hkl / self.reciprocal.length(self.hkl)
             # - (b1)
             sinp = np.sin(np.radians(self.phi))
             cosp = np.cos(np.radians(self.phi))
@@ -178,11 +187,11 @@ class Dislocation(lattice.Lattice):
             # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
             #       e2 = 1/|n| M @ [h,k,l]
             modn = self.reciprocal.length(self.hkl)
-            xi2 = 1 / modn * self.reciprocal.M @ self.hkl # np.sqrt( self.hkl @ self.reciprocal.G @ self.hkl)
+            xi2 = 1 / modn * self.reciprocal.M.T @ self.hkl # np.sqrt( self.hkl @ self.reciprocal.G @ self.hkl)
             # - (b) e3 := R(phi, e2) @ [b1, b2, b3]
             modb = self.reciprocal.length(self.uvw)
-            xib = 1 / modb * self.reciprocal.M @ self.uvw #  / np.sqrt(self.uvw @ self.G @ self.uvw)
-            xi3 = self.Rp2 @ xib
+            xib = 1 / modb * self.reciprocal.M.T @ self.uvw #  / np.sqrt(self.uvw @ self.G @ self.uvw)
+            xi3 = self.Rp2.T @ xib
             # - (c) e1 := e2 x e3
             xi1 = np.cross(xi2, xi3)
             self._P = np.array((xi1, xi2, xi3))
@@ -311,7 +320,7 @@ class Dislocation(lattice.Lattice):
         fig, ax = plot_cell(self)
         # - lattice vectors
         for v, s in zip(self.matrix, ('a', 'b', 'c')):
-            ax.plot(*np.transpose((o, v)))
+            ax.plot(*np.transpose((o, v))) # (xs, ys, zs, *args)
             ax.text(*v, s)
         # - dislocation reference frame
         for v, s in zip((self.e), ('e1', 'e2', 'e3')):

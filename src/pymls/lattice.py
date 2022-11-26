@@ -75,7 +75,14 @@ class Lattice():
     # FIXME there must be a linear algebra route to this.
     @classmethod
     def from_metric(cls, x:np.ndarray) -> Lattice:
-        """ """
+        r"""
+        .. math::
+            
+            \vec{a}\cdot\vec{b} = a b cos(\theta)
+            
+            \theta = cos^{-1}\left(\frac{\vec{a}\cdot\vec{b}}{a b}\right)
+            
+        """
         abc = np.sqrt(np.diag(x))
         angles = np.array((
             np.arccos(x[1,2] / np.product(abc[[1,2]])), # arccos(bc cos(alpha) / bc)
@@ -147,7 +154,13 @@ class Lattice():
     @property
     def reciprocal(self):
         if self._reciprocal is None:
-            self._reciprocal = Lattice.from_metric(LA.inv(self.G))
+            # self._reciprocal = Lattice.from_metric(LA.inv(self.G))
+            V = self.V
+            x1, x2, x3 = self.M
+            b1 = np.cross(x2, x3) / V
+            b2 = np.cross(x1, x3) / V
+            b3 = np.cross(x1, x2) / V
+            self._reciprocal = Lattice.from_matrix(np.array((b1, b2, b3)))
         return self._reciprocal
     
     # - properties
