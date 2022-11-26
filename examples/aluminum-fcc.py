@@ -42,3 +42,23 @@ print(f'Differs by Canzic / Cmls == {Canzic / Cmls:.6f}')
 
 
 # %%
+def MLS_M(lattice):
+    """ eqn. 1 """
+    D = lattice
+    R = lattice.reciprocal
+    cos = np.cos(D.angles * np.pi/180)
+    sin = np.sin(D.angles * np.pi/180)
+    cosstar = np.cos(R.angles * np.pi/180)
+    M = np.array((
+        (1/D.a                 , 0                 , 0  ),
+        (-cos[2] / (D.a*sin[2]), 1 / (D.b * sin[2]), 0  ),
+        (R.a * cosstar[1]      , R.b * cosstar[0]  , R.c)
+        ))
+    return M
+
+M = MLS_M(lattice)
+L = Lattice(M)
+D = Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi)
+C2 = MLS(D, C)
+Cmls2 = C2.Chkl(uvw)
+

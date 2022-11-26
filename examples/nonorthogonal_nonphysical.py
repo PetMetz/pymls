@@ -64,3 +64,6 @@ def vol_from_scalar(a,b,c,al,be,ga):
 
 
 M = MLS_M(lattice)
+L = Lattice(M)
+D = Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi)
+C2 = MLS(D, C)
