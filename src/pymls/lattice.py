@@ -154,13 +154,13 @@ class Lattice():
     @property
     def reciprocal(self):
         if self._reciprocal is None:
-            # self._reciprocal = Lattice.from_metric(LA.inv(self.G))
-            V = self.V
-            x1, x2, x3 = self.M
-            b1 = np.cross(x2, x3) / V
-            b2 = np.cross(x1, x3) / V
-            b3 = np.cross(x1, x2) / V
-            self._reciprocal = Lattice.from_matrix(np.array((b1, b2, b3)))
+            # V = self.V
+            # x1, x2, x3 = self.M
+            # b1 = np.cross(x2, x3) / V  # 1, 2, 3
+            # b3 = np.cross(x1, x2) / V  # 3, 1, 2
+            # b2 = np.cross(x3, x1) / V  # 2, 3, 1
+            # self._reciprocal = Lattice.from_matrix(np.transpose((b1, b2, b3)))  # [b1,b2,b3]^T = [a1,a2,a3]^-1
+            self._reciprocal = Lattice.from_matrix(LA.inv(self.M).T)
         return self._reciprocal
     
     # - properties

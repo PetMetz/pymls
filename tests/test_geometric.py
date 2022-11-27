@@ -43,6 +43,21 @@ class Test:
     # end TestOrthogonal
 '''
 
+# --- helpers
+def MLS_M(lattice):
+    """ eqn. 1 """
+    D = lattice
+    R = lattice.reciprocal
+    cos = np.cos(D.angles * np.pi/180)
+    sin = np.sin(D.angles * np.pi/180)
+    cosstar = np.cos(R.angles * np.pi/180)
+    M = np.array((
+        (1/D.a                 , 0                 , 0  ),
+        (-cos[2] / (D.a*sin[2]), 1 / (D.b * sin[2]), 0  ),
+        (R.a * cosstar[1]      , R.b * cosstar[0]  , R.c)
+        ))
+    return M
+    
 
 # --- constants
 
@@ -58,6 +73,8 @@ def test_dislocation_instance(thisFixture, request):
 # FIXME this is mostly incomplete and needs to separate tests from expected values
 
 # --- classes
+
+# FIXME (X)^-1 @ X == I is trivially orthogonal. 
 @pytest.mark.parametrize('thisFixture', dislocation_suite)
 class TestOrthogonal:
     """ test orthogonal vectors """
@@ -65,33 +82,17 @@ class TestOrthogonal:
     def _instantiate_class_fixture(self, thisFixture, request):
         self.d = request.getfixturevalue(thisFixture)
 
-    def test_M(self):
-        """ """
-        assert tbx.is_orthogonal(LA.inv(self.d.M) * self.d.M)
-
-    def test_G(self):
-        """ """
-        assert tbx.is_orthogonal(LA.inv(self.d.G) * self.d.G)
-    
-    def test_reciprocal_M(self):
-        """ """
-        assert tbx.is_orthogonal(LA.inv(self.d.reciprocal.M) * self.d.reciprocal.M)
-    
-    def test_reciprocal_G(self):
-        """ """
-        assert tbx.is_orthogonal(LA.inv(self.d.reciprocal.G) * self.d.reciprocal.G)
-
     def test_P(self):
         """ """
-        assert tbx.is_orthogonal(LA.inv(self.d.P) * self.d.P)
+        assert tbx.is_orthogonal(self.d.P)
     
     def test_e(self):
         """ """
-        assert tbx.is_orthogonal(LA.inv(self.d.e) * self.d.e)
+        assert tbx.is_orthogonal(self.d.e)
     
     def test_rp2(self):
         """ """
-        assert tbx.is_orthogonal(LA.inv(self.d.Rp2) * self.d.Rp2)
+        assert tbx.is_orthogonal(self.d.Rp2)
     
     # end TestOrthogonal
 
@@ -106,22 +107,6 @@ class TestAllUnit:
     @staticmethod
     def all_unit(x):
         return all( np.apply_along_axis(tbx.is_unit_vector, axis=1, arr=x) )
-
-    def test_M(self):
-        """ """
-        assert self.all_unit(self.d.M)
-
-    def test_G(self):
-        """ """
-        assert self.all_unit(self.d.G)
-    
-    def test_reciprocal_M(self):
-        """ """
-        assert self.all_unit(self.d.reciprocal.M)
-    
-    def test_reciprocal_G(self):
-        """ """
-        assert self.all_unit(self.d.reciprocal.G)
 
     def test_P(self):
         """ """
@@ -145,33 +130,21 @@ class TestSymmetry:
     def _instantiate_class_fixture(self, thisFixture, request):
         self.d = request.getfixturevalue(thisFixture)
 
-    def test_M(self):
+    def test_M_asymmetric(self):
         """ """
-        assert tbx.is_symmetric(self.d.M)
+        assert tbx.is_symmetric(self.d.M) is False
 
-    def test_G(self):
+    def test_G_symmetric(self):
         """ """
-        assert tbx.is_symmetric(self.d.G)
+        assert tbx.is_symmetric(self.d.G) is True
     
-    def test_reciprocal_M(self):
+    def test_reciprocal_M_asymmetric(self):
         """ """
-        assert tbx.is_symmetric(self.d.reciprocal.M)
+        assert tbx.is_symmetric(self.d.reciprocal.M) is False
     
-    def test_reciprocal_G(self):
+    def test_reciprocal_G_symmetric(self):
         """ """
-        assert tbx.is_symmetric(self.d.reciprocal.G)
-
-    def test_P(self):
-        """ """
-        assert tbx.is_symmetric(self.d.P)
-    
-    def test_e(self):
-        """ """
-        assert tbx.is_symmetric(self.d.e)
-
-    def test_rp2(self):
-        """ """
-        assert tbx.is_symmetric(self.d.Rp2)
+        assert tbx.is_symmetric(self.d.reciprocal.G) is True
     
     # end TestSymmetric
     
@@ -194,23 +167,30 @@ class TestComputation:
         """ """
         V1 = self._vol_from_scalar(*self.d.scalar)
         V2 = LA.det(self.d.M)
-        assert tbx.float_tol(V1, V2)
+        assert tbx.float_tol(V1, V2) is True
 
     def test_reciprocal_construction(self):
         """ """
         V = LA.det(self.d.M)
         x1, x2, x3 = self.d.M
-        b1 = np.cross(x2, x3) / V
-        b2 = np.cross(x1, x3) / V
+        b1 = np.cross(x2, x3) / V  # cyclic permuations
         b3 = np.cross(x1, x2) / V
+        b2 = np.cross(x3, x1) / V
         a1, a2, a3 = self.d.reciprocal.M
-        assert tbx.float_tol(a1, b1)
-        assert tbx.float_tol(a2, b2)
-        assert tbx.float_tol(a3, b3)
+        assert tbx.float_tol(a1, b1) is True
+        assert tbx.float_tol(a2, b2) is True
+        assert tbx.float_tol(a3, b3) is True
         
-    def test_reciprocal_metric(self):
-        """ will result in same volume but different element-wise """
-        A = LA.det( self.d.reciprocal.G )
-        B = LA.det( LA.inv(self.d.G) )
-        assert tbx.float_tol(A, B)
+    def test_reciprocal_invertable(self):
+        """  """
+        A = self.d.reciprocal.G
+        B = LA.inv(self.d.G)
+        assert tbx.float_tol(A, B) is True
+        
+    def test_MLS_M_is_transposed(self):
+        """ """
+        A = MLS_M(self.d)
+        B = self.d.M.T
+        assert tbx.float_tol(A, B) is True
+        
     # end TestSymmetric

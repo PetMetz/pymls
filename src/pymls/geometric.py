@@ -39,11 +39,11 @@ class Dislocation(lattice.Lattice):
         return f'<Dislocation(hkl={self.hkl}, uvw={self.uvw}, phi={self.phi}) @ {hex(id(self))}>'
 
     # - instance
-    def __init__(self, lattice: (lattice.Lattice, np.ndarray, tuple),
+    def __init__(self, lattice: lattice.Lattice,
                        hkl: np.ndarray,
-                       uvw:np.ndarray,
-                       phi:float,
-                       SGno:int=None
+                       uvw: np.ndarray,
+                       phi: float,
+                       SGno: int=None
                        ):
         r"""
 
@@ -165,7 +165,7 @@ class Dislocation(lattice.Lattice):
                 (-sinp,  cosp,  sinp),
                 ( sinp, -sinp,  cosp)
                 ))
-            self._Rp2 = m1 + (m2 * m3)
+            self._Rp2 = m1 + (m2 * m3) # element-wise
         return self._Rp2
     
     # FIXME there's some confusion here in the printed paper, not sure if they're correct or were sloppy...
@@ -210,7 +210,10 @@ class Dislocation(lattice.Lattice):
         crystal system defined by `lattice`.
         """
         if self._e is None:
-            self._e = self.P # @ np.eye(3)
+            # e_i = P M C, but M == reciprocal matrix and C == direct matrix 
+            #    and therefore 
+            # e_i = P I == P
+            self._e = self.P # @ I
         return self._e
 
     @property
