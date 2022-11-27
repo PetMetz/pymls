@@ -59,6 +59,20 @@ def MLS_M(lattice):
     return M
     
 
+def rotation_from_axis_angle(vector, angle, degree=True):
+    """
+    https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle    
+
+    """
+    if degree:
+        angle *= np.pi / 180  # as radian
+    u = vector / LA.norm(vector) # as unit
+    uu = np.outer(u,u)
+    ux = np.cross(u, -1*np.eye(3)) # https://en.wikipedia.org/wiki/Cross_product#Conversion_to_matrix_multiplication
+    cos = np.cos(angle)
+    sin = np.sin(angle)
+    return cos * np.eye(3) + sin * ux + (1 - cos) * uu
+
 # --- constants
 
 # --- fixtures

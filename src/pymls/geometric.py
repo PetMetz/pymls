@@ -140,7 +140,8 @@ class Dislocation(lattice.Lattice):
     @tbx.unit_vectors
     def Rp2(self):
         """
-        
+        NB this yields a different rotation matrix than expected from conventional
+        linear algebra, which may again be a convention issue
         """
         if self._Rp2 is None:
             # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
