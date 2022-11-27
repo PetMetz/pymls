@@ -51,6 +51,17 @@ def complex_tol(a, b, sig=None):
     m = np.sqrt(d * np.conjugate(d)).real
     return all(m < sig)
 
+
+def vol_from_scalar(a,b,c,al,be,ga):
+    cosa = np.cos(al*np.pi/180)
+    cosb = np.cos(be*np.pi/180)
+    cosg = np.cos(ga*np.pi/180)
+    return a*b*c*np.sqrt(1 + 2*cosa*cosb*cosg - cosa**2 - cosb**2 - cosg**2)
+
+
+def all_unit_vectors(x) -> bool:
+    return all( np.apply_along_axis(is_unit_vector, axis=1, arr=x) )
+
     
 def is_orthogonal(X:np.ndarray) -> bool:
     """ det| X(N,N) | == 1 """

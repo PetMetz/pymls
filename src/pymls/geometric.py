@@ -132,20 +132,26 @@ class Dislocation(lattice.Lattice):
         """
         self._reset()
         self._phi = x
-        
+       
+    # FIXME Should be an axis-angle rotation matrix, should confirm again the
+    #       convention of the matrix utilized.
     @property
     @tbx.orthogonal
     @tbx.unit_vectors
     def Rp2(self):
-        """ """
+        """
+        
+        """
         if self._Rp2 is None:
             # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
             #       e2 = 1/|n| M @ [h,k,l]
-            xi2 = self.reciprocal.M.T @ self.hkl / self.reciprocal.length(self.hkl)
+            # xi2 = self.reciprocal.M.T @ self.hkl / self.reciprocal.length(self.hkl)
+            xi2 = self.xi2
             # - (b1)
-            sinp = np.sin(np.radians(self.phi))
-            cosp = np.cos(np.radians(self.phi))
-            sinp2 = np.sin(np.radians(self.phi/2)) ** 2
+            phi = np.radians(self.phi)
+            sinp = np.sin(phi)
+            cosp = np.cos(phi)
+            sinp2 = np.sin(phi/2) ** 2
             xi21, xi22, xi23 = xi2
             # m1 = 2 * sinp2 * np.array((
             #     (xi21*xi21,  xi21*xi22, xi21*xi23),
@@ -165,8 +171,29 @@ class Dislocation(lattice.Lattice):
                 (-sinp,  cosp,  sinp),
                 ( sinp, -sinp,  cosp)
                 ))
-            self._Rp2 = m1 + (m2 * m3) # element-wise
+            self._Rp2 =  m1 + (m2 * m3)  # element-wise
         return self._Rp2
+    
+    @property
+    def xi2(self):
+        """ MLS (2014) eqn. 3 """
+        return self.reciprocal.M @ self.hkl / self.reciprocal.length(self.hkl)
+    
+    @property
+    def xib(self):
+        """ MLS (2014) eqn. 4 """
+        return self.M @ self.uvw / self.length(self.uvw)
+    
+    @property
+    def xi3(self):
+        """ MLS (2014) eqn. 5 """
+        return self.Rp2 @ self.xib
+    
+    @property
+    def xi1(self):
+        """ MLS (2014) eqn. 7 """
+        return np.cross(self.xi2, self.xi3)
+        
     
     # FIXME there's some confusion here in the printed paper, not sure if they're correct or were sloppy...
     @property
@@ -176,25 +203,27 @@ class Dislocation(lattice.Lattice):
         r""" 
         .. math::
             
-            \left[e_1 e_2 e_3 \right] = P left[i j k \right]
+            \left[ e_1 e_2 e_3 \right] = P \left[i j k \right]
             
             and
             
             P = \xi_{ij}
+            
+            NB MLS (2014) type this in row-major format
         
         """
         if self._P is None:
-            # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
-            #       e2 = 1/|n| M @ [h,k,l]
-            modn = self.reciprocal.length(self.hkl)
-            xi2 = 1 / modn * self.reciprocal.M.T @ self.hkl # np.sqrt( self.hkl @ self.reciprocal.G @ self.hkl)
-            # - (b) e3 := R(phi, e2) @ [b1, b2, b3]
-            modb = self.reciprocal.length(self.uvw)
-            xib = 1 / modb * self.reciprocal.M.T @ self.uvw #  / np.sqrt(self.uvw @ self.G @ self.uvw)
-            xi3 = self.Rp2.T @ xib
-            # - (c) e1 := e2 x e3
-            xi1 = np.cross(xi2, xi3)
-            self._P = np.array((xi1, xi2, xi3))
+            # # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
+            # #       e2 = 1/|n| M @ [h,k,l]
+            # modn = self.reciprocal.length(self.hkl)
+            # xi2 = 1 / modn * self.reciprocal.M @ self.hkl # np.sqrt( self.hkl @ self.reciprocal.G @ self.hkl)
+            # # - (b) e3 := R(phi, e2) @ [b1, b2, b3]
+            # modb = self.length(self.uvw)
+            # xib = 1 / modb * self.M @ self.uvw #  / np.sqrt(self.uvw @ self.G @ self.uvw)
+            # xi3 = self.Rp2 @ xib
+            # # - (c) e1 := e2 x e3
+            # xi1 = np.cross(xi2, xi3)
+            self._P = np.array((self.xi1, self.xi2, self.xi3))
         return self._P
     
     # FIXME not sure if this is the correct normalization for nonorthogonal crystal systems
@@ -210,10 +239,7 @@ class Dislocation(lattice.Lattice):
         crystal system defined by `lattice`.
         """
         if self._e is None:
-            # e_i = P M C, but M == reciprocal matrix and C == direct matrix 
-            #    and therefore 
-            # e_i = P I == P
-            self._e = self.P # @ I
+            self._e = self.P @ self.reciprocal.M @ self.M
         return self._e
 
     @property
