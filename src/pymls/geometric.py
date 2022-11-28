@@ -203,7 +203,6 @@ class Dislocation(lattice.Lattice):
         return np.cross(self.xi2, self.xi3)
         
     
-    # FIXME there's some confusion here in the printed paper, not sure if they're correct or were sloppy...
     @property
     @tbx.orthogonal
     @tbx.unit_vectors
@@ -234,7 +233,10 @@ class Dislocation(lattice.Lattice):
             self._P = np.array((self.xi1, self.xi2, self.xi3))
         return self._P
     
-    # FIXME not sure if this is the correct normalization for nonorthogonal crystal systems
+    
+    # equation 8 is somewhat perplexing-- it gives e_i = PM[abc], but if M
+    # is the reciprocal lattice matrix, and [abc] is the crystal lattice matrix,
+    # this is the transform of the identity matrix.
     @property
     @tbx.orthogonal
     @tbx.unit_vectors

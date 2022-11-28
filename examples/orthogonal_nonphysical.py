@@ -19,9 +19,9 @@ from pymls.toolbox import abt
 M = 2 * np.eye(3)
 
 # - 2. slip system
-hkl = np.array((0,0,1))  # BCC slip plane
+hkl = np.array((0,0,1))  # slip plane normal
 uvw = np.array((1,0,0))  # burgers vector
-l   = np.array((0,1,0))  # dislocation line vector
+l   = np.array((1,1,0))  # dislocation line vector
 phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 
 # - 3. elastic constituents

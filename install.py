@@ -9,5 +9,5 @@ def install(package):
 
 
 if __name__ == "__main__":
-    install("dislocation")
+    install("pymls")
     # raw_input("Press Enter to Exit...\n")
