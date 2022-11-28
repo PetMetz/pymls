@@ -60,18 +60,26 @@ def MLS_M(lattice):
     
 
 def rotation_from_axis_angle(vector, angle, degree=True):
-    """
-    https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle    
-
+    r"""
+    .. math::
+        
+        R(u, \theta) = cos(\theta)\ I + sin(\theta)\ u_x + (1-cos(\theta))\ u \otimes u
+        
+    where :math:`u_x` is the cross product matrix
+    
+    Reference
+    ---------
+    https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
     """
     if degree:
         angle *= np.pi / 180  # as radian
+    I = np.eye(3)
     u = vector / LA.norm(vector) # as unit
     uu = np.outer(u,u)
-    ux = np.cross(u, -1*np.eye(3)) # https://en.wikipedia.org/wiki/Cross_product#Conversion_to_matrix_multiplication
+    ux = np.cross(u, -I) # https://en.wikipedia.org/wiki/Cross_product#Conversion_to_matrix_multiplication
     cos = np.cos(angle)
     sin = np.sin(angle)
-    return cos * np.eye(3) + sin * ux + (1 - cos) * uu
+    return cos * I + sin * ux + (1 - cos) * uu
 
 # --- constants
 

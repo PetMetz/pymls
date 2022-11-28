@@ -222,3 +222,41 @@ def plot_r3(a, b, c, o=None, ax=None, labels=None):
     for v, s in zip((a,b,c), (labels)):
         ax.text(*v, s)
     return fig, ax
+
+
+def rotation_from_axis_angle(vector:np.ndarray, angle:float, degree:bool=True) -> np.ndarray:
+    r"""
+    .. math::
+        
+        R(u, \theta) = cos(\theta)\ I + sin(\theta)\ u_x + (1-cos(\theta))\ u \otimes u
+        
+    where :math:`u_x` is the cross product matrix
+    
+
+    Parameters
+    ----------
+    vector : np.ndarray
+        unit vector.
+    angle : float
+        angle.
+    degree : bool, optional
+        provided in radians or degrees? The default is degree=True.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    Reference
+    ---------
+    https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
+    """
+    if degree:
+        angle *= np.pi / 180  # as radian
+    I = np.eye(len(vector))
+    u = vector / LA.norm(vector) # as unit
+    uu = np.outer(u,u)
+    ux = np.cross(u, -I) # https://en.wikipedia.org/wiki/Cross_product#Conversion_to_matrix_multiplication
+    cos = np.cos(angle)
+    sin = np.sin(angle)
+    return cos * I + sin * ux + (1 - cos) * uu

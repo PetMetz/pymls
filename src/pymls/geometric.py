@@ -133,47 +133,54 @@ class Dislocation(lattice.Lattice):
         self._reset()
         self._phi = x
        
-    # FIXME Should be an axis-angle rotation matrix, should confirm again the
-    #       convention of the matrix utilized.
+# =============================================================================
+#     # FIXME Should be an axis-angle rotation matrix, should confirm again the
+#     #       convention of the matrix utilized.
+#     @property
+#     @tbx.orthogonal
+#     @tbx.unit_vectors
+#     def Rp2(self):
+#         """
+#         NB this yields a different rotation matrix than expected from conventional
+#         linear algebra, which may again be a convention issue
+#         """
+#         if self._Rp2 is None:
+#             # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
+#             #       e2 = 1/|n| M @ [h,k,l]
+#             # xi2 = self.reciprocal.M.T @ self.hkl / self.reciprocal.length(self.hkl)
+#             xi2 = self.xi2
+#             # - (b1)
+#             phi = np.radians(self.phi)
+#             sinp = np.sin(phi)
+#             cosp = np.cos(phi)
+#             sinp2 = np.sin(phi/2) ** 2
+#             xi21, xi22, xi23 = xi2
+#             # m1 = 2 * sinp2 * np.array((
+#             #     (xi21*xi21,  xi21*xi22, xi21*xi23),
+#             #     (xi22*xi21,  xi22*xi22, xi22*xi23), 
+#             #     (xi23*xi21,  xi23*xi22, xi23*xi23)
+#             #     ))
+#             XI2 = xi2 * np.ones((3,3))
+#             m1 = 2 * sinp2 * XI2 * XI2.T
+#             
+#             m2 = np.array((
+#                 (1,   xi23, xi22),
+#                 (xi23,   1, xi21),     
+#                 (xi22, xi21, 1  )
+#                 ))
+#             m3 = np.array((
+#                 ( cosp,  sinp, -sinp),
+#                 (-sinp,  cosp,  sinp),
+#                 ( sinp, -sinp,  cosp)
+#                 ))
+#             self._Rp2 =  m1 + (m2 * m3)  # element-wise
+#         return self._Rp2
+# =============================================================================
     @property
     @tbx.orthogonal
     @tbx.unit_vectors
     def Rp2(self):
-        """
-        NB this yields a different rotation matrix than expected from conventional
-        linear algebra, which may again be a convention issue
-        """
-        if self._Rp2 is None:
-            # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
-            #       e2 = 1/|n| M @ [h,k,l]
-            # xi2 = self.reciprocal.M.T @ self.hkl / self.reciprocal.length(self.hkl)
-            xi2 = self.xi2
-            # - (b1)
-            phi = np.radians(self.phi)
-            sinp = np.sin(phi)
-            cosp = np.cos(phi)
-            sinp2 = np.sin(phi/2) ** 2
-            xi21, xi22, xi23 = xi2
-            # m1 = 2 * sinp2 * np.array((
-            #     (xi21*xi21,  xi21*xi22, xi21*xi23),
-            #     (xi22*xi21,  xi22*xi22, xi22*xi23), 
-            #     (xi23*xi21,  xi23*xi22, xi23*xi23)
-            #     ))
-            XI2 = xi2 * np.ones((3,3))
-            m1 = 2 * sinp2 * XI2 * XI2.T
-            
-            m2 = np.array((
-                (1,   xi23, xi22),
-                (xi23,   1, xi21),     
-                (xi22, xi21, 1  )
-                ))
-            m3 = np.array((
-                ( cosp,  sinp, -sinp),
-                (-sinp,  cosp,  sinp),
-                ( sinp, -sinp,  cosp)
-                ))
-            self._Rp2 =  m1 + (m2 * m3)  # element-wise
-        return self._Rp2
+        return tbx.rotation_from_axis_angle(vector=self.xi2, angle=self.phi, degree=True)
     
     @property
     def xi2(self):
