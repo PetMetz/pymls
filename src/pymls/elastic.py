@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 """
 Created on Mon Jun 27 14:40:09 2022
 
@@ -47,7 +47,7 @@ _ELASTIC_RESTRICTIONS = np.array((
     (46, 46, 0 , 0 , 0 ,-15, 0 , 0 , 0 , 0 , 0 ),
     (55, 55, 55, 44, 44, 44, 44, 44, 44, 44, 44),
     (56, 0 , 0 , 0 , 0 , 14, 14, 0 , 0 , 0 , 0 ),
-    (66, 66, 66, 66, 66, 99, 99, 99, 99, 99, 44)
+    (66, 66, 66, 66, 66, 99, 99, 99, 99, 44, 44)
     ), dtype=int)
 
 
@@ -58,10 +58,13 @@ def generate_index(arg:int) -> tuple:
     return tuple((i-1, j-1))
 
 
+def generate_indices(arg:np.ndarray) -> np.ndarray:
+    return np.apply_along_axis(generate_index, axis=0, arr=arg)
+
+
 def get_unique(LaueGroup:int) -> tuple:
     rv = _ELASTIC_RESTRICTIONS[:, LaueGroup-1] # NB zero index
-    rv = set(rv[(rv!=0) & (rv!=99)])
-    return tuple(rv)
+    return np.unique(abs(rv[(rv!=0) & (rv!=99)]))
 
 
 def parse_laue_class(arg:(str, int)) -> int:
@@ -81,7 +84,7 @@ def parse_laue_class(arg:(str, int)) -> int:
         raise Exception(f'invalid Laue class: {arg}')
 
 
-# FIXME can we factor out for/if?
+# FIXME factor out for / if with masking?
 def cij_from_group(*cij, group):
     """ 
     Cij ordered i, j according to unique elements.
@@ -106,7 +109,34 @@ def cij_from_group(*cij, group):
     return rv + rv.T - np.diag(rv.diagonal())
 
 
+def cij_from_vector(group, *cij):
+    """ alias """
+    return cij_from_group(*cij, group=group)
+    
 
+def cij_from_dict(group, **cij):
+    """ from dict """
+    order = cij_order(group)
+    elements = np.asarray(list(cij.values()), dtype=float)
+    keys = np.asarray(list(cij.keys()), dtype=int)
+    m = np.argwhere(np.in1d(order, keys))
+    return cij_from_group(*elements[m], group=group)
+    
+
+def cij_order(group):
+    laue = parse_laue_class(group)
+    return get_unique(laue)
+
+# FIXME unused 
+def _compact(X:np.ndarray):
+    return np.apply_along_axis(lambda x:''.join(map(str, x)), axis=-1, arr=X)
+    
+# - conventions
+_voigt = np.array(((0,0), (1,1), (2,2), (1,2), (0,2), (0,1)), dtype=int)
+_mandel = np.array([ np.concatenate((np.ones_like(_voigt)*_voigt[i], _voigt), axis=1) for i in range(6) ], dtype=int)
+
+
+    
 # --- classes
 class Stroh():
     """ Ref: Ting T.C.T. Elastic Anisotropy. """
@@ -129,21 +159,7 @@ class Stroh():
             np.column_stack((I, O))
             ))
         return conI
-    
-    # FIXME these can just be constants
-    # - conventions
-    @functools.cached_property
-    def _voigt(self):
-        return np.array(((0,0), (1,1), (2,2), (1,2), (0,2), (0,1)), dtype=int)
-    
-    @functools.cached_property
-    def _mandel(self):
-        return np.array([ np.concatenate((np.ones_like(self._voigt)*self._voigt[i], self._voigt), axis=1) for i in range(6) ], dtype=int)
-    
-    @staticmethod
-    def _compact(X:np.ndarray):
-        return np.apply_along_axis(lambda x:''.join(map(str, x)), axis=-1, arr=X)
-    
+
     # - overloads
     def __repr__(self):
         return f'<Stroh(cij=\n{self.cij}, crystalSystem={self.crystalsystem}) @ {hex(id(self))}>'
@@ -199,14 +215,14 @@ class Stroh():
         Apply Voigt reduction scheme to X(3,3) to produce X2(6,).
         11 -> 1; 22 -> 2; 33 -> 3; 23 -> 4; 13 -> 5; 12 -> 6
         """
-        return np.array([X[tuple(e)] for e in self._voigt])
+        return np.array([X[tuple(e)] for e in _voigt])
     
     def invert_voigt(self, X):
         """
         Given a Voigt reduced vector, reconstruct 2nd order tensor.
         """
         a = np.zeros((3,3))
-        for idx, pt in enumerate(self._voigt):
+        for idx, pt in enumerate(_voigt):
             a[tuple(pt)] = X[idx]
             a[tuple(pt[::-1])] = X[idx]
         return a
@@ -216,7 +232,7 @@ class Stroh():
         The extension of Voigt reduction to the 4th rank tensor representing
         proportionality of two 2nd rank tensors.
         """
-        return np.reshape([X[tuple(e)] for e in self._mandel.reshape(-1,4)], (6,6))
+        return np.reshape([X[tuple(e)] for e in _mandel.reshape(-1,4)], (6,6))
 
     # FIXME can't this be vectorized?
     def invert_mandel(self, X):
@@ -245,7 +261,7 @@ class Stroh():
         I = I.reshape((-1, len(shape))) # -1, 4
         rv = [] 
         # form symmetry equivalents ijks = jiks = ksij = ijsk 
-        rv.append( I[:, (0,1,2,3)] )# ijks
+        rv.append( I[:, (0,1,2,3)] ) # ijks
         rv.append( I[:, (1,0,2,3)] ) # jiks 
         rv.append( I[:, (2,3,0,1)] ) # ksij
         rv.append( I[:, (0,1,3,2)] ) # ijsk

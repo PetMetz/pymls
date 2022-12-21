@@ -17,10 +17,11 @@ from pymls.toolbox import abt
 lattice_scalar = (2.95, 2.95, 4.69, 90, 90, 120)
 
 # 2. slip system
-hkl = np.array((0,0,2))  # HCP basal slip
-uvw = np.array((1,1,0)) # burgers vector
+hkl = np.array((0,0,1))  # HCP basal slip
+uvw = np.array((2,-1,0)) # burgers vector
 l   = np.cross(uvw, hkl) # defines edge dislocation
 phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
+chi = abt(hkl, uvw, degrees=True)
 
 # 3. elastic constituents
 C = cij_from_group(135.6, 71.1, 24.1, 145.7, 45.7, group='6/mmm')
@@ -38,3 +39,7 @@ Canzic = 0.54240600
 Cmls = I.Chkl(uvw)
 print(f'Anzic: {Canzic}; this work: {Cmls}')
 print(f'Differs by Canzic / Cmls == {Canzic / Cmls:.6f}')
+
+
+# plot
+D.visualize()

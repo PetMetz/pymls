@@ -101,6 +101,19 @@ def unit_vectors(fn):
     return dec
 
 
+# FIXME this could just be a case of unit_vectors
+def unit_vector(fn):
+    @functools.wraps(fn)
+    def dec(*args, **kwargs):
+        rv = fn(*args, **kwargs)
+        test = LA.norm(rv)
+        if abs(test - 1) >= _SMALL:
+            n = fn.__name__
+            print(f'Warning: {n} not properly normalized. |v| = {test:.6f}')
+        return rv
+    return dec
+
+
 def get_largest(X):
     a = np.apply_along_axis(np.linalg.norm, 0, X)
     return max(a)
@@ -222,6 +235,14 @@ def plot_r3(a, b, c, o=None, ax=None, labels=None):
     for v, s in zip((a,b,c), (labels)):
         ax.text(*v, s)
     return fig, ax
+
+
+def plot_line3(ax, v, o=None, label=None) -> None:
+    if o is None:
+        o = np.zeros((3,))
+    ax.plot(*np.transpose((o, v-o)))
+    if label:
+        ax.text(*v, label)
 
 
 def rotation_from_axis_angle(vector:np.ndarray, angle:float, degree:bool=True) -> np.ndarray:

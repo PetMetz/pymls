@@ -15,7 +15,7 @@ from . import toolbox as tbx
 
 
 # FIXME I'm not sure subclassing a Lattice is the right approach, but it makes the included expressions more compact.
-#       Probably better to store the Lattice as an attribute and alias it (i.e. as L) for compactness
+#       Probably better to store the Lattice as an attribute and alias it (i.e. as L) for brevity
 class Dislocation(lattice.Lattice):
     """
     Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
@@ -106,7 +106,7 @@ class Dislocation(lattice.Lattice):
     
     @property
     def line(self):
-        ...
+        return self.Rp2 @ self.uvw
     
     @property
     def phi(self):
@@ -180,24 +180,28 @@ class Dislocation(lattice.Lattice):
     @tbx.orthogonal
     @tbx.unit_vectors
     def Rp2(self):
-        return tbx.rotation_from_axis_angle(vector=self.xi2, angle=self.phi, degree=True)
+        return tbx.rotation_from_axis_angle(vector=self.xi2, angle=-self.phi, degree=True) # MLS shows this rotation of b into l in the negative sense
     
     @property
+    @tbx.unit_vector
     def xi2(self):
         """ MLS (2014) eqn. 3 """
         return self.reciprocal.M @ self.hkl / self.reciprocal.length(self.hkl)
     
     @property
+    @tbx.unit_vector
     def xib(self):
-        """ MLS (2014) eqn. 4 """
+        """ normalized burgers vector MLS (2014) eqn. 4 """
         return self.M @ self.uvw / self.length(self.uvw)
     
     @property
+    @tbx.unit_vector
     def xi3(self):
         """ MLS (2014) eqn. 5 """
         return self.Rp2 @ self.xib
     
     @property
+    @tbx.unit_vector
     def xi1(self):
         """ MLS (2014) eqn. 7 """
         return np.cross(self.xi2, self.xi3)

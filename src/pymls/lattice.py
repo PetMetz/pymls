@@ -51,7 +51,7 @@ class Lattice():
     # - constructors
     @classmethod
     def from_scalar(cls, x:tuple) -> Lattice:
-        """ Julian 2014 Foundations of Crystallography """
+        """ Julian 2014 Foundations of Crystallography, p.17 (eqn. 1.6) """
         x = np.asarray(x)
         a, b, c = x[:3] # unpack
         angles = x[3:] * np.pi / 180
