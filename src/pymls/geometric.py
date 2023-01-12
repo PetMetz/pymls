@@ -277,8 +277,8 @@ class Dislocation(lattice.Lattice):
         # version 1
         # return np.sqrt(1 - self.t2(s)**2 - self.t3(s)**2)
         # version 2
-        v1 = s / self.reciprocal.length(s)
-        v2 = self.e1 / self.length(self.e1)
+        v1 = s / LA.norm(s) # should just be a unit vector/ self.reciprocal.length(s)
+        v2 = self.e1 # should be unit vector by construction / self.length(self.e1)
         return v1 @ v2
     
     # @functools.lru_cache(maxsize=100)
@@ -306,8 +306,8 @@ class Dislocation(lattice.Lattice):
         # v2 = self.hkl / self.reciprocal.length(self.hkl)
         # return v1 @ Gstar @ v2
         # version 3
-        v1 = s / self.reciprocal.length(s)
-        v2 = self.e2 / self.length(self.e2)
+        v1 = s / LA.norm(s) # should just be a unit vector self.reciprocal.length(s)
+        v2 = self.e2  # should be unit vector by construction  / self.length(self.e2)
         return v1 @ v2
     
     # @functools.lru_cache(maxsize=100)
@@ -326,8 +326,8 @@ class Dislocation(lattice.Lattice):
         # T  = self.M.T @ self.Rp2 @ LA.inv(self.M.T)
         # return v1 @ T @ v2
         # version 3
-        v1 = s / self.reciprocal.length(s)
-        v2 = self.e3 / self.length(self.e3)
+        v1 = s / LA.norm(s) # should just be a unit vector/ self.reciprocal.length(s)
+        v2 = self.e3 # should be unit vector by construction  / self.length(self.e3)
         return v1 @ v2
 
     # @functools.lru_cache(maxsize=100)
@@ -347,14 +347,14 @@ class Dislocation(lattice.Lattice):
             (i,m) = 1,2,3,
             (j,n) = 1,2.
         """
-        # a = np.zeros((3,2,3,2)) # .reshape((-1,4))
+        a = np.zeros((3,2,3,2)) # .reshape((-1,4))
         I = np.indices((3,2,3,2)).T.reshape((-1,4))
         tau = self.tau(s) # (-1,)
-        # for index in I:
-        #     a[tuple(index)] = np.product([tau[i] for i in index])
-        # return a
-        rv = np.product(tau[I], axis=1) # NB this works because tau is 1D, hence I is treated as an integer mask
-        return rv.reshape((3,2,3,2)) # .round(tbx._PREC)
+        for index in I:
+            a[tuple(index)] = np.product([tau[i] for i in index])
+        return a
+        # rv = np.product(tau[I], axis=1) # NB this works because tau is 1D, hence I is treated as an integer mask
+        # return rv.reshape((3,2,3,2)) # .round(tbx._PREC)
     
     def visualize(self):
         from .toolbox import plot_cell
