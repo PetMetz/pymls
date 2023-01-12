@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 """
+
+NB for this case we only really care about symmetric rank 4 elastic tensors
+
 Created on Mon Dec 19 18:11:40 2022
 
 @author: UT
@@ -13,6 +16,10 @@ SQ2 = np.sqrt(2)
 class Voigt():
     """ mappings for voigt reduction """
     _ORDER = None
+    
+    def __repr__(self):
+        """ pretty print Cij """
+        ...
     
     def __init__(self, T:np.ndarray=None,
                        M:np.ndarray=None,
@@ -34,8 +41,8 @@ class Voigt():
         
     # constructors
     @classmethod
-    def from_tenor(cls, X:np.ndarray, case=None):
-        return cls.__init__(T=X, case=case)
+    def from_tensor(cls, X:np.ndarray, case=None):
+        return cls(T=X, case=case)
     
     @classmethod
     def from_matrix(cls, X:np.ndarray, case=None):
@@ -51,6 +58,24 @@ class Voigt():
     @staticmethod
     def get_order(X:np.ndarray):
         return int(len(X.shape))
+    
+    @staticmethod
+    def contract_ijkl(i,j,k,l):
+        """ Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-5b """
+        i, j, k, l = map(int, (i,j,k,l))
+        a = i if i == j else 9 - i - j
+        b = k if k == l else 9 - k - l
+        return a, b
+    
+    @staticmethod
+    def contract_ij(i, j):
+        """ Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-1 """
+        i, j = map(int, (i,j))
+        return i if i==j else 9 - i - j
+    
+    def to_mandel(self):
+        """ return Mandel object """
+        ...
     
     # properties
     @property
@@ -72,6 +97,8 @@ class Voigt():
     
     @tensor.setter
     def tensor(self, X:np.ndarray):
+        if X is None:
+            return
         X = np.asarray(X)
         assert len(X.shape) == 4, f'Incorrect shape for tensor: {X}'
         self._tensor = X
@@ -91,6 +118,8 @@ class Voigt():
     
     @matrix.setter
     def matrix(self, X:np.ndarray):
+        if X is None:
+            return
         X = np.asarray(X)
         assert len(X.shape) == 2, f'Incorrect shape for matrix: {X}'
         self._matrix = X
@@ -110,6 +139,8 @@ class Voigt():
     
     @vector.setter
     def vector(self, X:np.ndarray):
+        if X is None:
+            return
         X = np.asarray(X)
         assert len(X.shape) == 1, f'Incorrect shape for vector: {X}'
         self._vector = X
@@ -122,6 +153,9 @@ class Voigt():
     @V.setter
     def V(self, X:np.ndarray):
         self.vector = X
+
+
+    
 
     # End of class Voigt
 
@@ -141,4 +175,9 @@ class Mandel():
 
 if __name__ == "__main__":
     
-    v = Voigt(1, case='s')
+    v3    = np.array((1, 2, 3))
+    m33   = np.outer(v3,v3)
+    m99   = np.outer(m33,m33)
+    t3333 = m99.reshape((3,3,3,3)) 
+    
+    v = Voigt.from_tensor(t3333, case='s')

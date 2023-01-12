@@ -132,11 +132,21 @@ def _compact(X:np.ndarray):
     return np.apply_along_axis(lambda x:''.join(map(str, x)), axis=-1, arr=X)
     
 # - conventions
-_voigt = np.array(((0,0), (1,1), (2,2), (1,2), (0,2), (0,1)), dtype=int)
-_mandel = np.array([ np.concatenate((np.ones_like(_voigt)*_voigt[i], _voigt), axis=1) for i in range(6) ], dtype=int)
+_voigt3 = np.array(((0,0), (1,1), (2,2), (1,2), (0,2), (0,1)), dtype=int)
+_voigt6 = np.array([ np.concatenate((np.ones_like(_voigt3)*_voigt3[i], _voigt3), axis=1) for i in range(6) ], dtype=int)
 
+def contract_ijkl(i, j, k, l, index=0):
+    """ Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-5b """
+    i, j, k, l = map(int, (i,j,k,l))
+    a = contract_ij(i, j, index)
+    b = contract_ij(k, l, index)
+    return a, b
 
-    
+def contract_ij(i, j, index=0):
+    """ Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-1 """
+    i, j = map(int, (i,j))
+    return i if i==j else 9 - i - j - 3 * (1-index)
+
 # --- classes
 class Stroh():
     """ Ref: Ting T.C.T. Elastic Anisotropy. """
@@ -193,36 +203,19 @@ class Stroh():
         if not X is None:
             self._cijkl = self.invert_mandel(X)
         
-    # FIXME this doesn't need to be a class method
-    @classmethod
-    def to_voigt(cls, i, j, hit=0):
-        """ 0 index!!!! """
-        if i == j:
-            return int(i)
-        elif i == 1 and j == 2:
-            return 3
-        elif i == 0 and j == 2:
-            return 4
-        elif i == 0 and j == 1:
-            return 5
-        elif hit == 0:
-            return cls.to_voigt(j, i, hit=1)
-        else:
-            raise Exception(f'unable to match {i} {j} in Voigt scheme')
-
     def apply_voigt(self, X):
         """
         Apply Voigt reduction scheme to X(3,3) to produce X2(6,).
         11 -> 1; 22 -> 2; 33 -> 3; 23 -> 4; 13 -> 5; 12 -> 6
         """
-        return np.array([X[tuple(e)] for e in _voigt])
+        return np.array([X[tuple(e)] for e in _voigt3])
     
     def invert_voigt(self, X):
         """
         Given a Voigt reduced vector, reconstruct 2nd order tensor.
         """
         a = np.zeros((3,3))
-        for idx, pt in enumerate(_voigt):
+        for idx, pt in enumerate(_voigt3):
             a[tuple(pt)] = X[idx]
             a[tuple(pt[::-1])] = X[idx]
         return a
@@ -232,21 +225,21 @@ class Stroh():
         The extension of Voigt reduction to the 4th rank tensor representing
         proportionality of two 2nd rank tensors.
         """
-        return np.reshape([X[tuple(e)] for e in _mandel.reshape(-1,4)], (6,6))
+        return np.reshape([X[tuple(e)] for e in _voigt6.reshape(-1,4)], (6,6))
 
     # FIXME can't this be vectorized?
-    def invert_mandel(self, X):
+    def invert_mandel(self, X, case='c'):
         """
-        Given a Mandel reduced 2nd order tensor, reconstruct 4th order tensor.
+        Given a Voigt reduced 2nd order tensor, reconstruct 4th order tensor.
         """
         a = np.zeros((3,3,3,3))
         # - form index
         I = self.elastic_symmetry
         I0 = I[0]
         # - apply mapping
-        for idx in I0:
-            l, r = idx[:2], idx[2:]
-            a[tuple(idx)] = X[self.to_voigt(*l), self.to_voigt(*r)]
+        for ijkl in I0:
+            mn = contract_ijkl(*ijkl)
+            a[tuple(ijkl)] = X[tuple(mn)]
         # - exhaustive equivalence
         for Ip in I[1:]:
             for idx, jdx in zip(I0, Ip):
