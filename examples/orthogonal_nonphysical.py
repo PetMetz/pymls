@@ -141,3 +141,6 @@ if not test_value_7:
                 for l in range(2):
                     idx = (i,j,k,l)
                     print(idx, Gijkl[idx], Gijkl_v2[idx], Gijkl_v3[idx])
+
+
+

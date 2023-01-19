@@ -185,25 +185,25 @@ class Dislocation(lattice.Lattice):
     @property
     @tbx.unit_vector
     def xi2(self):
-        """ MLS (2014) eqn. 3 """
+        """ MLS (2009) eqn. 3 """
         return self.reciprocal.M @ self.hkl / self.reciprocal.length(self.hkl)
     
     @property
     @tbx.unit_vector
     def xib(self):
-        """ normalized burgers vector MLS (2014) eqn. 4 """
+        """ normalized burgers vector MLS (2009) eqn. 4 """
         return self.M @ self.uvw / self.length(self.uvw)
     
     @property
     @tbx.unit_vector
     def xi3(self):
-        """ MLS (2014) eqn. 5 """
+        """ MLS (2009) eqn. 5 """
         return self.Rp2 @ self.xib
     
     @property
     @tbx.unit_vector
     def xi1(self):
-        """ MLS (2014) eqn. 7 """
+        """ MLS (2009) eqn. 7 """
         return np.cross(self.xi2, self.xi3)
         
     
@@ -220,7 +220,7 @@ class Dislocation(lattice.Lattice):
             
             P = \xi_{ij}
             
-            NB MLS (2014) type this in row-major format
+            NB MLS (2009) type this in row-major format
         
         """
         if self._P is None:
