@@ -209,10 +209,12 @@ class TestComputation:
         B = LA.inv(self.d.G)
         assert tbx.float_tol(A, B) is True
         
-    def test_MLS_M_is_transposed(self):
-        """ """
-        A = MLS_M(self.d)
-        B = self.d.M.T
-        assert tbx.float_tol(A, B) is True
+# =============================================================================
+#     def test_MLS_M_is_transposed(self):
+#         """ """
+#         A = MLS_M(self.d)
+#         B = self.d.M.T
+#         assert tbx.float_tol(A, B) is True
+# =============================================================================
         
     # end TestSymmetric

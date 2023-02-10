@@ -427,7 +427,8 @@ class Stroh():
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
         if self._flag_eig:
-            self._p, self._xi = LA.eig(self.N)
+            self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
+            # self._xi = self._xi.T # 20230209
             self._flag_eig = 0
         return self._p
     
@@ -446,7 +447,8 @@ class Stroh():
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
         if self._flag_eig:
-            self._p, self._xi = LA.eig(self.N)
+            self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
+            # self._xi = self._xi.T # 20230209
             self._flag_eig = 0
         return self._xi # .round(tbx._PREC)
     
@@ -468,6 +470,7 @@ class Stroh():
         return (self.conI @ self.xi) # .round(tbx._PREC) # this is equivalent
         # return self.xi[::-1] # apparently Ting means the former, not reversal by index
     
+    # FIXME for some reason np.eig returns column major eigen vectors? This slicing should be adjusted?
     @functools.cached_property
     def a(self):
         r"""
