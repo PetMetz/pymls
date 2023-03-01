@@ -1,6 +1,6 @@
 PyMLS 0.0.0
 ==========================================================
-[ ] Refactor Lattice out of Dislocation (subclass)
+[X] Refactor Lattice out of Dislocation (subclass)
 [ ] Refactor mandel/voigt reduction schemes out of Stroh class to toolbox (e.g. reduction of Eijmn tensor -> Eij matrix)
 [ ] Refactor reduction schemes as an index mapping (i.e. generalize to any input indices)
 [ ] Needs to support Miller-Bravais indices for hexagonal systems? (will effect averaging)

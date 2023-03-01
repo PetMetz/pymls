@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 from pymls import Lattice, Dislocation, Stroh, MLS
 from pymls.elastic import cij_from_group
 from pymls.toolbox import abt
+import pymls.toolbox as tbx
 
 
 plt.close('all')
