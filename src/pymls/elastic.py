@@ -443,7 +443,6 @@ class Stroh():
         """
         if self._flag_eig:
             self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
-            # self._xi = self._xi.T # 20230209
             self._flag_eig = 0
         return self._xi # .round(tbx._PREC)
     
@@ -462,7 +461,7 @@ class Stroh():
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
         # return np.row_stack((self.l, self.a)) # "... the left eigenvector... are in the reverse order"""
-        return (self.conI @ self.xi) # .round(tbx._PREC) # this is equivalent
+        return self.conI @ self.xi # .round(tbx._PREC) # this is equivalent
         # return self.xi[::-1] # apparently Ting means the former, not reversal by index
     
     # FIXME for some reason np.eig returns column major eigen vectors? This slicing should be adjusted?
@@ -471,15 +470,20 @@ class Stroh():
         r"""
         Stroh eigenvectors (6,6) solutions to the fundamental elasticity matrix
         The eigenvector `a` represents the direction of the displacement.
+        
+        c.f. Ting eqn. 5.5-4 & 5.3-11
+        NB scipy.linalg.eig returns column eigenvectors
         """
         return self.xi[:3,:]
-        # return np.concatenate((self.xi[:3,:], self.xi[:3,1::2]), axis=1)
         
     @functools.cached_property
     def l(self):
         r""" 
         Stroh eigenvectors (6,6) solutions to the fundamental elasticity matrix
         The eigenvector `l` represents the direction of traction.
+            
+        c.f. Ting eqn. 5.5-4 & 5.3-11
+        NB scipy.linalg.eig returns column eigenvectors
         """
         return self.xi[3:,:]
     
@@ -488,6 +492,7 @@ class Stroh():
         r"""
         Stroh eigen vectors (3,3) obeying :math:`a_{\alpha+3} = \bar{a}_{\alpha}`
         (i.e. half the roots of the sextic equation)
+        :math:`A = [a1, a2, a3]` (NB column vectors) (c.f. Ting eqn. 5.5-4 & 5.3-11)
         """
         return self.xi[:3, ::2]
     
@@ -496,6 +501,7 @@ class Stroh():
         r""" 
         Stroh eigen vectors (3,3) obeying :math:`l_{\alpha+3} = \bar{l}_{\alpha}`
         (i.e. half the roots of the sextic equation)
+        :math:`B = [b1, b2, b3]` (NB column vectors) (c.f. Ting eqn. 5.5-4 & 5.3-11)
         """
         return self.xi[3:, ::2]
     

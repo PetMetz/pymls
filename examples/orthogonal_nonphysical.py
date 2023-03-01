@@ -24,9 +24,9 @@ plt.close('all')
 M = 2 * np.eye(3)
 
 # - 2. slip system
-hkl = np.array((0,0,1))  # slip plane normal
-uvw = np.array((1,0,0))  # burgers vector
-l   = np.array((1,-1,0))  # dislocation line vector
+hkl = np.array((1,1,0))  # slip plane normal
+uvw = np.array((-1,1,1))  # burgers vector
+l   = np.array((-1,1,-2))  # dislocation line vector
 phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 
 # - 3. elastic constituents
@@ -101,16 +101,17 @@ if not test_value_6:
 # vectors in (2008), though the formulae are written differently.
 
 s = hkl
+s_norm = s / LA.norm(s)
 Gijkl = np.zeros((3,2,3,2))
 for i in range(3):
     for j in range(2):
         for k in range(3):
             for l in range(2):
                 Gijkl[(i,j,k,l)] = np.product((               
-                    np.dot(s, D.e[i]),
-                    np.dot(s, D.e[j]),
-                    np.dot(s, D.e[k]),
-                    np.dot(s, D.e[l])
+                    np.dot(s_norm, D.e[i]),
+                    np.dot(s_norm, D.e[j]),
+                    np.dot(s_norm, D.e[k]),
+                    np.dot(s_norm, D.e[l])
                 ))
 
 

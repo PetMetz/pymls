@@ -73,11 +73,22 @@ class MLS():
         
         returns (3,) complex (length**-1)
         """
-        bj = self.dislocation.uvw # b_j
+        # =============================================================================
+        #         b = self.dislocation.uvw # b_j
+        #         modb = self.dislocation.length(self.dislocation.uvw) # |b_j|
+        #         L = self.stroh.L 
+        #         AL = np.diag(self.stroh.A @ self.stroh.L) 
+        #         # return  -1/modb * Lai @ bj @ LA.inv(ALij) # 1/Aij != (Aij)**-1
+        #         return -1/modb * L @ b / AL
+        # =============================================================================
+        b = self.dislocation.uvw # b_j
         modb = self.dislocation.length(self.dislocation.uvw) # |b_j|
-        Lai = self.stroh.L # L_ai
-        ALij = (self.stroh.A @ self.stroh.L) # A_ai dot L_aj -> AL_ij
-        return  -1/modb * Lai @ bj @ LA.inv(ALij)
+        A = self.stroh.A # column vectors
+        L = self.stroh.L # column vectors
+        D = np.empty((3,), dtype=complex)
+        for i in range(3):
+            D[i] = -(L[:,i] @ b) / (modb * (A[:,i] @ L[:,i]))
+        return D
         
     @functools.cached_property
     def x(self):
@@ -96,9 +107,7 @@ class MLS():
         returns (a,a`) -> (3,3) (radians)
         """
         p3 = self.stroh.P * np.ones((3,3))
-        A = (p3 - p3.T).real
-        B = (p3 + p3.T).imag
-        return np.arctan( A / B ) # real
+        return np.arctan( (p3.T - p3).real / (p3.T + p3).imag ) # real
     
     @functools.cached_property
     def z(self):
@@ -107,7 +116,7 @@ class MLS():
         Martinez-Garcia, Leoni, Scardi (2009) eqn. 26
         returns (a,a`) -> (3,3) (radians)
         """
-        return np.arctan(self.gamma1 * LA.inv(self.gamma2)) # real
+        return np.arctan(self.gamma1 / self.gamma2 ) # real
         
     @functools.cached_property
     def F(self):
@@ -121,7 +130,7 @@ class MLS():
         return (3,3)
         """
         p3 = self.stroh.P * np.ones((3,3))
-        A = p3 - p3.T
+        A = p3.T - p3
         return A.real**2 + A.imag**2 # (p3.real - p3.real.T)**2 + (p3.imag - p3.imag.T)**2
     
     @functools.cached_property
@@ -139,9 +148,9 @@ class MLS():
         mod2  = np.abs(self.stroh.P)**2 # (p * np.conjugate(p).T).real 
         p3    = p * np.ones((3,3))
         mod23 = mod2 * np.ones((3,3))
-        q1 = (mod2 - mod2.T)**2
-        q2 = 4 * (p3 - p3.T).real
-        q3 = mod23.T * p3.real - mod23 * p3.real.T
+        q1 = (mod23.T - mod23)**2
+        q2 = 4 * (p3.T - p3).real
+        q3 = mod23 * p3.T.real - mod23.T * p3.real
         return q1 + q2 * q3 # real
 
     # - indexed on alpha & ij(mn)
@@ -166,7 +175,7 @@ class MLS():
         
         Martinez-Garcia, Leoni, Scardi (2009) eqn. 26
         
-        returns (a,m,n) -> (3,3,2) radians
+        asserts (a,m,n) -> (3,3,2) radians
         """
         rv = np.zeros((3,3,2), dtype=complex)
         I  = np.indices(rv.shape).T # len, 3, 3, 2 - > 2, 3, 3, len
@@ -193,7 +202,7 @@ class MLS():
         """
         p3 = self.stroh.P * np.ones((3,3)) # complex
         x3 = self.x * np.ones((3,3)) # real
-        return p3.imag * p3.imag.T * ( np.tan(x3) + np.tan(x3.T) ) # real
+        return p3.imag.T * p3.imag * ( np.tan(x3.T) + np.tan(x3) ) # real
         
     @functools.cached_property
     def gamma2(self):
@@ -208,7 +217,7 @@ class MLS():
         """
         p3 = self.stroh.P * np.ones((3,3))
         mod2 = np.abs(self.stroh.P)**2 # np.diag(p3 * np.conjugate(p3)).real
-        return mod2 - (p3.real * p3.real.T) + (p3.imag * p3.imag.T) # real
+        return mod2 - (p3.real.T * p3.real) + (p3.imag.T * p3.imag) # real
     
     # FIXME corrected but unvalidated
     @functools.cached_property

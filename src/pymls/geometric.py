@@ -180,7 +180,7 @@ class Dislocation(lattice.Lattice):
     @tbx.orthogonal
     @tbx.unit_vectors
     def Rp2(self):
-        return tbx.rotation_from_axis_angle(vector=self.xi2, angle=-self.phi, degree=True) # MLS shows this rotation of b into l in the negative sense
+        return tbx.rotation_from_axis_angle(vector=self.xi2, angle=self.phi, degree=True) # MLS shows this rotation of b into l in the negative sense of phi
     
     @property
     @tbx.unit_vector
@@ -206,7 +206,6 @@ class Dislocation(lattice.Lattice):
         """ MLS (2009) eqn. 7 """
         return np.cross(self.xi2, self.xi3)
         
-    
     @property
     @tbx.orthogonal
     @tbx.unit_vectors

@@ -19,7 +19,7 @@ lattice_scalar = (4.775, 10.190, 5.978, 90, 90, 90)
 # - 2. slip system
 hkl = np.array((0,1,0))
 uvw = np.array((1,0,0))
-l   = np.cross(hkl, uvw)
+l   = np.array((0,0,1)) # np.cross(hkl, uvw)
 phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 chi = abt(hkl, uvw, degrees=True)
 
