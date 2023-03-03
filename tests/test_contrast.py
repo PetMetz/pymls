@@ -86,7 +86,7 @@ def test_gamma2_algebra(thisFixture, request):
     A = np.empty((3,3), dtype=float)
     for j in range(3):
         for i in range(3):
-            A[i,j] = modP[i] - (P[i].real * P[j].real) + (P[i].imag * P[j].real)
+            A[i,j] = modP[i] - (P[i].real * P[j].real) + (P[i].imag * P[j].imag)
     B = mls.gamma2
     assert tbx.float_tol(A,B)
 

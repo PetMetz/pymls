@@ -185,7 +185,7 @@ class MLS():
         P  = self.stroh.P # P_a
         for index in I:
             a, i, j = index
-            rv[tuple(index)] = A[a, i] * D[a] * P[a]**int(j-1)
+            rv[tuple(index)] = A[i, a] * D[a] * P[a]**int(j-1)  # NB A are column eigenvectors
         # return np.arctan(k.imag / k.real) # https://en.wikipedia.org/wiki/Argument
         return np.angle(rv)
 
