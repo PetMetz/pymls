@@ -44,11 +44,25 @@ S = Stroh(C) # captures characteristic elastic matrix and eigensolution
 I = MLS(dislocation=D, cij=C) # captures sum computation
 
 # - 5. compute values
-Cmls = I.Chkl(uvw)
-print(Cmls)
-# print(f'Anzic: {Canzic:.6f}; this work: {Cmls:.6f}')
-# print(f'Differs by Canzic / Cmls == {Canzic / Cmls:.6f}')
+sss = np.array(( # c.f. Table 5, MLS (2009)
+    (0,2,0),
+    (1,1,0),
+    (0,2,1),
+    (1,0,1)
+    ))
+cbar = np.array(( # c.f. Table 5, MLS (2009)
+    0.1340,
+    0.4548,
+    0.0449,
+    0.1773
+    ))
 
+for s, c in zip(sss, cbar):
+    Cmls = I.Chkl(s)
+    print(Cmls)
+    print(f'MLS (2009): {c:.6f}; this work: {Cmls:.6f}')
+    print(f'Differs by c / Cmls == {c / Cmls:.6f}')
+    print('')
 
 # plot
 D.visualize()
