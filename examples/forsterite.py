@@ -5,6 +5,7 @@ Created on Wed Jun 29 12:47:54 2022
 @author: pmetz1
 """
 # 3rd party
+import matplotlib.pyplot as plt
 import numpy as np
 
 # package
@@ -12,6 +13,7 @@ from pymls import Lattice, Dislocation, Stroh, MLS
 from pymls.elastic import cij_from_group
 from pymls.toolbox import abt
 
+plt.close('all')
 
 # - 1. crystal lattice
 lattice_scalar = (4.775, 10.190, 5.978, 90, 90, 90)
@@ -59,10 +61,10 @@ cbar = np.array(( # c.f. Table 5, MLS (2009)
 
 for s, c in zip(sss, cbar):
     Cmls = I.Chkl(s)
-    print(Cmls)
     print(f'MLS (2009): {c:.6f}; this work: {Cmls:.6f}')
     print(f'Differs by c / Cmls == {c / Cmls:.6f}')
     print('')
 
 # plot
+plt.close('all')
 D.visualize()

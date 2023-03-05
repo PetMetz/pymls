@@ -216,31 +216,31 @@ class MLS():
         returns (a,a`) -> (3,3) (radians)
         """
         p3 = self.stroh.P * np.ones((3,3))
-        mod2 = np.abs(self.stroh.P)**2 # np.diag(p3 * np.conjugate(p3)).real
-        return mod2 - (p3.real.T * p3.real) + (p3.imag.T * p3.imag) # real
+        mod23 = np.abs(self.stroh.P)**2 * np.ones((3,3))
+        return mod23.T - (p3.real.T * p3.real) + (p3.imag.T * p3.imag) # real
     
-    # FIXME corrected but unvalidated
     @functools.cached_property
     def psi(self):
         r"""
         .. math::
             
-            case a = a`, a \ne a`
-            
-            ...
+            \Psi_{\alpha}^{\alpha'} = &&\\
+                & \frac{ \left|p_{\alpha}\right| }{2 \Im{\left[p_{\alpha}\right]^{2}} }\; & if\ \alpha = \alpha' \\
+                & \frac{ \left|p_{\alpha}\right| }{ \Im{\left[p_{\alpha}\right]} } \left[\frac{F(p_{\alpha})}{Q(p_{\alpha})}\right]^{1/2}\; & if\ \alpha \ne \alpha' \\
+
+        Martinez-Garcia, Leoni, Scardi (2009) eqn. 18.1
             
         returns (a, a`) -> (3,3)
         """
+        rv = np.zeros((3,3))
+        m = ~np.eye(3, dtype=bool) # a != a`
         p = self.stroh.P # p_a
         modp = np.abs(p) # |p_a|
-        a = np.eye(3) * modp / (2 * p.imag**2) # a == a`
-        b = np.zeros(self.F.shape) # a != a`
-        m = ~np.eye(3, dtype=bool)
-        b[m] = ( self.F[m] / self.Q[m] ) ** 0.5
-        b *= modp / p.imag
-        return a + b
+        pre = (modp / p.imag * np.ones((3,3))).T
+        rv[m] = pre[m] * (self.F[m] / self.Q[m]) ** 0.5  # a != a`
+        rv[~m] = modp / (2 * p.imag**2) # a == a`
+        return rv
         
-    # FIXME corrected but unvalidated
     @functools.cached_property
     def phi(self):
         r"""
@@ -256,12 +256,11 @@ class MLS():
             
             \frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)
             
+        Martinez-Garcia, Leoni, Scardi (2009) eqn. 18.2
+            
         returns (i,j,a,m,n,a`) == (3,2,3,3,2,3) 
         """
         # - alias
-        # modA = np.sqrt(self.stroh.A * np.conjugate(self.stroh.A).T).real  # |A_ai|
-        # modD = np.sqrt(self.D * np.conjugate(self.D)).real                # |D_a|  
-        # modP = np.sqrt(self.stroh.P * np.conjugate(self.stroh.P).T).real  # |P_a| 
         modA = np.abs(self.stroh.A) # |A_ia| == | stroh eigen vectors |
         modD = np.abs(self.D) # |D_a|  == | quantity containing direction cosines |
         modP = np.abs(self.stroh.P) # |P_a|  == | stroh eigen values |
@@ -271,53 +270,106 @@ class MLS():
         I = I.reshape((-1, len(rv.shape)))
         for index in I:
             i, j, a, m, n, b = index
-            rv[tuple(index)] = 2 * modA[a, i] * modA[b, m] * modD[a] * modD[b] * modP[a]**(j-1) * modP[b]**(n-1)
+            rv[tuple(index)] = 2 * modA[i, a] * modA[m, b] * modD[a] * modD[b] * modP[a]**(j-1) * modP[b]**(n-1)
         return rv
 
-    # - finally
-    # Having trouble forming multiplications over variety of indexes
-    # Delta_a^ij (3,2,3) + y (3,3) e.g.
+    # FIXME NB amn | bij but -> ija mnb (revisit indexing throughout)
     @functools.cached_property
     def Eijmn(self):
-        """
-        Should be real valued and positive with shape (3,2,3,2)
-        Contracts over alpha, alpha`.
-        (i,j,a,m,n,a`) == (3,2,3,3,2,3) 
-        to
-        (i,j,m,n) == (3,2,3,2)
-        """
-        # - setup return array
-        rv = np.zeros((3,2,3,3,2,3), dtype=float) # <--- note this is a real valued tensor
-        I = np.indices(rv.shape, dtype=np.intp).T # len(shape), *shape -> *shape. len(shape)
-        I = I.reshape((-1, len(rv.shape)))
-        # - alias objects
-        psi, phi, delta = self.psi, self.phi, self.delta
-        x, y, z = self.x, self.y, self.z
-        # - compute elements
-        for index in I:
-            i, j, a, m, n, b = index 
-            rv[tuple(index)] = \
-                psi[a,b] * phi[i,j,a,m,n,b] * (\
-                    np.cos(delta[a,m,n] + x[a]) * np.cos(delta[b,i,j] - y[a,b]) \
-                  + np.sin(delta[a,m,n]) * np.sin(delta[b,i,j] + z[a,b])
-                    )
-        # - alternative
-# =============================================================================
-#         pp = np.einsum('ab,ijamnb->ijamnb', psi, phi)
-#         a1 = np.transpose(delta.T - np.eye(3)*x)
-#         a2 = np.transpose(delta.T - y)
-#         b1 = delta
-#         b2 = np.transpose(delta.T - z)
-#         cos = np.einsum('amn,bij->ijamnb', np.cos(a1), np.cos(a2))
-#         sin = np.einsum('amn,bij->ijamnb', np.sin(b1), np.sin(b2))
-#         con = np.einsum('ijamnb,ijamnb,ijamnb->ijmn', pp, cos, sin)
-#         ...  
-# =============================================================================
-        # - contract
-        # equivalent to rv.sum(axis=2).sum(axis=-1)
-        rv = np.einsum('ijamnb->ijmn', rv) # .round(tbx._PREC)
-        return rv
+        r"""
         
+        .. math::
+            
+            E_{ijmn} = \Sigma_{\alpha, \alpha'}^{3} \Psi_{\alpha}^{\alpha'} \Phi_{ij\alpha}^{mn\alpha'} \left[ \cos(\Delta_{\alpha}^{mn} + x_{\alpha}) \cos(\Delta_{ij}^{\alpha'} - y_{\alpha}^{\alpha'}) + \sin(\Delta_{\alpha}^{mn}) \sin(\Delta_{ij}^{\alpha'} - z_{\alpha}^{\alpha'}) \right]
+        
+        Should be real valued and positive with shape (i,j,m,n) == (3,2,3,2)
+        """
+        # =============================================================================
+        #         # - setup return array
+        #         rv = np.zeros((3,2,3,3,2,3), dtype=float) # <--- note this is a real valued tensor
+        #         I = np.indices(rv.shape, dtype=np.intp).T # len(shape), *shape -> *shape. len(shape)
+        #         I = I.reshape((-1, len(rv.shape)))
+        #         # - alias objects
+        #         psi = self.psi  # (a, a`)  == (3,3)
+        #         phi = self.phi  # (i,j,a,m,n,a`) == (3,2,3,3,2,3) 
+        #         delta = self.delta  # (a, m, n) == (3,3,2)
+        #         x = self.x  # (a,) == (3,)
+        #         y = self.y  # (a, a`) == (3,3)
+        #         z = self.z  # (a, a`) == (3,3)
+        #         # - compute elements
+        #         for index in I:
+        #             i, j, a, m, n, b = index 
+        #             rv[tuple(index)] = \
+        #                 psi[a,b] * phi[i,j,a,m,n,b] * (\
+        #                     np.cos(delta[a,m,n] + x[a]) * np.cos(delta[b,i,j] - y[a,b]) \
+        #                   + np.sin(delta[a,m,n]) * np.sin(delta[b,i,j] + z[a,b])
+        #                     )
+        #         # - contract
+        #         # equivalent to rv.sum(axis=2).sum(axis=-1)
+        #         rv = np.einsum('ijamnb->ijmn', rv) # .round(tbx._PREC)
+        #         return rv
+        # =============================================================================
+        # - alternative
+        # =============================================================================
+        #         pp = np.einsum('ab,ijamnb->ijamnb', psi, phi)
+        #         a1 = np.transpose(delta.T - np.eye(3)*x)
+        #         a2 = np.transpose(delta.T - y)
+        #         b1 = delta
+        #         b2 = np.transpose(delta.T - z)
+        #         cos = np.einsum('amn,bij->ijamnb', np.cos(a1), np.cos(a2))
+        #         sin = np.einsum('amn,bij->ijamnb', np.sin(b1), np.sin(b2))
+        #         con = np.einsum('ijamnb,ijamnb,ijamnb->ijmn', pp, cos, sin)
+        #         ...  
+        # =============================================================================
+        # Try again...
+        # =============================================================================
+        C = np.einsum('amn,bij->ijamnb', self._c1, self._c2) + np.einsum('amn,bij->ijamnb', self._s1, self._s2) # (i,j,a,m,n,b) == (3,2,3,3,2,3)
+        B = np.einsum('ijamnb,ijamnb->ijamnb', self.phi, C) 
+        A = np.einsum('ab,ijamnb->ijmn', self.psi, B)
+        return A # (i,j,m,n) == (3,2,3,2)
+        
+    @functools.cached_property
+    def _c1(self) -> np.ndarray:
+        r""" :math:`\cos(\Delta_{\alpha}^{mn} + x_{\alpha})` """ 
+        # return np.cos( np.einsum('amn,a->amn', self.delta, self.x) ) # addition not multiplication
+        A = np.zeros((3,3,2))
+        for n in range(2):
+            for m in range(3):
+                for a in range(3):
+                    A[a,m,n] = np.cos(self.delta[a,m,n] + self.x[a])
+        return A
+    
+    @functools.cached_property
+    def _c2(self) -> np.ndarray:
+        r""" :math:`\cos(\Delta_{ij}^{\alpha'} - y_{\alpha}^{\alpha'})` """
+        # return np.cos( np.einsum('bmn,ab->amn', self.delta, -self.y) )
+        A = np.zeros((3,3,2))
+        for n in range(2):
+            for m in range(3):
+                for a in range(3):
+                    for b in range(3):
+                        A[a,m,n] = self.delta[a,m,n] - self.y[a,b] + A[a,m,n] # contract arg
+                    A[a,m,n] = np.cos(A[a,m,n]) # eval cos
+        return A
+    
+    @functools.cached_property
+    def _s1(self) -> np.ndarray:
+        r""" :math:`\sin(\Delta_{\alpha}^{mn})` """
+        return np.sin(self.delta)
+    
+    @functools.cached_property
+    def _s2(self) -> np.ndarray:
+        r""" :math:`\sin(\Delta_{ij}^{\alpha'} - z_{\alpha}^{\alpha'})` """
+        # return np.sin( np.einsum('bmn,ab->amn', self.delta, self.z) )
+        A = np.zeros((3,3,2))
+        for n in range(2):
+            for m in range(3):
+                for a in range(3):
+                    for b in range(3):
+                        A[a,m,n] = self.delta[a,m,n] - self.z[a,b] + A[a,m,n] # contract arg
+                    A[a,m,n] = np.sin(A[a,m,n]) # eval sin
+        return A
+    
     def Chkl(self, s):
         r""" 
         .. math::

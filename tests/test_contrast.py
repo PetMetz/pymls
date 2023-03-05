@@ -119,7 +119,7 @@ def test_psi_algebra(thisFixture, request):
     for j in range(3):
         for i in range(3):
             if i == j:
-                A[i,j] = modP[i] / (2 * P[i].imag**2)
+                A[i,i] = modP[i] / (2 * P[i].imag**2)
             elif i != j:
                 A[i,j] = (modP[i] / P[i].imag) * (F[i,j] / Q[i,j]) ** 0.5
     B = mls.psi
@@ -152,3 +152,126 @@ def test_phi_algebra(thisFixture, request):
 
 
 # --- classes
+
+@pytest.mark.parametrize('thisFixture', mls_suite)
+class TestEijmnContraction:
+    """ c.f. MLS (2009) eqn. 17 """
+
+    @pytest.fixture(autouse=True)
+    def _mls_class_fixture(self, thisFixture, request):
+        self.mls = request.getfixturevalue(thisFixture)
+        self.delta = self.mls.delta
+        self.x = self.mls.x
+        self.y = self.mls.y
+        self.z = self.mls.z
+        self.phi = self.mls.phi
+        self.psi = self.mls.psi
+
+    @property
+    def get_c1(self):
+        A = np.zeros((3,3,2))
+        for n in range(2):
+            for m in range(3):
+                for a in range(3):
+                    A[a,m,n] = np.cos(self.delta[a,m,n] + self.x[a])
+        return A
+    
+    @property
+    def get_c2(self):
+        A = np.zeros((3,3,2))
+        for n in range(2):
+            for m in range(3):
+                for a in range(3):
+                    for b in range(3):
+                        A[a,m,n] = self.delta[a,m,n] - self.y[a,b] + A[a,m,n] # contract arg
+                    A[a,m,n] = np.cos(A[a,m,n]) # eval cos
+        return A
+    
+    @property
+    def get_s1(self):
+        A = np.zeros((3,3,2))
+        for n in range(2):
+            for m in range(3):
+                for a in range(3):
+                    A[a,m,n] = np.sin(self.delta[a,m,n])
+        return A
+    
+    @property
+    def get_s2(self):
+        A = np.zeros((3,3,2))
+        for n in range(2):
+            for m in range(3):
+                for a in range(3):
+                    for b in range(3):
+                        A[a,m,n] = self.delta[a,m,n] - self.z[a,b] + A[a,m,n] # contract arg
+                    A[a,m,n] = np.sin(A[a,m,n]) # eval sin
+        return A
+    
+    @property
+    def get_direction_matrix(self):
+        A = np.zeros((3,2,3,3,2,3)) # i, j, a, m, n, b
+        c1 = self.get_c1
+        c2 = self.get_c2
+        s1 = self.get_s1
+        s2 = self.get_s2
+        for b in range(3):
+            for n in range(2):
+                for m in range(3):
+                    for a in range(3):
+                        for j in range(2):
+                            for i in range(3):
+                                A[i,j,a,m,n,b] = c1[a,m,n] * c2[b,i,j] + s1[a,m,n] * s2[b,i,j]
+        return A
+    
+    def test_c1(self):
+        r""" :math:`\cos(\Delta_{\alpha}^{mn} + x_{\alpha})` """ 
+        # return np.cos( np.einsum('amn,a->amn', self.delta, self.x) )
+        A = self.get_c1
+        B = self.mls._c1
+        assert tbx.float_tol(A,B)
+        
+    def test_c2(self) -> np.ndarray:
+        r""" :math:`\cos(\Delta_{ij}^{\alpha'} - y_{\alpha}^{\alpha'})` """
+        # return np.cos( np.einsum('bmn,ab->amn', self.delta, -self.y) )
+        A = self.get_c2
+        B = self.mls._c2
+        assert tbx.float_tol(A,B)
+    
+    def test_s1(self) -> np.ndarray:
+        r""" :math:`\sin(\Delta_{\alpha}^{mn})` """
+        # return np.sin(self.delta)
+        A = self.get_s1
+        B = self.mls._s1
+        assert tbx.float_tol(A,B)
+    
+    def test_s2(self) -> np.ndarray:
+        r""" :math:`\sin(\Delta_{ij}^{\alpha'} - z_{\alpha}^{\alpha'})` """
+        # return np.sin( np.einsum('bmn,ab->amn', self.delta, self.z) )
+        A = self.get_s2
+        B = self.mls._s2
+        assert tbx.float_tol(A,B)
+    
+    def test_direction_matrix(self):
+        r""" [_c1 * _c2 + _s1 * _s2] """
+        # C = np.einsum('amn,bij->ijamnb', self._c1, self._c2) + np.einsum('amn,bij->ijamnb', self._s1, self._s2) # (i,j,a,m,n,b) == (3,2,3,3,2,3)
+        c1 = self.get_c1
+        c2 = self.get_c2
+        s1 = self.get_s1
+        s2 = self.get_s2
+        A = self.get_direction_matrix
+        B = np.einsum('amn,bij->ijamnb', c1, c2) + np.einsum('amn,bij->ijamnb', s1, s2)
+        assert tbx.float_tol(A,B)
+        
+    def test_eijmn_contraction(self):
+        r""" sum_ab [ psi_ab phi_ija^mnb dm_ija^mnb ] """
+        A = np.zeros((3,2,3,2)) # i, j, m, n
+        D = self.get_direction_matrix
+        for n in range(2):
+            for m in range(3):
+                for j in range(2):
+                    for i in range(3):
+                        for b in range(3): # contract
+                            for a in range(3): # contract
+                                A[i,j,m,n] = self.psi[a,b] * self.phi[i,j,a,m,n,b] * D[i,j,a,m,n,b] + A[i,j,m,n]
+        B = self.mls.Eijmn
+        assert tbx.float_tol(A,B)
