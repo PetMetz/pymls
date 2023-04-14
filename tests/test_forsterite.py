@@ -17,7 +17,7 @@ Created on Mon Jun 27 14:20:20 2022
 """
 import numpy as np
 
-from pymls import Lattice, MLSLattice, Martinez
+from pymls import Lattice, Dislocation, MLS
 
 #%% Forsterite example
 c11 = 328.7 # GPa
@@ -39,9 +39,9 @@ cij = np.array((
     ))
 SG = "Pbnm"
 scalar = (4.775, 10.190, 5.978, 90, 90, 90)
-M = Lattice.from_scalar(scalar).M
+M = Lattice.from_scalar(scalar)
 hkl = np.array((0,1,0))
 uvw = np.array((0,0,1))
 phi = 90
-L = MLSLattice(M, hkl, uvw, phi)
-MLS = Martinez(cij, L)
+L = Dislocation(M, hkl, uvw, phi)
+I = MLS(L, cij)

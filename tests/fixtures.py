@@ -26,8 +26,8 @@ lattice_suite = \
     ]
     
 dislocation_suite = \
-    ['BCC_dislocation',
-     'HCP_dislocation',
+    ['cubic_dislocation',
+     'hexagonal_dislocation',
      'orthorhombic_dislocation',
      'triclinic_dislocation'
     ]

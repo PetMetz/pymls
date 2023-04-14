@@ -17,8 +17,8 @@ from pymls import toolbox as tbx
 
 # local
 from fixtures import cubic_lattice, hexagonal_lattice, triclinic_lattice
-from fixtures import BCC_slip, HCP_slip, triclinic_slip
-from fixtures import BCC_dislocation, HCP_dislocation, triclinic_dislocation
+from fixtures import cubic_slip, hexagonal_slip, triclinic_slip
+from fixtures import cubic_dislocation, hexagonal_dislocation, triclinic_dislocation
 from fixtures import lattice_suite
 from fixtures import dislocation_suite
 

@@ -45,13 +45,11 @@ class MLS():
         return f'<Martinez(\ndislocation={self.dislocation.__repr__()},\ncij={self.stroh.cij} @ {hex(id(self))}>'
     
     def __init__(self,
-                 # lattice: Lattice=None,         # crystal lattice
                  dislocation: Dislocation=None, # dislocation geometry (carries around a lattice instance)
                  cij: np.ndarray=None,          # elastic tensor -> anisotropic strain
                  ) -> None:
         """ constructu from CIJ representation of elastic stiffness (6,6) """
         self.dislocation = dislocation             # Dislocation instance
-        # self.lattice = dislocation.lattice         # Lattice instance
         self.stroh = Stroh(cij, self.dislocation.laue) # Stroh instance        
     
     def Gijmn(self, s):
@@ -73,14 +71,6 @@ class MLS():
         
         returns (3,) complex (length**-1)
         """
-        # =============================================================================
-        #         b = self.dislocation.uvw # b_j
-        #         modb = self.dislocation.length(self.dislocation.uvw) # |b_j|
-        #         L = self.stroh.L 
-        #         AL = np.diag(self.stroh.A @ self.stroh.L) 
-        #         # return  -1/modb * Lai @ bj @ LA.inv(ALij) # 1/Aij != (Aij)**-1
-        #         return -1/modb * L @ b / AL
-        # =============================================================================
         b = self.dislocation.uvw # b_j
         modb = self.dislocation.length(self.dislocation.uvw) # |b_j|
         A = self.stroh.A # column vectors
