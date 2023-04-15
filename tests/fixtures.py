@@ -244,4 +244,4 @@ def triclinic_dislocation(triclinic_slip, triclinic_lattice):
 
 @pytest.fixture
 def triclinic_interface(triclinic_dislocation, triclinic_cij):
-    return MLS(dislocation=triclinic_dislocation, cij=triclinic_cij) 
+    return MLS(dislocation=triclinic_dislocation, cij=triclinic_cij)

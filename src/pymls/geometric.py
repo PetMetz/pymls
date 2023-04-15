@@ -18,12 +18,13 @@ from . import toolbox as tbx
 #       Probably better to store the Lattice as an attribute and alias it (i.e. as L) for brevity
 class Dislocation(lattice.Lattice):
     """
+    Slip reference frame for the slip system {hkl}<uvw> and geometric
+    aspects of the dislocation contrast factor.
+    
+    Reference
+    ---------
     Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
     dislocations." Acta Cryst A65, 109-119.
-    
-    construct slip reference frame for the slip system {hkl}<uvw> for the
-    crystal system defined by.
-    
     """
     # - class state
     _Rp2 = None
@@ -31,6 +32,7 @@ class Dislocation(lattice.Lattice):
     _P   = None
 
     def _reset(self):
+        """ Reset class state. """
         self._Rp2 = None
         self._e   = None
         self._P   = None
@@ -44,7 +46,7 @@ class Dislocation(lattice.Lattice):
                        uvw: np.ndarray,
                        phi: float,
                        SGno: int=None
-                       ):
+                       ) -> None:
         r"""
 
         Parameters
@@ -60,11 +62,6 @@ class Dislocation(lattice.Lattice):
         SGno : int, optional
             Space group number. No symmetry operations currently defined.
             The default is None.
-
-        Returns
-        -------
-        None.
-
         """
         # FIXME this needs to __init__ to use as a superclass, so a dispatch doesn't work here
         super().__init__(super().dispatch_constructor(lattice).matrix) 
@@ -75,6 +72,7 @@ class Dislocation(lattice.Lattice):
             
     @property
     def SG(self):
+        """ Space group number. """
         return self._SGno
     
     @SG.setter
@@ -83,6 +81,7 @@ class Dislocation(lattice.Lattice):
         
     @property
     def hkl(self):
+        """ Miller indices of slip plane. """
         return self._hkl
     
     @hkl.setter
@@ -92,6 +91,7 @@ class Dislocation(lattice.Lattice):
 
     @property
     def uvw(self):
+        """ Miller indices of slip vector. """
         return self._uvw
     
     @uvw.setter
@@ -101,19 +101,16 @@ class Dislocation(lattice.Lattice):
     
     @property
     def burgers(self):
-        """ alias uvw """
+        """ Alias of  `self.uvw`. """
         return self.uvw
     
     @property
     def line(self):
+        r""" Line vector defined :math:`R_{p2} \cdot \vec{b}`. """
         return self.Rp2 @ self.uvw
     
     @property
     def phi(self):
-        return self._phi
-    
-    @phi.setter
-    def phi(self, x):
         """
         Angle between dislocation line and Burgers vector describes
         dislocation character, :math:`\phi`. [1]
@@ -130,80 +127,72 @@ class Dislocation(lattice.Lattice):
         [2] Martinez-Garcia, Leoni, and Scardi (2009). Diffraction contrast
                 factor of dislocations. Acta Cryst. A65, 109–119.
         """
+        return self._phi
+    
+    @phi.setter
+    def phi(self, x):
         self._reset()
         self._phi = x
        
-# =============================================================================
-#     # FIXME Should be an axis-angle rotation matrix, should confirm again the
-#     #       convention of the matrix utilized.
-#     @property
-#     @tbx.orthogonal
-#     @tbx.unit_vectors
-#     def Rp2(self):
-#         """
-#         NB this yields a different rotation matrix than expected from conventional
-#         linear algebra, which may again be a convention issue
-#         """
-#         if self._Rp2 is None:
-#             # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
-#             #       e2 = 1/|n| M @ [h,k,l]
-#             # xi2 = self.reciprocal.M.T @ self.hkl / self.reciprocal.length(self.hkl)
-#             xi2 = self.xi2
-#             # - (b1)
-#             phi = np.radians(self.phi)
-#             sinp = np.sin(phi)
-#             cosp = np.cos(phi)
-#             sinp2 = np.sin(phi/2) ** 2
-#             xi21, xi22, xi23 = xi2
-#             # m1 = 2 * sinp2 * np.array((
-#             #     (xi21*xi21,  xi21*xi22, xi21*xi23),
-#             #     (xi22*xi21,  xi22*xi22, xi22*xi23), 
-#             #     (xi23*xi21,  xi23*xi22, xi23*xi23)
-#             #     ))
-#             XI2 = xi2 * np.ones((3,3))
-#             m1 = 2 * sinp2 * XI2 * XI2.T
-#             
-#             m2 = np.array((
-#                 (1,   xi23, xi22),
-#                 (xi23,   1, xi21),     
-#                 (xi22, xi21, 1  )
-#                 ))
-#             m3 = np.array((
-#                 ( cosp,  sinp, -sinp),
-#                 (-sinp,  cosp,  sinp),
-#                 ( sinp, -sinp,  cosp)
-#                 ))
-#             self._Rp2 =  m1 + (m2 * m3)  # element-wise
-#         return self._Rp2
-# =============================================================================
     @property
     @tbx.orthogonal
     @tbx.unit_vectors
     def Rp2(self):
+        """ 
+        ...
+        
+        Reference
+        ---------
+        ...
+        """
         return tbx.rotation_from_axis_angle(vector=self.xi2, angle=self.phi, degree=True) # MLS shows this rotation of b into l in the negative sense of phi
     
     @property
     @tbx.unit_vector
     def xi2(self):
-        """ MLS (2009) eqn. 3 """
+        """
+        ...
+        
+        Reference
+        ---------
+        MLS (2009) eqn. 3
+        """
         return self.reciprocal.M @ self.hkl / self.reciprocal.length(self.hkl)
     
     @property
     @tbx.unit_vector
     def xib(self):
-        """ normalized burgers vector MLS (2009) eqn. 4 """
+        """
+        Normalized burgers vector
+        
+        Reference
+        ---------
+        MLS (2009) eqn. 4
+        """
         return self.M @ self.uvw / self.length(self.uvw)
     
     @property
     @tbx.unit_vector
     def xi3(self):
-        """ MLS (2009) eqn. 5 """
+        """
+        ...
+        
+        Reference
+        ---------
+        MLS (2009) eqn. 5
+        """
         return self.Rp2 @ self.xib
     
     @property
     @tbx.unit_vector
     def xi1(self):
-        """ MLS (2009) eqn. 7 """
+        """
+        ...
+        
+        Reference
+        ---------
+        MLS (2009) eqn. 7
+        """
         return np.cross(self.xi2, self.xi3)
         
     @property
@@ -223,16 +212,6 @@ class Dislocation(lattice.Lattice):
         
         """
         if self._P is None:
-            # # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
-            # #       e2 = 1/|n| M @ [h,k,l]
-            # modn = self.reciprocal.length(self.hkl)
-            # xi2 = 1 / modn * self.reciprocal.M @ self.hkl # np.sqrt( self.hkl @ self.reciprocal.G @ self.hkl)
-            # # - (b) e3 := R(phi, e2) @ [b1, b2, b3]
-            # modb = self.length(self.uvw)
-            # xib = 1 / modb * self.M @ self.uvw #  / np.sqrt(self.uvw @ self.G @ self.uvw)
-            # xi3 = self.Rp2 @ xib
-            # # - (c) e1 := e2 x e3
-            # xi1 = np.cross(xi2, xi3)
             self._P = np.array((self.xi1, self.xi2, self.xi3))
         return self._P
     
