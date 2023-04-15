@@ -215,7 +215,7 @@ class Dislocation(lattice.Lattice):
             self._P = np.array((self.xi1, self.xi2, self.xi3))
         return self._P
     
-    
+    # FIXME    
     # equation 8 is somewhat perplexing-- it gives e_i = PM[abc], but if M
     # is the reciprocal lattice matrix, and [abc] is the crystal lattice matrix,
     # this is the transform of the identity matrix.
@@ -236,25 +236,22 @@ class Dislocation(lattice.Lattice):
 
     @property
     def e1(self):
-        """ dislocation reference frame """
+        """ Dislocation reference frame 1. """
         return self.e[0]
     
     @property
     def e2(self):
-        """ dislocation reference frame """
+        """ Dislocation reference frame 2. """
         return self.e[1]
     
     @property
     def e3(self):
-        """ dislocation reference frame """
+        """ Dislocation reference frame 3. """
         return self.e[2]
 
     # @functools.lru_cache(maxsize=100)  # this isn't a substantial gain, and limits arguments to hashable inputs
     def t1(self, s:tuple) -> float:
-        """ direction cosines. s == diffracting plane. returns (1,) """
-        # version 1
-        # return np.sqrt(1 - self.t2(s)**2 - self.t3(s)**2)
-        # version 2
+        """ Sirection cosine 1. s == diffracting plane. returns (1,) """
         v1 = s / LA.norm(s) # should just be a unit vector/ self.reciprocal.length(s)
         v2 = self.e1 # should be unit vector by construction / self.length(self.e1)
         return v1 @ v2
@@ -273,17 +270,6 @@ class Dislocation(lattice.Lattice):
         
         returns (1,)
         """
-        # return self.reciprocal.angle(s, self.hkl)
-        # Gstar = self.reciprocal.G
-        # version 1
-        # n = s @ Gstar @ self.hkl  # vector @ transform @ vector -> scalar
-        # d = (self.hkl @ Gstar @ self.hkl)**0.5 * (s @ Gstar @ s)**0.5 # length * length
-        # return n / d
-        # version 2
-        # v1 = s / self.reciprocal.length(s)
-        # v2 = self.hkl / self.reciprocal.length(self.hkl)
-        # return v1 @ Gstar @ v2
-        # version 3
         v1 = s / LA.norm(s) # should just be a unit vector self.reciprocal.length(s)
         v2 = self.e2  # should be unit vector by construction  / self.length(self.e2)
         return v1 @ v2
@@ -291,19 +277,6 @@ class Dislocation(lattice.Lattice):
     # @functools.lru_cache(maxsize=100)
     def t3(self, s:tuple) -> float:
         """ direction cosines. s == diffracting plane. returns (1,) """
-        # M = self.M
-        # Gstar = self.reciprocal.G
-        # G = self.G # typo in eqn 11?
-        # version 1
-        # n = s @ M.T @ self.Rp2 @ LA.inv(M.T) @ self.uvw # vector @ transform @ vector -> scalar
-        # d = (self.uvw @ Gstar @ self.uvw )**0.5 * (s @ Gstar @ s)**0.5  # length * length
-        # return n / d
-        # version 2
-        # v1 = s / self.reciprocal.length(s)
-        # v2 = self.uvw / self.reciprocal.length(self.uvw)
-        # T  = self.M.T @ self.Rp2 @ LA.inv(self.M.T)
-        # return v1 @ T @ v2
-        # version 3
         v1 = s / LA.norm(s) # should just be a unit vector/ self.reciprocal.length(s)
         v2 = self.e3 # should be unit vector by construction  / self.length(self.e3)
         return v1 @ v2
@@ -335,6 +308,9 @@ class Dislocation(lattice.Lattice):
         # return rv.reshape((3,2,3,2)) # .round(tbx._PREC)
     
     def visualize(self):
+        """
+        Simple rendering of unit cell and relevant reference frames.
+        """
         from .toolbox import plot_cell
         o = np.array((0,0,0))
         # - unit cell        
