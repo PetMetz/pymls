@@ -22,6 +22,12 @@ _LAUE = np.array((
     ('-1',        '2/m',        'mmm',          '4/m',        '4/mmm',      '-3',       '-3m',      '6/m',       '6/mmm',     'm-3',   'm-3m' )  # crystal system
     ), dtype=object)
 
+O = np.zeros((3,3))
+I = np.eye(3)
+conI = np.row_stack((
+    np.column_stack((O, I)),
+    np.column_stack((I, O))
+    ))
 
 # FIXME didn't have a reference handy: https://link.springer.com/content/pdf/bbm%3A978-94-007-0350-6%2F1.pdf
 # FIXME more convnient slicing if arranged in rows
@@ -149,27 +155,24 @@ def contract_ij(i, j, index=0):
 
 # --- classes
 class Stroh():
-    """ Ref: Ting T.C.T. Elastic Anisotropy. """
+    """ 
+    Elastic aspects of the dislocation contrast factor obtained by solution to 
+    the Stroh formulation.
+    
+    Reference
+    ---------
+        Ting, T.C.T. (1996) Elastic Anisotropy. ISBN 9780195074475
+    """
     # - class state
     _flag_N = 1
     _flag_eig = 1
     
     @classmethod
     def reset(cls):
+        """ Reset class state. """
         cls._flag_N = 1
         cls._flag_eig = 1
     
-    # - handy
-    @functools.cached_property
-    def conI(cls):
-        O = np.zeros((3,3))
-        I = np.eye(3)
-        conI = np.row_stack((
-            np.column_stack((O, I)),
-            np.column_stack((I, O))
-            ))
-        return conI
-
     # - overloads
     def __repr__(self):
         return f'<Stroh(cij=\n{self.cij}, crystalSystem={self.crystalsystem}) @ {hex(id(self))}>'
@@ -179,15 +182,26 @@ class Stroh():
                  crystalSystem:str=None
                  ) -> None:
         """
-        constructu from CIJ representation of elastic stiffness (6,6)
-        NB properties are cached-- create new instance if you want to update cijkl
+        Elastic aspects of the dislocation contrast factor obtained by solution to 
+        the Stroh formulation.
+        
+        Parameters
+        ----------
+        cij : np.ndarray, optional
+            DESCRIPTION. The default is None.
+        crystalSystem : str, optional
+            DESCRIPTION. The default is None.
+
+        Reference
+        ---------
+        Ting, T.C.T. (1996) Elastic Anisotropy. ISBN 9780195074475
         """
         self.cij = cij        
         self.crystalsystem = crystalSystem
         
     @property
-    def cijkl(self):
-        """ elastic stiffness tensor """
+    def cijkl(self) -> np.ndarray:
+        """ Elastic stiffness tensor. """
         return self._cijkl
 
     @cijkl.setter
@@ -195,7 +209,8 @@ class Stroh():
         self._cijkl = X
 
     @property
-    def cij(self):
+    def cij(self) -> np.ndarray:
+        """ Reduced stiffness matrix. """
         return self.apply_mandel(self._cijkl)
     
     @cij.setter
@@ -461,7 +476,7 @@ class Stroh():
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
         # return np.row_stack((self.l, self.a)) # "... the left eigenvector... are in the reverse order"""
-        return self.conI @ self.xi # .round(tbx._PREC) # this is equivalent
+        return conI @ self.xi # .round(tbx._PREC) # this is equivalent
         # return self.xi[::-1] # apparently Ting means the former, not reversal by index
     
     # FIXME for some reason np.eig returns column major eigen vectors? This slicing should be adjusted?
