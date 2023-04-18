@@ -21,10 +21,11 @@ class Dislocation(lattice.Lattice):
     Slip reference frame for the slip system {hkl}<uvw> and geometric
     aspects of the dislocation contrast factor.
     
+    
     Reference
     ---------
     Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
-    dislocations." Acta Cryst A65, 109-119.
+        dislocations." Acta Cryst A65, 109-119.
     """
     # - class state
     _Rp2 = None
@@ -146,10 +147,11 @@ class Dislocation(lattice.Lattice):
         np.ndarray (3,3)
             Rotation matrix transforming Burgers vector `b` into the line vector `l`.
         
+        
         Reference
         ---------
         Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
-        dislocations." Acta Cryst A65, 109-119. eqns. 5-6.
+            dislocations." Acta Cryst A65, 109-119. eqns. 5-6.
         """
         return tbx.rotation_from_axis_angle(vector=self.xi2, angle=self.phi, degree=True) # MLS shows this rotation of b into l in the negative sense of phi
     

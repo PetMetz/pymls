@@ -61,3 +61,28 @@ Created on Fri Apr 14 19:23:02 2023
             # xi3 = self.Rp2 @ xib
             # # - (c) e1 := e2 x e3
             # xi1 = np.cross(xi2, xi3)
+
+    # FIXME These letters from Ting clash with the nomenclature of Stroh
+    # --- from Ting ch. 5
+# =============================================================================
+#     @functools.cached_property
+#     def S(self):
+#         r"""
+#         Barnett-Lothe tensors
+#         """
+#         return 1j * (2*self.A @ self.B.T - np.eye(3))
+#
+#     @functools.cached_property
+#     def H(self):
+#         r"""
+#         Barnett-Lothe tensors
+#         """
+#         return 2j * self.A @ self.A.T
+#
+#     @functools.cached_property
+#     def L(self):
+#         r"""
+#         Barnett-Lothe tensors
+#         """
+#         return -2j * self.L @ self.L.T
+# =============================================================================
