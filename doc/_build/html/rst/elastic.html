@@ -52,37 +52,77 @@ the Stroh formulation.</p>
 </div></blockquote>
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.A">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">A</span></span><a class="headerlink" href="#pymls.contrast.Stroh.A" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">A</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.A" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stroh eigen vectors (3,3) obeying <span class="math notranslate nohighlight">\(a_{\alpha+3} = \bar{a}_{\alpha}\)</span>
 (i.e. half the roots of the sextic equation)
-<span class="math notranslate nohighlight">\(A = [a1, a2, a3]\)</span> (NB column vectors) (c.f. Ting eqn. 5.5-4 &amp; 5.3-11)</p>
+<span class="math notranslate nohighlight">\(A = [a1, a2, a3]\)</span> (NB column vectors)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Unique half of the right Stroh eigenvectors.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray (3,3) imaginary</p>
+</dd>
+</dl>
+<section id="id1">
+<h4>Reference<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h4>
+<p>c.f. Ting eqn. 5.5-4 &amp; 5.3-11</p>
+</section>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.B">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">B</span></span><a class="headerlink" href="#pymls.contrast.Stroh.B" title="Permalink to this definition">¶</a></dt>
-<dd><p><span class="math notranslate nohighlight">\(B_{ij} = 1/2 i \sum_{\alpha}(A_{i \alpha} M_{\alpha j} - \bar{A}_{i \alpha} \bar{M}_{\alpha j})\)</span>
-ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">B</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.B" title="Permalink to this definition">¶</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(B_{ij} = 1/2 i \sum_{\alpha}(A_{i \alpha} M_{\alpha j} - \bar{A}_{i \alpha} \bar{M}_{\alpha j})\)</span></p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray (3,3) imaginary</p>
+</dd>
+</dl>
+<section id="id2">
+<h4>Reference<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h4>
+<p>Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</p>
+</section>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.L">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">L</span></span><a class="headerlink" href="#pymls.contrast.Stroh.L" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">L</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.L" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stroh eigen vectors (3,3) obeying <span class="math notranslate nohighlight">\(l_{\alpha+3} = \bar{l}_{\alpha}\)</span>
 (i.e. half the roots of the sextic equation)
-<span class="math notranslate nohighlight">\(B = [b1, b2, b3]\)</span> (NB column vectors) (c.f. Ting eqn. 5.5-4 &amp; 5.3-11)</p>
+<span class="math notranslate nohighlight">\(B = [b1, b2, b3]\)</span> (NB column vectors)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Unique half of the right Stroh eigenvectors.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray (3,3) imaginary</p>
+</dd>
+</dl>
+<section id="id3">
+<h4>Reference<a class="headerlink" href="#id3" title="Permalink to this heading">¶</a></h4>
+<p>c.f. Ting eqn. 5.5-4 &amp; 5.3-11</p>
+</section>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.M">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">M</span></span><a class="headerlink" href="#pymls.contrast.Stroh.M" title="Permalink to this definition">¶</a></dt>
-<dd><p><span class="math notranslate nohighlight">\(M_{\alpha i} L_{i \beta} = \partial _{\alpha \beta}\)</span>
-ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">M</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.M" title="Permalink to this definition">¶</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(M_{\alpha i} L_{i \beta} = \partial _{\alpha \beta}\)</span></p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray (3,3) imaginary</p>
+</dd>
+</dl>
+<section id="id4">
+<h4>Reference<a class="headerlink" href="#id4" title="Permalink to this heading">¶</a></h4>
+<p>Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</p>
+</section>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.N">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">N</span></span><a class="headerlink" href="#pymls.contrast.Stroh.N" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">N</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.N" title="Permalink to this definition">¶</a></dt>
 <dd><p>c.f. pp 144 Ting, Elastic Anisotropy.</p>
 <p>fundamental elasticity matrix (Ingebrigtsen &amp; Tonning, 1969)</p>
 <div class="math notranslate nohighlight">
@@ -95,7 +135,7 @@ ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.N1">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">N1</span></span><a class="headerlink" href="#pymls.contrast.Stroh.N1" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">N1</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.N1" title="Permalink to this definition">¶</a></dt>
 <dd><p>c.f. pp 144 Ting, Elastic Anisotropy.</p>
 <div class="math notranslate nohighlight">
 \[N_1 = -T^{-1} R^T \ \  [-]\]</div>
@@ -103,7 +143,7 @@ ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.N2">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">N2</span></span><a class="headerlink" href="#pymls.contrast.Stroh.N2" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">N2</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.N2" title="Permalink to this definition">¶</a></dt>
 <dd><p>c.f. pp 144 Ting, Elastic Anisotropy.</p>
 <div class="math notranslate nohighlight">
 \[N_2 = T^{-1} \ \ [m^2 \cdot N^{-1}]\]</div>
@@ -111,7 +151,7 @@ ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.N3">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">N3</span></span><a class="headerlink" href="#pymls.contrast.Stroh.N3" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">N3</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.N3" title="Permalink to this definition">¶</a></dt>
 <dd><p>c.f. pp 144 Ting, Elastic Anisotropy.</p>
 <div class="math notranslate nohighlight">
 \[N_3 = R T^{-1} R^T - Q \ \ [N \cdot m^{-2}]\]</div>
@@ -119,14 +159,26 @@ ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.P">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">P</span></span><a class="headerlink" href="#pymls.contrast.Stroh.P" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">P</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.P" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stroh eigen values (3,) obeying <span class="math notranslate nohighlight">\(p_{\alpha+3} = \bar{p}_{\alpha}\)</span>
 (i.e. half the roots of the sextic equation)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Unique half of the right Stroh eigenvalues.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>np.ndarray (3,) imaginary</p>
+</dd>
+</dl>
+<section id="id5">
+<h4>Reference<a class="headerlink" href="#id5" title="Permalink to this heading">¶</a></h4>
+<p>…</p>
+</section>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.Q">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Q</span></span><a class="headerlink" href="#pymls.contrast.Stroh.Q" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Q</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.Q" title="Permalink to this definition">¶</a></dt>
 <dd><p>c.f. pp 137 Ting, Elastic Anisotropy.</p>
 <div class="math notranslate nohighlight">
 \[ \begin{align}\begin{aligned}Q_{ik} = C_{i1k1}\\\begin{split}Q =
@@ -139,7 +191,7 @@ ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.R">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">R</span></span><a class="headerlink" href="#pymls.contrast.Stroh.R" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">R</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.R" title="Permalink to this definition">¶</a></dt>
 <dd><p>c.f. pp 137 Ting, Elastic Anisotropy.</p>
 <div class="math notranslate nohighlight">
 \[ \begin{align}\begin{aligned}R_{ik} = C_{i1k2}\\\begin{split}R =
@@ -152,7 +204,7 @@ ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.T">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">T</span></span><a class="headerlink" href="#pymls.contrast.Stroh.T" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">T</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.T" title="Permalink to this definition">¶</a></dt>
 <dd><p>c.f. pp 137 Ting, Elastic Anisotropy.</p>
 <div class="math notranslate nohighlight">
 \[ \begin{align}\begin{aligned}T_{ij} = C_{i2k2}\\\begin{split}T =
@@ -165,8 +217,8 @@ ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.a">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">a</span></span><a class="headerlink" href="#pymls.contrast.Stroh.a" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stroh eigenvectors (6,6) solutions to the fundamental elasticity matrix
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">a</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.a" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stroh eigenvectors (3,6) solutions to the fundamental elasticity matrix
 The eigenvector <cite>a</cite> represents the direction of the displacement.</p>
 <p>c.f. Ting eqn. 5.5-4 &amp; 5.3-11
 NB scipy.linalg.eig returns column eigenvectors</p>
@@ -179,19 +231,19 @@ NB scipy.linalg.eig returns column eigenvectors</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.apply_elastic_symmetry">
-<span class="sig-name descname"><span class="pre">apply_elastic_symmetry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymls/elastic.html#Stroh.apply_elastic_symmetry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.contrast.Stroh.apply_elastic_symmetry" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">apply_elastic_symmetry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#Stroh.apply_elastic_symmetry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.contrast.Stroh.apply_elastic_symmetry" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.apply_mandel">
-<span class="sig-name descname"><span class="pre">apply_mandel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymls/elastic.html#Stroh.apply_mandel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.contrast.Stroh.apply_mandel" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">apply_mandel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#Stroh.apply_mandel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.contrast.Stroh.apply_mandel" title="Permalink to this definition">¶</a></dt>
 <dd><p>The extension of Voigt reduction to the 4th rank tensor representing
 proportionality of two 2nd rank tensors.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.apply_voigt">
-<span class="sig-name descname"><span class="pre">apply_voigt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymls/elastic.html#Stroh.apply_voigt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.contrast.Stroh.apply_voigt" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">apply_voigt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#Stroh.apply_voigt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.contrast.Stroh.apply_voigt" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply Voigt reduction scheme to X(3,3) to produce X2(6,).
 11 -&gt; 1; 22 -&gt; 2; 33 -&gt; 3; 23 -&gt; 4; 13 -&gt; 5; 12 -&gt; 6</p>
 </dd></dl>
@@ -210,18 +262,18 @@ proportionality of two 2nd rank tensors.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.crystalsystem">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">crystalsystem</span></span><a class="headerlink" href="#pymls.contrast.Stroh.crystalsystem" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">crystalsystem</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#pymls.contrast.Stroh.crystalsystem" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.elastic_symmetry">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">elastic_symmetry</span></span><a class="headerlink" href="#pymls.contrast.Stroh.elastic_symmetry" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">elastic_symmetry</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.elastic_symmetry" title="Permalink to this definition">¶</a></dt>
 <dd><p>form symmetry equivalents ijks = jiks = ksij = ijsk</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.eta">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eta</span></span><a class="headerlink" href="#pymls.contrast.Stroh.eta" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.eta" title="Permalink to this definition">¶</a></dt>
 <dd><p>Left eigenvectors (6,6) of <span class="math notranslate nohighlight">\(N^T \eta = p \eta\)</span>, see <cite>p</cite>.</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\eta = \begin{bmatrix}
@@ -235,28 +287,33 @@ proportionality of two 2nd rank tensors.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.invert_mandel">
-<span class="sig-name descname"><span class="pre">invert_mandel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'c'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymls/elastic.html#Stroh.invert_mandel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.contrast.Stroh.invert_mandel" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">invert_mandel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'c'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#Stroh.invert_mandel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.contrast.Stroh.invert_mandel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a Voigt reduced 2nd order tensor, reconstruct 4th order tensor.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.invert_voigt">
-<span class="sig-name descname"><span class="pre">invert_voigt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymls/elastic.html#Stroh.invert_voigt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.contrast.Stroh.invert_voigt" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">invert_voigt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#Stroh.invert_voigt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.contrast.Stroh.invert_voigt" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a Voigt reduced vector, reconstruct 2nd order tensor.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.l">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">l</span></span><a class="headerlink" href="#pymls.contrast.Stroh.l" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stroh eigenvectors (6,6) solutions to the fundamental elasticity matrix
-The eigenvector <cite>l</cite> represents the direction of traction.</p>
-<p>c.f. Ting eqn. 5.5-4 &amp; 5.3-11
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">l</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.l" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stroh eigenvectors (3,6) solutions to the fundamental elasticity matrix
+The eigenvector <cite>l</cite> represents the direction of traction.
 NB scipy.linalg.eig returns column eigenvectors</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray()</p>
+</dd>
+</dl>
+<p>c.f. Ting eqn. 5.5-4 &amp; 5.3-11</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.p">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">p</span></span><a class="headerlink" href="#pymls.contrast.Stroh.p" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">p</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.p" title="Permalink to this definition">¶</a></dt>
 <dd><p>eigenvalues (6,) of the fundamental elasticity matrix</p>
 <div class="math notranslate nohighlight">
 \[ \begin{align}\begin{aligned}N \xi = p \xi\\\begin{split}N = \begin{bmatrix}
@@ -273,13 +330,13 @@ NB scipy.linalg.eig returns column eigenvectors</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.reset">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymls/elastic.html#Stroh.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.contrast.Stroh.reset" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#Stroh.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.contrast.Stroh.reset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reset class state.</p>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pymls.contrast.Stroh.xi">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">xi</span></span><a class="headerlink" href="#pymls.contrast.Stroh.xi" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">xi</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#pymls.contrast.Stroh.xi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Right eigenvectors (6,6) of <span class="math notranslate nohighlight">\(N \xi = p \xi\)</span>, see <cite>p</cite>.</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\xi = \begin{bmatrix}
@@ -315,43 +372,43 @@ NB scipy.linalg.eig returns column eigenvectors</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pymls.elastic.parse_laue_class">
-<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">parse_laue_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg:</span> <span class="pre">(&lt;class</span> <span class="pre">'str'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'int'&gt;)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#parse_laue_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.parse_laue_class" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">parse_laue_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#parse_laue_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.parse_laue_class" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reduce various common inputs to integer representation.</p>
 <p>If crystal system is given, assumes the higher symmetry choice.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pymls.elastic.cij_from_group">
-<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">cij_from_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">cij</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymls/elastic.html#cij_from_group"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.cij_from_group" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">cij_from_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">cij</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#cij_from_group"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.cij_from_group" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cij ordered i, j according to unique elements.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pymls.elastic.cij_from_vector">
-<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">cij_from_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">cij</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymls/elastic.html#cij_from_vector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.cij_from_vector" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">cij_from_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">cij</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#cij_from_vector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.cij_from_vector" title="Permalink to this definition">¶</a></dt>
 <dd><p>alias</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pymls.elastic.cij_from_dict">
-<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">cij_from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">cij</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymls/elastic.html#cij_from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.cij_from_dict" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">cij_from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">cij</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#cij_from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.cij_from_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>from dict</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pymls.elastic.cij_order">
-<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">cij_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymls/elastic.html#cij_order"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.cij_order" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">cij_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#cij_order"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.cij_order" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pymls.elastic.contract_ijkl">
-<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">contract_ijkl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymls/elastic.html#contract_ijkl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.contract_ijkl" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">contract_ijkl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#contract_ijkl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.contract_ijkl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-5b</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pymls.elastic.contract_ij">
-<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">contract_ij</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pymls/elastic.html#contract_ij"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.contract_ij" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pymls.elastic.</span></span><span class="sig-name descname"><span class="pre">contract_ij</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/pymls/elastic.html#contract_ij"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymls.elastic.contract_ij" title="Permalink to this definition">¶</a></dt>
 <dd><p>Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-1</p>
 </dd></dl>
 

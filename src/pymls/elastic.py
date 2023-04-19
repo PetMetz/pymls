@@ -483,22 +483,39 @@ class Stroh():
     @functools.cached_property
     def a(self) -> np.ndarray:
         r"""
-        Stroh eigenvectors (6,6) solutions to the fundamental elasticity matrix
+        Stroh eigenvectors (3,6) solutions to the fundamental elasticity matrix
         The eigenvector `a` represents the direction of the displacement.
-
-        c.f. Ting eqn. 5.5-4 & 5.3-11
         NB scipy.linalg.eig returns column eigenvectors
+
+
+        Returns
+        -------
+        np.ndarray (3,6) imaginary
+            Half the redundant right Stroh eigenvectors
+        
+        
+        Reference
+        ---------
+        c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         return self.xi[:3,:]
 
     @functools.cached_property
     def l(self) -> np.ndarray:
         r"""
-        Stroh eigenvectors (6,6) solutions to the fundamental elasticity matrix
+        Stroh eigenvectors (3,6) solutions to the fundamental elasticity matrix
         The eigenvector `l` represents the direction of traction.
-
-        c.f. Ting eqn. 5.5-4 & 5.3-11
         NB scipy.linalg.eig returns column eigenvectors
+
+        Returns
+        -------
+        np.ndarray (3,6) imaginary
+            Half the redundant right Stroh eigenvectors
+        
+        
+        Reference
+        ---------
+        c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         return self.xi[3:,:]
 
@@ -507,7 +524,17 @@ class Stroh():
         r"""
         Stroh eigen vectors (3,3) obeying :math:`a_{\alpha+3} = \bar{a}_{\alpha}`
         (i.e. half the roots of the sextic equation)
-        :math:`A = [a1, a2, a3]` (NB column vectors) (c.f. Ting eqn. 5.5-4 & 5.3-11)
+        :math:`A = [a1, a2, a3]` (NB column vectors)
+        
+        Returns
+        -------
+        np.ndarray (3,3) imaginary
+            Unique half of the right Stroh eigenvectors.
+        
+        
+        Reference
+        ---------
+        c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         return self.xi[:3, ::2]
 
@@ -516,7 +543,17 @@ class Stroh():
         r"""
         Stroh eigen vectors (3,3) obeying :math:`l_{\alpha+3} = \bar{l}_{\alpha}`
         (i.e. half the roots of the sextic equation)
-        :math:`B = [b1, b2, b3]` (NB column vectors) (c.f. Ting eqn. 5.5-4 & 5.3-11)
+        :math:`B = [b1, b2, b3]` (NB column vectors)
+        
+        Returns
+        -------
+        np.ndarray (3,3) imaginary
+            Unique half of the right Stroh eigenvectors.
+        
+        
+        Reference
+        ---------
+        c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         return self.xi[3:, ::2]
 
@@ -525,6 +562,17 @@ class Stroh():
         r"""
         Stroh eigen values (3,) obeying :math:`p_{\alpha+3} = \bar{p}_{\alpha}`
         (i.e. half the roots of the sextic equation)
+        
+        
+        Returns
+        -------
+        np.ndarray (3,) imaginary
+            Unique half of the right Stroh eigenvalues. 
+        
+        
+        Reference
+        ---------
+        ...
         """
         return self.p[::2]
 
@@ -532,7 +580,16 @@ class Stroh():
     def M(self) -> np.ndarray:
         r"""
         :math:`M_{\alpha i} L_{i \beta} = \partial _{\alpha \beta}`
-        ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
+        
+        
+        Returns
+        -------
+        np.ndarray (3,3) imaginary
+        
+        
+        Reference
+        ---------
+        Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
         """
         return LA.inv(self.L)
 
@@ -540,7 +597,16 @@ class Stroh():
     def B(self) -> np.ndarray:
         r"""
         :math:`B_{ij} = 1/2 i \sum_{\alpha}(A_{i \alpha} M_{\alpha j} - \bar{A}_{i \alpha} \bar{M}_{\alpha j})`
-        ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
+
+
+        Returns
+        -------
+        np.ndarray (3,3) imaginary
+
+
+        Reference
+        ---------
+        Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
         """
         return 0.5j * (self.A @ self.M - np.conjugate(self.A) @ np.conjugate(self.M))
 

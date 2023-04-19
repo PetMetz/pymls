@@ -38,6 +38,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="c1"># built-ins</span>
 <span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
 
 <span class="c1"># 3rd party</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -109,7 +110,7 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">rv</span><span class="p">[(</span><span class="n">rv</span><span class="o">!=</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">rv</span><span class="o">!=</span><span class="mi">99</span><span class="p">)]))</span></div>
 
 
-<div class="viewcode-block" id="parse_laue_class"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.parse_laue_class">[docs]</a><span class="k">def</span> <span class="nf">parse_laue_class</span><span class="p">(</span><span class="n">arg</span><span class="p">:(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<div class="viewcode-block" id="parse_laue_class"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.parse_laue_class">[docs]</a><span class="k">def</span> <span class="nf">parse_laue_class</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reduce various common inputs to integer representation.</span>
 
@@ -127,7 +128,7 @@
 
 
 <span class="c1"># FIXME factor out for / if with masking?</span>
-<div class="viewcode-block" id="cij_from_group"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.cij_from_group">[docs]</a><span class="k">def</span> <span class="nf">cij_from_group</span><span class="p">(</span><span class="o">*</span><span class="n">cij</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+<div class="viewcode-block" id="cij_from_group"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.cij_from_group">[docs]</a><span class="k">def</span> <span class="nf">cij_from_group</span><span class="p">(</span><span class="o">*</span><span class="n">cij</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Cij ordered i, j according to unique elements.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -151,12 +152,12 @@
     <span class="k">return</span> <span class="n">rv</span> <span class="o">+</span> <span class="n">rv</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">rv</span><span class="o">.</span><span class="n">diagonal</span><span class="p">())</span></div>
 
 
-<div class="viewcode-block" id="cij_from_vector"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.cij_from_vector">[docs]</a><span class="k">def</span> <span class="nf">cij_from_vector</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="o">*</span><span class="n">cij</span><span class="p">):</span>
+<div class="viewcode-block" id="cij_from_vector"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.cij_from_vector">[docs]</a><span class="k">def</span> <span class="nf">cij_from_vector</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="o">*</span><span class="n">cij</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; alias &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">cij_from_group</span><span class="p">(</span><span class="o">*</span><span class="n">cij</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="cij_from_dict"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.cij_from_dict">[docs]</a><span class="k">def</span> <span class="nf">cij_from_dict</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="o">**</span><span class="n">cij</span><span class="p">):</span>
+<div class="viewcode-block" id="cij_from_dict"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.cij_from_dict">[docs]</a><span class="k">def</span> <span class="nf">cij_from_dict</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="o">**</span><span class="n">cij</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; from dict &quot;&quot;&quot;</span>
     <span class="n">order</span> <span class="o">=</span> <span class="n">cij_order</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
     <span class="n">elements</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">cij</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
@@ -165,17 +166,12 @@
     <span class="k">return</span> <span class="n">cij_from_group</span><span class="p">(</span><span class="o">*</span><span class="n">elements</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="cij_order"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.cij_order">[docs]</a><span class="k">def</span> <span class="nf">cij_order</span><span class="p">(</span><span class="n">group</span><span class="p">):</span>
+<div class="viewcode-block" id="cij_order"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.cij_order">[docs]</a><span class="k">def</span> <span class="nf">cij_order</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
     <span class="n">laue</span> <span class="o">=</span> <span class="n">parse_laue_class</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">get_unique</span><span class="p">(</span><span class="n">laue</span><span class="p">)</span></div>
 
 
-<span class="c1"># FIXME unused</span>
-<span class="k">def</span> <span class="nf">_compact</span><span class="p">(</span><span class="n">X</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">x</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">arr</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="contract_ijkl"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.contract_ijkl">[docs]</a><span class="k">def</span> <span class="nf">contract_ijkl</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="contract_ijkl"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.contract_ijkl">[docs]</a><span class="k">def</span> <span class="nf">contract_ijkl</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-5b &quot;&quot;&quot;</span>
     <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="n">l</span><span class="p">))</span>
     <span class="n">a</span> <span class="o">=</span> <span class="n">contract_ij</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
@@ -183,10 +179,10 @@
     <span class="k">return</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span></div>
 
 
-<span class="k">def</span> <span class="nf">contract_ij</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="contract_ij"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.contract_ij">[docs]</a><span class="k">def</span> <span class="nf">contract_ij</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-1 &quot;&quot;&quot;</span>
     <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">i</span> <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="n">j</span> <span class="k">else</span> <span class="mi">9</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="n">j</span> <span class="o">-</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">index</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">i</span> <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="n">j</span> <span class="k">else</span> <span class="mi">9</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="n">j</span> <span class="o">-</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">index</span><span class="p">)</span></div>
 
 
 <span class="c1"># --- classes</span>
@@ -204,13 +200,13 @@
     <span class="n">_flag_eig</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="Stroh.reset"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.Stroh.reset">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; Reset class state. &quot;&quot;&quot;</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">_flag_N</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">_flag_eig</span> <span class="o">=</span> <span class="mi">1</span></div>
 
     <span class="c1"># - overloads</span>
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;&lt;Stroh(cij=</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cij</span><span class="si">}</span><span class="s1">, crystalSystem=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">crystalsystem</span><span class="si">}</span><span class="s1">) @ </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span><span class="si">}</span><span class="s1">&gt;&#39;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
@@ -241,7 +237,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cijkl</span>
 
     <span class="nd">@cijkl</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">cijkl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">cijkl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cijkl</span> <span class="o">=</span> <span class="n">X</span>
 
     <span class="nd">@property</span>
@@ -250,18 +246,18 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_mandel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cijkl</span><span class="p">)</span>
 
     <span class="nd">@cij</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">cij</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">cij</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">X</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cijkl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invert_mandel</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Stroh.apply_voigt"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.Stroh.apply_voigt">[docs]</a>    <span class="k">def</span> <span class="nf">apply_voigt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+<div class="viewcode-block" id="Stroh.apply_voigt"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.Stroh.apply_voigt">[docs]</a>    <span class="k">def</span> <span class="nf">apply_voigt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Apply Voigt reduction scheme to X(3,3) to produce X2(6,).</span>
 <span class="sd">        11 -&gt; 1; 22 -&gt; 2; 33 -&gt; 3; 23 -&gt; 4; 13 -&gt; 5; 12 -&gt; 6</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">_voigt3</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="Stroh.invert_voigt"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.Stroh.invert_voigt">[docs]</a>    <span class="k">def</span> <span class="nf">invert_voigt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+<div class="viewcode-block" id="Stroh.invert_voigt"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.Stroh.invert_voigt">[docs]</a>    <span class="k">def</span> <span class="nf">invert_voigt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a Voigt reduced vector, reconstruct 2nd order tensor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -271,7 +267,7 @@
             <span class="n">a</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">pt</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">a</span></div>
 
-<div class="viewcode-block" id="Stroh.apply_mandel"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.Stroh.apply_mandel">[docs]</a>    <span class="k">def</span> <span class="nf">apply_mandel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+<div class="viewcode-block" id="Stroh.apply_mandel"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.Stroh.apply_mandel">[docs]</a>    <span class="k">def</span> <span class="nf">apply_mandel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The extension of Voigt reduction to the 4th rank tensor representing</span>
 <span class="sd">        proportionality of two 2nd rank tensors.</span>
@@ -279,7 +275,7 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">_voigt6</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">4</span><span class="p">)],</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span></div>
 
     <span class="c1"># FIXME can&#39;t this be vectorized?</span>
-<div class="viewcode-block" id="Stroh.invert_mandel"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.Stroh.invert_mandel">[docs]</a>    <span class="k">def</span> <span class="nf">invert_mandel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="s1">&#39;c&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="Stroh.invert_mandel"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.Stroh.invert_mandel">[docs]</a>    <span class="k">def</span> <span class="nf">invert_mandel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="s1">&#39;c&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a Voigt reduced 2nd order tensor, reconstruct 4th order tensor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -298,7 +294,7 @@
         <span class="k">return</span> <span class="n">a</span></div>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">elastic_symmetry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">elastic_symmetry</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; form symmetry equivalents ijks = jiks = ksij = ijsk &quot;&quot;&quot;</span>
         <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
         <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">shape</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="c1"># 3, 3, 3, 3, 4</span>
@@ -312,7 +308,7 @@
         <span class="k">return</span> <span class="n">rv</span>
 
     <span class="c1"># FIXME can&#39;t this be vectorized?</span>
-<div class="viewcode-block" id="Stroh.apply_elastic_symmetry"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.Stroh.apply_elastic_symmetry">[docs]</a>    <span class="k">def</span> <span class="nf">apply_elastic_symmetry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+<div class="viewcode-block" id="Stroh.apply_elastic_symmetry"><a class="viewcode-back" href="../../rst/elastic.html#pymls.contrast.Stroh.apply_elastic_symmetry">[docs]</a>    <span class="k">def</span> <span class="nf">apply_elastic_symmetry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>  <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="n">I0</span><span class="p">,</span> <span class="o">*</span><span class="n">I</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">elastic_symmetry</span>
         <span class="c1"># - exhaustive equivalence</span>
         <span class="k">for</span> <span class="n">Ip</span> <span class="ow">in</span> <span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
@@ -321,12 +317,12 @@
         <span class="k">return</span> <span class="n">X</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">crystalsystem</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">crystalsystem</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning: crystal symmetry not yet implemented&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crystalsystem</span>
 
     <span class="nd">@crystalsystem</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">crystalsystem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span><span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">crystalsystem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span><span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_crystalsystem</span> <span class="o">=</span> <span class="n">x</span>
 
     <span class="c1"># FIXME incomplete</span>
@@ -335,7 +331,7 @@
         <span class="o">...</span></div>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">Q</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">Q</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        c.f. pp 137 Ting, Elastic Anisotropy.</span>
 
@@ -356,7 +352,7 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">cij</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">],</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">R</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">R</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        c.f. pp 137 Ting, Elastic Anisotropy.</span>
 
@@ -377,7 +373,7 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">cij</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">],</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">T</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">T</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        c.f. pp 137 Ting, Elastic Anisotropy.</span>
 
@@ -398,7 +394,7 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">cij</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">],</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">N1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">N1</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        c.f. pp 144 Ting, Elastic Anisotropy.</span>
 
@@ -408,7 +404,7 @@
         <span class="k">return</span> <span class="o">-</span><span class="n">LA</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">)</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">N2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">N2</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        c.f. pp 144 Ting, Elastic Anisotropy.</span>
 
@@ -418,7 +414,7 @@
         <span class="k">return</span> <span class="n">LA</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">N3</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">N3</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        c.f. pp 144 Ting, Elastic Anisotropy.</span>
 
@@ -428,7 +424,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">@</span> <span class="n">LA</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">N</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">N</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        c.f. pp 144 Ting, Elastic Anisotropy.</span>
 
@@ -452,7 +448,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_N</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">p</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">p</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        eigenvalues (6,) of the fundamental elasticity matrix</span>
 
@@ -479,7 +475,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">xi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">xi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Right eigenvectors (6,6) of :math:`N \xi = p \xi`, see `p`.</span>
 
@@ -498,7 +494,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xi</span> <span class="c1"># .round(tbx._PREC)</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">eta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">eta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Left eigenvectors (6,6) of :math:`N^T \eta = p \eta`, see `p`.</span>
 
@@ -517,9 +513,9 @@
 
     <span class="c1"># FIXME for some reason np.eig returns column major eigen vectors? This slicing should be adjusted?</span>
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">a</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">a</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Stroh eigenvectors (6,6) solutions to the fundamental elasticity matrix</span>
+<span class="sd">        Stroh eigenvectors (3,6) solutions to the fundamental elasticity matrix</span>
 <span class="sd">        The eigenvector `a` represents the direction of the displacement.</span>
 
 <span class="sd">        c.f. Ting eqn. 5.5-4 &amp; 5.3-11</span>
@@ -528,82 +524,111 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xi</span><span class="p">[:</span><span class="mi">3</span><span class="p">,:]</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">l</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">l</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Stroh eigenvectors (6,6) solutions to the fundamental elasticity matrix</span>
+<span class="sd">        Stroh eigenvectors (3,6) solutions to the fundamental elasticity matrix</span>
 <span class="sd">        The eigenvector `l` represents the direction of traction.</span>
+<span class="sd">        NB scipy.linalg.eig returns column eigenvectors</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray()</span>
+
 
 <span class="sd">        c.f. Ting eqn. 5.5-4 &amp; 5.3-11</span>
-<span class="sd">        NB scipy.linalg.eig returns column eigenvectors</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xi</span><span class="p">[</span><span class="mi">3</span><span class="p">:,:]</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">A</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">A</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Stroh eigen vectors (3,3) obeying :math:`a_{\alpha+3} = \bar{a}_{\alpha}`</span>
 <span class="sd">        (i.e. half the roots of the sextic equation)</span>
-<span class="sd">        :math:`A = [a1, a2, a3]` (NB column vectors) (c.f. Ting eqn. 5.5-4 &amp; 5.3-11)</span>
+<span class="sd">        :math:`A = [a1, a2, a3]` (NB column vectors)</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (3,3) imaginary</span>
+<span class="sd">            Unique half of the right Stroh eigenvectors.</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. Ting eqn. 5.5-4 &amp; 5.3-11</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xi</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">::</span><span class="mi">2</span><span class="p">]</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">L</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">L</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Stroh eigen vectors (3,3) obeying :math:`l_{\alpha+3} = \bar{l}_{\alpha}`</span>
 <span class="sd">        (i.e. half the roots of the sextic equation)</span>
-<span class="sd">        :math:`B = [b1, b2, b3]` (NB column vectors) (c.f. Ting eqn. 5.5-4 &amp; 5.3-11)</span>
+<span class="sd">        :math:`B = [b1, b2, b3]` (NB column vectors)</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (3,3) imaginary</span>
+<span class="sd">            Unique half of the right Stroh eigenvectors.</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. Ting eqn. 5.5-4 &amp; 5.3-11</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xi</span><span class="p">[</span><span class="mi">3</span><span class="p">:,</span> <span class="p">::</span><span class="mi">2</span><span class="p">]</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">P</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">P</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Stroh eigen values (3,) obeying :math:`p_{\alpha+3} = \bar{p}_{\alpha}`</span>
 <span class="sd">        (i.e. half the roots of the sextic equation)</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (3,) imaginary</span>
+<span class="sd">            Unique half of the right Stroh eigenvalues. </span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        ...</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[::</span><span class="mi">2</span><span class="p">]</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">M</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">M</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :math:`M_{\alpha i} L_{i \beta} = \partial _{\alpha \beta}`</span>
-<span class="sd">        ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (3,3) imaginary</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">LA</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">L</span><span class="p">)</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
-    <span class="k">def</span> <span class="nf">B</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">B</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :math:`B_{ij} = 1/2 i \sum_{\alpha}(A_{i \alpha} M_{\alpha j} - \bar{A}_{i \alpha} \bar{M}_{\alpha j})`</span>
-<span class="sd">        ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (3,3) imaginary</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="mf">0.5</span><span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">M</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">)</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">M</span><span class="p">))</span></div>
-
-    <span class="c1"># FIXME These letters from Ting clash with the nomenclature of Stroh</span>
-    <span class="c1"># --- from Ting ch. 5</span>
-<span class="c1"># =============================================================================</span>
-<span class="c1">#     @functools.cached_property</span>
-<span class="c1">#     def S(self):</span>
-<span class="c1">#         r&quot;&quot;&quot;</span>
-<span class="c1">#         Barnett-Lothe tensors</span>
-<span class="c1">#         &quot;&quot;&quot;</span>
-<span class="c1">#         return 1j * (2*self.A @ self.B.T - np.eye(3))</span>
-<span class="c1">#</span>
-<span class="c1">#     @functools.cached_property</span>
-<span class="c1">#     def H(self):</span>
-<span class="c1">#         r&quot;&quot;&quot;</span>
-<span class="c1">#         Barnett-Lothe tensors</span>
-<span class="c1">#         &quot;&quot;&quot;</span>
-<span class="c1">#         return 2j * self.A @ self.A.T</span>
-<span class="c1">#</span>
-<span class="c1">#     @functools.cached_property</span>
-<span class="c1">#     def L(self):</span>
-<span class="c1">#         r&quot;&quot;&quot;</span>
-<span class="c1">#         Barnett-Lothe tensors</span>
-<span class="c1">#         &quot;&quot;&quot;</span>
-<span class="c1">#         return -2j * self.L @ self.L.T</span>
-<span class="c1"># =============================================================================</span>
 
     <span class="c1"># End Stroh</span>
 
