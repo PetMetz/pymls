@@ -193,6 +193,22 @@ def contract_ij(i, j, index=0) -> int:
     return i if i==j else 9 - i - j - 3 * (1-index)
 
 
+def sijkl_from_cijkl(cijkl):
+    """
+    :math:`cijkl sijkl = 1/2 (\delta_{im} \delta_{jn} + \delta_{in} \delta_{jm}`.
+    Armstring & Lynch (2004) in Diffraction Analysis of the Microstructure of
+       Materials (Mittemeijer & Scardi, eds.)
+    """
+    indices = np.indices(cijkl.shape)
+    indices = indices.T.reshape((-1,4))
+    i, j, k, l = indices.T
+    dik = (i==k).astype(int)
+    djl = (j==l).astype(int)
+    dil = (i==l).astype(int)
+    djk = (j==k).astype(int)
+    A = 1/2 * (dik*djl + dil*djk).reshape(cijkl.shape)
+    ... 
+
 # --- classes
 class Stroh():
     """
