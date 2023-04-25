@@ -64,23 +64,33 @@ _voigt6 = np.array([ np.concatenate((np.ones_like(_voigt3)*_voigt3[i], _voigt3),
 
 # --- functions
 def generate_index(arg:int) -> tuple:
-    """ ## -> (#, #) """
+    """ 
+    generate indices from `_ELASTIC_RESTRICTIONS`.
+    
+    Returns
+    -------
+    tuple (int, int)
+        ## -> (#, #)
+    """
     i, j = divmod(abs(arg), 10)
     return tuple((i-1, j-1))
 
 
 def generate_indices(arg:np.ndarray) -> np.ndarray:
+    """ See `generate_index`. """
     return np.apply_along_axis(generate_index, axis=0, arr=arg)
 
 
 def get_unique(LaueGroup:int) -> tuple:
+    """ Unique symmetry invariant indices for the corresponding `LaueGroup`. """
     rv = _ELASTIC_RESTRICTIONS[:, LaueGroup-1] # NB zero index
     return np.unique(abs(rv[(rv!=0) & (rv!=99)]))
 
 
 def parse_laue_class(arg:Union[str,int]) -> int:
     """
-    Reduce various common inputs to integer representation.
+    Identify Laue class by integer (1-11), crystal system (cubic, ...) or
+    point group (m-3m, ...) and return corresponding integer.
 
     If crystal system is given, assumes the higher symmetry choice.
     """
@@ -98,7 +108,8 @@ def parse_laue_class(arg:Union[str,int]) -> int:
 # FIXME factor out for / if with masking?
 def cij_from_group(*cij, group:Union[str,int]) -> np.ndarray:
     """
-    Cij ordered i, j according to unique elements.
+    Cij matrix formed from unique elements corresponding to the Laue group.
+    See `cij_order(LaueGroup)` for expected order.
     """
     # - helpers
     def A(X):
@@ -121,12 +132,16 @@ def cij_from_group(*cij, group:Union[str,int]) -> np.ndarray:
 
 
 def cij_from_vector(group, *cij) -> np.ndarray:
-    """ alias """
+    """ Alias `cij_from_group`. """
     return cij_from_group(*cij, group=group)
 
 
 def cij_from_dict(group, **cij) -> np.ndarray:
-    """ from dict """
+    """
+    Cij matrix formed from unique elements corresponding to the Laue group.
+    `ij` pairs are passed explicitly.
+    See `cij_order(LaueGroup)` for expected pairs.
+    """
     order = cij_order(group)
     elements = np.asarray(list(cij.values()), dtype=float)
     keys = np.asarray(list(cij.keys()), dtype=int)
@@ -135,12 +150,31 @@ def cij_from_dict(group, **cij) -> np.ndarray:
 
 
 def cij_order(group) -> np.ndarray:
+    """ Order of `ij` pairs used to construct Cij from vector. """
     laue = parse_laue_class(group)
     return get_unique(laue)
 
 
 def contract_ijkl(i, j, k, l, index=0) -> tuple:
-    """ Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-5b """
+    """
+    Contraction of 4th rank elastic tensor into 2nd rank elastic matrix.
+
+    Parameters
+    ----------
+    i,j,k,l : int
+        DESCRIPTION.
+    index : TYPE, optional
+        DESCRIPTION. The default is 0.
+
+    Returns
+    -------
+    tuple
+        DESCRIPTION.
+
+    Reference
+    ---------
+    Ting, T.C.T. (1996) Anisotropic Elasticity: Theory and Applications. c.f. eqn. 2.3-5b
+    """
     i, j, k, l = map(int, (i,j,k,l))
     a = contract_ij(i, j, index)
     b = contract_ij(k, l, index)
@@ -148,7 +182,13 @@ def contract_ijkl(i, j, k, l, index=0) -> tuple:
 
 
 def contract_ij(i, j, index=0) -> int:
-    """ Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-1 """
+    """ 
+    Contraction of 2nd rank matrix into 1st rank vector.
+
+    Reference
+    ---------
+    Ting, T.C.T. (1996) Anisotropic Elasticity: Theory and Applications. c.f. eqn. 2.3-1
+    """
     i, j = map(int, (i,j))
     return i if i==j else 9 - i - j - 3 * (1-index)
 
