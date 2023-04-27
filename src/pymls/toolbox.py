@@ -15,8 +15,16 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 # from tqdm import tqdm
 
+# --- constants
 _SMALL = 1e-6
 _PREC  = 9
+O = np.zeros((3,3))
+I = np.eye(3)
+conI = np.row_stack((
+    np.column_stack((O, I)),
+    np.column_stack((I, O))
+    ))
+# ---
 
 
 def abt(a: np.ndarray, b: np.ndarray, degrees=False):
