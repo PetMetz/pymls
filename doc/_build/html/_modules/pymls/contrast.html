@@ -1,0 +1,631 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pymls.contrast &#8212; pymls  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for pymls.contrast</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="sd">.. math::</span>
+
+<span class="sd">    C_{hkl} = \sum_{i,k}^{3} \sum_{j,l}^{2} G_{ijkl} E_{ijkl}</span>
+
+<span class="sd">Created on Fri Jun  3 10:06:56 2022</span>
+
+<span class="sd">@author: pmetz1</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># built-ins</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+
+<span class="c1"># 3rd party</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">linalg</span> <span class="k">as</span> <span class="n">LA</span>
+
+<span class="c1"># package imports</span>
+<span class="c1"># from .lattice import Lattice # Lattice</span>
+<span class="kn">from</span> <span class="nn">.elastic</span> <span class="kn">import</span> <span class="n">Stroh</span>   <span class="c1"># anisotropic strain</span>
+<span class="kn">from</span> <span class="nn">.geometric</span> <span class="kn">import</span> <span class="n">Dislocation</span> <span class="c1"># crystal reference frame</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">toolbox</span> <span class="k">as</span> <span class="n">tbx</span> <span class="c1"># orthogonal, unit_vectors, float_tol</span>
+
+
+<span class="n">_SMALL</span> <span class="o">=</span> <span class="mf">1e-12</span>
+
+
+<div class="viewcode-block" id="MLS"><a class="viewcode-back" href="../../rst/contrast.html#pymls.contrast.MLS">[docs]</a><span class="k">class</span> <span class="nc">MLS</span><span class="p">():</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implements the geometric and elastic portions of the MLS contrast factor</span>
+<span class="sd">    calculation</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        C_{hkl} = \sum_{i,m} \sum_{j,n} G_{ijmn} E_{ijmn}</span>
+
+<span class="sd">    Reference</span>
+<span class="sd">    ---------</span>
+<span class="sd">    Martinez-Garcia, Leoni, &amp; Scardi (2009) &quot;A general approach for</span>
+<span class="sd">        determining the diffraction contrast factor of straight-line</span>
+<span class="sd">        dislocations.&quot; Acta Cryst. A65, 109–119. `doi:10.1107/S010876730804186X &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;&lt;Martinez(</span><span class="se">\n</span><span class="s1">dislocation=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dislocation</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()</span><span class="si">}</span><span class="s1">,</span><span class="se">\n</span><span class="s1">cij=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">cij</span><span class="si">}</span><span class="s1"> @ </span><span class="si">{</span><span class="nb">hex</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span><span class="si">}</span><span class="s1">&gt;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">dislocation</span><span class="p">:</span> <span class="n">Dislocation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="c1"># dislocation geometry (carries around a lattice instance)</span>
+                 <span class="n">cij</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>          <span class="c1"># elastic tensor -&gt; anisotropic strain</span>
+                 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; constructu from CIJ representation of elastic stiffness (6,6) &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dislocation</span> <span class="o">=</span> <span class="n">dislocation</span>             <span class="c1"># Dislocation instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stroh</span> <span class="o">=</span> <span class="n">Stroh</span><span class="p">(</span><span class="n">cij</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dislocation</span><span class="o">.</span><span class="n">laue</span><span class="p">)</span> <span class="c1"># Stroh instance</span>
+
+<div class="viewcode-block" id="MLS.Gijmn"><a class="viewcode-back" href="../../rst/contrast.html#pymls.contrast.MLS.Gijmn">[docs]</a>    <span class="k">def</span> <span class="nf">Gijmn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`G_{ijmn} = \tau_i \tau_j \tau_m \tau_n`.</span>
+
+<span class="sd">        See `pymls.contrast.Dislocation.Gijmn`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        np.ndarray (3,)</span>
+<span class="sd">            Diffraction vector.</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Gijmn :  np.ndarray (i, j, m, n) == (3, 2, 3, 2) real float</span>
+<span class="sd">            Product of direction cosines :math:`\tau_i`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dislocation</span><span class="o">.</span><span class="n">Gijmn</span><span class="p">(</span><span class="n">s</span><span class="p">)</span></div>
+
+    <span class="c1"># - indexed on alpha only</span>
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">D</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            D_{\alpha} = - \frac{(L_{\alpha} \cdot b_{v})}{|b_{v}|(A_{\alpha} \cdot L_{\alpha})}</span>
+
+<span class="sd">        where :math:`A_{\alpha}` and :math:`L_{\alpha}` are equal to the `a`</span>
+<span class="sd">        and `b` Stroh eigenvectors.</span>
+
+<span class="sd">        NB this differs from Stroh&#39;s D_alpha coefficients by :math:`1/|\vec{b}|`</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (a,) -&gt; (3,) complex (length**-1)</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 13, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dislocation</span><span class="o">.</span><span class="n">uvw</span> <span class="c1"># b_j</span>
+        <span class="n">modb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dislocation</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dislocation</span><span class="o">.</span><span class="n">uvw</span><span class="p">)</span> <span class="c1"># |b_j|</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">A</span> <span class="c1"># column vectors</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">L</span> <span class="c1"># column vectors</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">3</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">D</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">L</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">@</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">modb</span> <span class="o">*</span> <span class="p">(</span><span class="n">A</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">@</span> <span class="n">L</span><span class="p">[:,</span><span class="n">i</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">D</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">x</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`x = \arctan(\Re{(p)}/\Im{(p)})`</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (a,) -&gt; (3,) (radians)</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 26, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">real</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">P</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="c1"># real</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`y = \arctan((\Re{(p_i)} - \Re{(p_j)}) / (\Im{(p_i)} + \Im{(p_j)}))`</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (a,a`) -&gt; (3,3) (radians)</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 26, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">P</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span> <span class="p">(</span><span class="n">p3</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="n">p3</span><span class="p">)</span><span class="o">.</span><span class="n">real</span> <span class="o">/</span> <span class="p">(</span><span class="n">p3</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">p3</span><span class="p">)</span><span class="o">.</span><span class="n">imag</span> <span class="p">)</span> <span class="c1"># real</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">z</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`z = \arctan(\Gamma_1(\alpha) / \Gamma_2(\alpha))`</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (a,a`) -&gt; (3,3) (radians)</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 26, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma2</span> <span class="p">)</span> <span class="c1"># real</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">F</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            F(p_{\alpha}) = ( \Re[p_{\alpha}] - \Re[p_{\alpha}^`] )^2 + ( \Im[p_{\alpha}] - \Im[p_{\alpha}^`] )^2</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (a, a`) -&gt; (3, 3) real</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 26, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">P</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">p3</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="n">p3</span>
+        <span class="k">return</span> <span class="n">A</span><span class="o">.</span><span class="n">real</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">A</span><span class="o">.</span><span class="n">imag</span> <span class="o">**</span> <span class="mi">2</span> <span class="c1"># real</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">Q</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            Q(p_{\alpha}) = (|p_{\alpha}|^2 - |p_{\alpha^`}|^2 )^2 + 4 (Re[p_{\alpha}] - Re[p_{\alpha^`}]) (|p_{\alpha^`}|^2 Re[p_{\alpha}] - |p_{\alpha}|^2 Re[p_{\alpha^`}])</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (a, a`) == (3, 3) real</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 26, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">P</span>
+        <span class="n">mod2</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">P</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="c1"># (p * np.conjugate(p).T).real</span>
+        <span class="n">p3</span>    <span class="o">=</span> <span class="n">p</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+        <span class="n">mod23</span> <span class="o">=</span> <span class="n">mod2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+        <span class="n">q1</span> <span class="o">=</span> <span class="p">(</span><span class="n">mod23</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="n">mod23</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">q2</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">p3</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="n">p3</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
+        <span class="n">q3</span> <span class="o">=</span> <span class="n">mod23</span> <span class="o">*</span> <span class="n">p3</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">real</span> <span class="o">-</span> <span class="n">mod23</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">p3</span><span class="o">.</span><span class="n">real</span>
+        <span class="k">return</span> <span class="n">q1</span> <span class="o">+</span> <span class="n">q2</span> <span class="o">*</span> <span class="n">q3</span> <span class="c1"># real</span>
+
+    <span class="c1"># - indexed on alpha &amp; ij(mn)</span>
+    <span class="c1"># must reduce such that Arg(z) -&gt; scalar and z = complex</span>
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">delta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :math:`\Delta_{\alpha}^{mn} = arg(A_{m \alpha} D_{\alpha} p_{\alpha}^{(n-1)})`</span>
+
+<span class="sd">        for</span>
+
+<span class="sd">        :math:`\alpha \in 1,2,3, m \in 1,2,3, n \in 1,2`</span>
+
+<span class="sd">        NB (n-1) is an *exponent* (rather than an index) resulting from</span>
+<span class="sd">        evaluation of the partial differentials (Martinez-Garcia et al. eqn. 15)</span>
+
+<span class="sd">        :math:`\frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)`</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (a, m, n) == (3, 3, 2) radians</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 26, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="n">I</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">rv</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="c1"># len, 3, 3, 2 - &gt; 2, 3, 3, len</span>
+        <span class="n">I</span>  <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rv</span><span class="o">.</span><span class="n">shape</span><span class="p">)))</span> <span class="c1"># -&gt; N x (a,i,j)</span>
+        <span class="n">A</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">A</span> <span class="c1"># A_ai</span>
+        <span class="n">D</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="c1"># D_a</span>
+        <span class="n">P</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">P</span> <span class="c1"># P_a</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">I</span><span class="p">:</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">index</span>
+            <span class="n">rv</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">index</span><span class="p">)]</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">]</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">*</span> <span class="n">P</span><span class="p">[</span><span class="n">a</span><span class="p">]</span><span class="o">**</span><span class="nb">int</span><span class="p">(</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># NB A are column eigenvectors</span>
+        <span class="c1"># return np.arctan(k.imag / k.real) # https://en.wikipedia.org/wiki/Argument</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">rv</span><span class="p">)</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">gamma1</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \Gamma_1( \alpha ) = Im[p_{\alpha}] Im[p_{\alpha^`}] [tan(x_{\alpha}) + tan(x_{\alpha^`})]</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (a, a`) == (3, 3) radians</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 27, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">P</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span> <span class="c1"># complex</span>
+        <span class="n">x3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span> <span class="c1"># real</span>
+        <span class="k">return</span> <span class="n">p3</span><span class="o">.</span><span class="n">imag</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">p3</span><span class="o">.</span><span class="n">imag</span> <span class="o">*</span> <span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">x3</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">x3</span><span class="p">)</span> <span class="p">)</span> <span class="c1"># real</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">gamma2</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \Gamma_2( \alpha ) = |p_{\alpha}|^2 - Re[p_{\alpha}] Re[_{\alpha^`}] + Im[p_{\alpha}] Im[p_{\alpha^`}]</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (a, a`) == (3, 3) radians</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 27, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">P</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+        <span class="n">mod23</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">P</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">mod23</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="p">(</span><span class="n">p3</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">p3</span><span class="o">.</span><span class="n">real</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">p3</span><span class="o">.</span><span class="n">imag</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">p3</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="c1"># real</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">psi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">              \Psi_{\alpha}^{\alpha&#39;} =  &amp; \frac{ \left|p_{\alpha}\right| }{2 \Im{\left[p_{\alpha}\right]^{2}} }\;                                                   &amp; if\ \alpha = \alpha&#39;   \\</span>
+<span class="sd">                                         &amp; \frac{ \left|p_{\alpha}\right| }{ \Im{\left[p_{\alpha}\right]} } \left[\frac{F(p_{\alpha})}{Q(p_{\alpha})}\right]^{1/2}\; &amp; if\ \alpha \ne \alpha&#39; \\</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (a, a`) == (3, 3) real valued.</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 18.1, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span> <span class="c1"># a != a`</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">P</span> <span class="c1"># p_a</span>
+        <span class="n">modp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="c1"># |p_a|</span>
+        <span class="n">pre</span> <span class="o">=</span> <span class="p">(</span><span class="n">modp</span> <span class="o">/</span> <span class="n">p</span><span class="o">.</span><span class="n">imag</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)))</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">rv</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">pre</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">[</span><span class="n">m</span><span class="p">])</span> <span class="o">**</span> <span class="mf">0.5</span>  <span class="c1"># a != a`</span>
+        <span class="n">rv</span><span class="p">[</span><span class="o">~</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">modp</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">p</span><span class="o">.</span><span class="n">imag</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># a == a`</span>
+        <span class="k">return</span> <span class="n">rv</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">phi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \Phi_{ij\alpha}^{mn\alpha^`} = 2 |A_{i\alpha}||A_{i\alpha^`}||D_{\alpha}||D_{\alpha^`}||P_{\alpha}^{(j-1)}||P_{\alpha^`}^{(n-1)}|</span>
+
+<span class="sd">        NB (n-1) is an *exponent* resulting from evaluation of the partial</span>
+<span class="sd">        differentials (rather than an index)</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (i,j,a,m,n,a`) == (3,2,3,3,2,3) real valued.</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 18.2, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># - alias</span>
+        <span class="n">modA</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">A</span><span class="p">)</span> <span class="c1"># |A_ia| == | stroh eigen vectors |</span>
+        <span class="n">modD</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">)</span> <span class="c1"># |D_a|  == | quantity containing direction cosines |</span>
+        <span class="n">modP</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stroh</span><span class="o">.</span><span class="n">P</span><span class="p">)</span> <span class="c1"># |P_a|  == | stroh eigen values |</span>
+        <span class="c1"># - setup</span>
+        <span class="n">rv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="c1"># &lt;--- note this is a real valued tensor</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">rv</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rv</span><span class="o">.</span><span class="n">shape</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">I</span><span class="p">:</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">index</span>
+            <span class="n">rv</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">index</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">modA</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">]</span> <span class="o">*</span> <span class="n">modA</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="n">b</span><span class="p">]</span> <span class="o">*</span> <span class="n">modD</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">*</span> <span class="n">modD</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="o">*</span> <span class="n">modP</span><span class="p">[</span><span class="n">a</span><span class="p">]</span><span class="o">**</span><span class="p">(</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">modP</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="o">**</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rv</span>
+
+    <span class="c1"># FIXME NB amn | bij but -&gt; ija mnb (revisit indexing throughout)</span>
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">Eijmn</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            E_{ijmn} = \Sigma_{\alpha, \alpha&#39;}^{3} \Psi_{\alpha}^{\alpha&#39;} \Phi_{ij\alpha}^{mn\alpha&#39;} \left[ \cos(\Delta_{\alpha}^{mn} + x_{\alpha}) \cos(\Delta_{ij}^{\alpha&#39;} - y_{\alpha}^{\alpha&#39;}) + \sin(\Delta_{\alpha}^{mn}) \sin(\Delta_{ij}^{\alpha&#39;} - z_{\alpha}^{\alpha&#39;}) \right]</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (i,j,m,n) == (3,2,3,2) real valued and positive</span>
+<span class="sd">            Elastic component of the dislocation contrast factor.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 17, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+        <span class="c1"># =============================================================================</span>
+        <span class="c1">#         # - setup return array</span>
+        <span class="c1">#         rv = np.zeros((3,2,3,3,2,3), dtype=float) # &lt;--- note this is a real valued tensor</span>
+        <span class="c1">#         I = np.indices(rv.shape, dtype=np.intp).T # len(shape), *shape -&gt; *shape. len(shape)</span>
+        <span class="c1">#         I = I.reshape((-1, len(rv.shape)))</span>
+        <span class="c1">#         # - alias objects</span>
+        <span class="c1">#         psi = self.psi  # (a, a`)  == (3,3)</span>
+        <span class="c1">#         phi = self.phi  # (i,j,a,m,n,a`) == (3,2,3,3,2,3)</span>
+        <span class="c1">#         delta = self.delta  # (a, m, n) == (3,3,2)</span>
+        <span class="c1">#         x = self.x  # (a,) == (3,)</span>
+        <span class="c1">#         y = self.y  # (a, a`) == (3,3)</span>
+        <span class="c1">#         z = self.z  # (a, a`) == (3,3)</span>
+        <span class="c1">#         # - compute elements</span>
+        <span class="c1">#         for index in I:</span>
+        <span class="c1">#             i, j, a, m, n, b = index</span>
+        <span class="c1">#             rv[tuple(index)] = \</span>
+        <span class="c1">#                 psi[a,b] * phi[i,j,a,m,n,b] * (\</span>
+        <span class="c1">#                     np.cos(delta[a,m,n] + x[a]) * np.cos(delta[b,i,j] - y[a,b]) \</span>
+        <span class="c1">#                   + np.sin(delta[a,m,n]) * np.sin(delta[b,i,j] + z[a,b])</span>
+        <span class="c1">#                     )</span>
+        <span class="c1">#         # - contract</span>
+        <span class="c1">#         # equivalent to rv.sum(axis=2).sum(axis=-1)</span>
+        <span class="c1">#         rv = np.einsum(&#39;ijamnb-&gt;ijmn&#39;, rv) # .round(tbx._PREC)</span>
+        <span class="c1">#         return rv</span>
+        <span class="c1"># =============================================================================</span>
+        <span class="c1"># - alternative</span>
+        <span class="c1"># =============================================================================</span>
+        <span class="c1">#         pp = np.einsum(&#39;ab,ijamnb-&gt;ijamnb&#39;, psi, phi)</span>
+        <span class="c1">#         a1 = np.transpose(delta.T - np.eye(3)*x)</span>
+        <span class="c1">#         a2 = np.transpose(delta.T - y)</span>
+        <span class="c1">#         b1 = delta</span>
+        <span class="c1">#         b2 = np.transpose(delta.T - z)</span>
+        <span class="c1">#         cos = np.einsum(&#39;amn,bij-&gt;ijamnb&#39;, np.cos(a1), np.cos(a2))</span>
+        <span class="c1">#         sin = np.einsum(&#39;amn,bij-&gt;ijamnb&#39;, np.sin(b1), np.sin(b2))</span>
+        <span class="c1">#         con = np.einsum(&#39;ijamnb,ijamnb,ijamnb-&gt;ijmn&#39;, pp, cos, sin)</span>
+        <span class="c1">#         ...</span>
+        <span class="c1"># =============================================================================</span>
+        <span class="c1"># Try again...</span>
+        <span class="c1"># =============================================================================</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;amn,bij-&gt;ijamnb&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_c2</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;amn,bij-&gt;ijamnb&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s2</span><span class="p">)</span> <span class="c1"># (i,j,a,m,n,b) == (3,2,3,3,2,3)</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ijamnb,ijamnb-&gt;ijamnb&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ab,ijamnb-&gt;ijmn&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">psi</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">A</span> <span class="c1"># (i,j,m,n) == (3,2,3,2)</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">_c1</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \_c_1 = \cos(\Delta_{\alpha}^{mn} + x_{\alpha})</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (3,3,2) real</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># return np.cos( np.einsum(&#39;amn,a-&gt;amn&#39;, self.delta, self.x) ) # addition not multiplication</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                    <span class="n">A</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">a</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">A</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">_c2</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \_c_2 = \cos(\Delta_{ij}^{\alpha&#39;} - y_{\alpha}^{\alpha&#39;})</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (3,3,2) real</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># return np.cos( np.einsum(&#39;bmn,ab-&gt;amn&#39;, self.delta, -self.y) )</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                        <span class="n">A</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">]</span> <span class="o">+</span> <span class="n">A</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="c1"># contract arg</span>
+                    <span class="n">A</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">])</span> <span class="c1"># eval cos</span>
+        <span class="k">return</span> <span class="n">A</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">_s1</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+<span class="sd">            \_s_1 = \sin(\Delta_{\alpha}^{mn})</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (3,3,2) real</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">)</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">_s2</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \_s_2 = \sin(\Delta_{ij}^{\alpha&#39;} - z_{\alpha}^{\alpha&#39;})</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray (3,3,2) real</span>
+<span class="sd">            Component of :math:`E_{ijmn}` calculation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># return np.sin( np.einsum(&#39;bmn,ab-&gt;amn&#39;, self.delta, self.z) )</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                        <span class="n">A</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">]</span> <span class="o">+</span> <span class="n">A</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="c1"># contract arg</span>
+                    <span class="n">A</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">a</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">])</span> <span class="c1"># eval sin</span>
+        <span class="k">return</span> <span class="n">A</span>
+
+<div class="viewcode-block" id="MLS.Chkl"><a class="viewcode-back" href="../../rst/contrast.html#pymls.contrast.MLS.Chkl">[docs]</a>    <span class="k">def</span> <span class="nf">Chkl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .. math::</span>
+
+<span class="sd">            C_{hkl} = \sum_{i,m}^{3} \sum_{j,n}^{2} G_{ijmn} E_{ijmn}</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        s : np.ndarray</span>
+<span class="sd">            Diffraction vector (3,).</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Dislocation contrast factor for the diffraction vector `hkl`.</span>
+
+
+<span class="sd">        Reference</span>
+<span class="sd">        ---------</span>
+<span class="sd">        c.f. eqn. 9, `Martinez-Garcia, Leoni, Scardi (2009). &lt;https://dx.doi.org/10.1107/S010876730804186X&gt;`_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ijmn,ijmn-&gt;&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Gijmn</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">Eijmn</span><span class="p">)</span></div></div>
+
+    <span class="c1"># End Martinez</span>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">pymls</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../rst/contrast.html">contrast</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../rst/elastic.html">elastic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../rst/geometric.html">geometric</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../rst/lattice.html">lattice</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../rst/symmetry.html">symmetry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../rst/toolbox.html">toolbox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../rst/voigt.html">voigt</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Peter C. Metz.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.1.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

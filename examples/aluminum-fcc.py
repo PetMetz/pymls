@@ -12,6 +12,8 @@ import numpy as np
 from pymls import Lattice, Dislocation, Stroh, MLS
 from pymls.elastic import cij_from_group, cij_from_dict
 from pymls.toolbox import abt
+from pymls.symmetry import Symmetry as SO
+import pymls.toolbox as tbx
 
 
 # - 1. crystal lattice
@@ -48,26 +50,43 @@ D = dislocation
 D.visualize()
 
 
-# %%
-# =============================================================================
-# def MLS_M(lattice):
-#     """ eqn. 1 """
-#     D = lattice
-#     R = lattice.reciprocal
-#     cos = np.cos(D.angles * np.pi/180)
-#     sin = np.sin(D.angles * np.pi/180)
-#     cosstar = np.cos(R.angles * np.pi/180)
-#     M = np.array((
-#         (1/D.a                 , 0                 , 0  ),
-#         (-cos[2] / (D.a*sin[2]), 1 / (D.b * sin[2]), 0  ),
-#         (R.a * cosstar[1]      , R.b * cosstar[0]  , R.c)
-#         ))
-#     return M
-# 
-# M = MLS_M(lattice)
-# L = Lattice(M)
-# D = Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi)
-# C2 = MLS(D, C)
-# Cmls2 = C2.Chkl(uvw)
-# 
-# =============================================================================
+
+#%% Sym Eqs
+# m-3m (215) https://it.iucr.org/Ac/ch2o3v0001/sgtable2o3o225/
+#  1
+#  2 || (x,0,0), (0,y,0)
+#  3 || (x,x,x)
+#  2 || (x,x,0)
+# -1 || (0,0,0)
+R2x00 = SO.rotation((1,0,0), 180)
+R20y0 = SO.rotation((0,1,0), 180)
+R3xxx = SO.rotation((1,1,1), 120)
+R2xx0 = SO.rotation((1,1,0), 180)
+Inv   = SO.inversion()
+SOS   = (R2x00, R20y0, R3xxx, R2xx0, Inv) # set of generators
+N     = (1, 1, 2, 1, 1) # number of times to operate
+
+slip = [hkl, uvw]
+for _ in range(4): # redundant
+    for symOpp, nOpp in list(zip(SOS, N)):                # for symOpp in generator set
+        for _ in range(nOpp):                             # do N times
+            slip = np.asarray(slip).reshape((-1,3))       # ...
+            slip = np.concatenate((slip, symOpp(slip)))   # append new symmetric elements
+            slip = slip.reshape((-1,2,3))                 # ...
+            slip = tbx.get_unique_pairs(slip)             # find unique pairs (elements)
+# slip = slip.astype(int) # this is changing nominal 1 values to zeros for some reason.... =(
+slip = np.round(slip, decimals=0).astype(int)
+m = ~np.array([np.dot(*e) for e in slip], dtype=bool)
+
+
+
+all_combinations = []
+for uvw, hkl in slip[m]:
+    dislocation = Dislocation(lattice=lattice, hkl=hkl, uvw=uvw, phi=phi, SGno=None)
+    stroh = Stroh(C) # captures characteristic elastic matrix and eigensolution
+    calc = MLS(dislocation=dislocation, cij=C) # captures sum computation
+    all_combinations.append(calc)
+
+s = (1,1,0)
+mean = np.mean([e.Chkl(s) for e in all_combinations])
+

@@ -6,6 +6,7 @@ Created on Mon Jun 27 14:40:09 2022
 """
 # built-ins
 import functools
+from typing import Union
 
 # 3rd party
 import numpy as np
@@ -22,6 +23,12 @@ _LAUE = np.array((
     ('-1',        '2/m',        'mmm',          '4/m',        '4/mmm',      '-3',       '-3m',      '6/m',       '6/mmm',     'm-3',   'm-3m' )  # crystal system
     ), dtype=object)
 
+O = np.zeros((3,3))
+I = np.eye(3)
+conI = np.row_stack((
+    np.column_stack((O, I)),
+    np.column_stack((I, O))
+    ))
 
 # FIXME didn't have a reference handy: https://link.springer.com/content/pdf/bbm%3A978-94-007-0350-6%2F1.pdf
 # FIXME more convnient slicing if arranged in rows
@@ -50,27 +57,41 @@ _ELASTIC_RESTRICTIONS = np.array((
     (66, 66, 66, 66, 66, 99, 99, 99, 99, 44, 44)
     ), dtype=int)
 
+# - conventions
+_voigt3 = np.array(((0,0), (1,1), (2,2), (1,2), (0,2), (0,1)), dtype=int)
+_voigt6 = np.array([ np.concatenate((np.ones_like(_voigt3)*_voigt3[i], _voigt3), axis=1) for i in range(6) ], dtype=int)
+
 
 # --- functions
 def generate_index(arg:int) -> tuple:
-    """ ## -> (#, #) """
+    """ 
+    generate indices from `_ELASTIC_RESTRICTIONS`.
+    
+    Returns
+    -------
+    tuple (int, int)
+        ## -> (#, #)
+    """
     i, j = divmod(abs(arg), 10)
     return tuple((i-1, j-1))
 
 
 def generate_indices(arg:np.ndarray) -> np.ndarray:
+    """ See `generate_index`. """
     return np.apply_along_axis(generate_index, axis=0, arr=arg)
 
 
 def get_unique(LaueGroup:int) -> tuple:
+    """ Unique symmetry invariant indices for the corresponding `LaueGroup`. """
     rv = _ELASTIC_RESTRICTIONS[:, LaueGroup-1] # NB zero index
     return np.unique(abs(rv[(rv!=0) & (rv!=99)]))
 
 
-def parse_laue_class(arg:(str, int)) -> int:
+def parse_laue_class(arg:Union[str,int]) -> int:
     """
-    Reduce various common inputs to integer representation.
-    
+    Identify Laue class by integer (1-11), crystal system (cubic, ...) or
+    point group (m-3m, ...) and return corresponding integer.
+
     If crystal system is given, assumes the higher symmetry choice.
     """
     if isinstance(arg, int) and (1 <= arg <= 11): # trivial case
@@ -85,9 +106,10 @@ def parse_laue_class(arg:(str, int)) -> int:
 
 
 # FIXME factor out for / if with masking?
-def cij_from_group(*cij, group):
-    """ 
-    Cij ordered i, j according to unique elements.
+def cij_from_group(*cij, group:Union[str,int]) -> np.ndarray:
+    """
+    Cij matrix formed from unique elements corresponding to the Laue group.
+    See `cij_order(LaueGroup)` for expected order.
     """
     # - helpers
     def A(X):
@@ -109,108 +131,141 @@ def cij_from_group(*cij, group):
     return rv + rv.T - np.diag(rv.diagonal())
 
 
-def cij_from_vector(group, *cij):
-    """ alias """
+def cij_from_vector(group, *cij) -> np.ndarray:
+    """ Alias `cij_from_group`. """
     return cij_from_group(*cij, group=group)
-    
 
-def cij_from_dict(group, **cij):
-    """ from dict """
+
+def cij_from_dict(group, **cij) -> np.ndarray:
+    """
+    Cij matrix formed from unique elements corresponding to the Laue group.
+    `ij` pairs are passed explicitly.
+    See `cij_order(LaueGroup)` for expected pairs.
+    """
     order = cij_order(group)
     elements = np.asarray(list(cij.values()), dtype=float)
     keys = np.asarray(list(cij.keys()), dtype=int)
     m = np.argwhere(np.in1d(order, keys))
     return cij_from_group(*elements[m], group=group)
-    
 
-def cij_order(group):
+
+def cij_order(group) -> np.ndarray:
+    """ Order of `ij` pairs used to construct Cij from vector. """
     laue = parse_laue_class(group)
     return get_unique(laue)
 
-# FIXME unused 
-def _compact(X:np.ndarray):
-    return np.apply_along_axis(lambda x:''.join(map(str, x)), axis=-1, arr=X)
-    
-# - conventions
-_voigt3 = np.array(((0,0), (1,1), (2,2), (1,2), (0,2), (0,1)), dtype=int)
-_voigt6 = np.array([ np.concatenate((np.ones_like(_voigt3)*_voigt3[i], _voigt3), axis=1) for i in range(6) ], dtype=int)
 
-def contract_ijkl(i, j, k, l, index=0):
-    """ Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-5b """
+def contract_ijkl(i, j, k, l, index=0) -> tuple:
+    """
+    Contraction of 4th rank elastic tensor into 2nd rank elastic matrix.
+
+    Parameters
+    ----------
+    i,j,k,l : int
+        DESCRIPTION.
+    index : TYPE, optional
+        DESCRIPTION. The default is 0.
+
+    Returns
+    -------
+    tuple
+        DESCRIPTION.
+
+    Reference
+    ---------
+    Ting, T.C.T. (1996) Anisotropic Elasticity: Theory and Applications. c.f. eqn. 2.3-5b
+    """
     i, j, k, l = map(int, (i,j,k,l))
     a = contract_ij(i, j, index)
     b = contract_ij(k, l, index)
     return a, b
 
-def contract_ij(i, j, index=0):
-    """ Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-1 """
+
+def contract_ij(i, j, index=0) -> int:
+    """ 
+    Contraction of 2nd rank matrix into 1st rank vector.
+
+    Reference
+    ---------
+    Ting, T.C.T. (1996) Anisotropic Elasticity: Theory and Applications. c.f. eqn. 2.3-1
+    """
     i, j = map(int, (i,j))
     return i if i==j else 9 - i - j - 3 * (1-index)
 
+
 # --- classes
 class Stroh():
-    """ Ref: Ting T.C.T. Elastic Anisotropy. """
+    """
+    Elastic aspects of the dislocation contrast factor obtained by solution to
+    the Stroh formulation.
+
+    Reference
+    ---------
+        Ting, T.C.T. (1996) Elastic Anisotropy. ISBN 9780195074475
+    """
     # - class state
     _flag_N = 1
     _flag_eig = 1
-    
+
     @classmethod
-    def reset(cls):
+    def reset(cls) -> None:
+        """ Reset class state. """
         cls._flag_N = 1
         cls._flag_eig = 1
-    
-    # - handy
-    @functools.cached_property
-    def conI(cls):
-        O = np.zeros((3,3))
-        I = np.eye(3)
-        conI = np.row_stack((
-            np.column_stack((O, I)),
-            np.column_stack((I, O))
-            ))
-        return conI
 
     # - overloads
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<Stroh(cij=\n{self.cij}, crystalSystem={self.crystalsystem}) @ {hex(id(self))}>'
-    
+
     def __init__(self,
                  cij:np.ndarray=None,
                  crystalSystem:str=None
                  ) -> None:
         """
-        constructu from CIJ representation of elastic stiffness (6,6)
-        NB properties are cached-- create new instance if you want to update cijkl
+        Elastic aspects of the dislocation contrast factor obtained by solution to
+        the Stroh formulation.
+
+        Parameters
+        ----------
+        cij : np.ndarray, optional
+            DESCRIPTION. The default is None.
+        crystalSystem : str, optional
+            DESCRIPTION. The default is None.
+
+        Reference
+        ---------
+        Ting, T.C.T. (1996) Elastic Anisotropy. ISBN 9780195074475
         """
-        self.cij = cij        
+        self.cij = cij
         self.crystalsystem = crystalSystem
-        
+
     @property
-    def cijkl(self):
-        """ elastic stiffness tensor """
+    def cijkl(self) -> np.ndarray:
+        """ Elastic stiffness tensor. """
         return self._cijkl
 
     @cijkl.setter
-    def cijkl(self, X):
+    def cijkl(self, X) -> None:
         self._cijkl = X
 
     @property
-    def cij(self):
+    def cij(self) -> np.ndarray:
+        """ Reduced stiffness matrix. """
         return self.apply_mandel(self._cijkl)
-    
+
     @cij.setter
-    def cij(self, X):
+    def cij(self, X) -> None:
         if not X is None:
             self._cijkl = self.invert_mandel(X)
-        
-    def apply_voigt(self, X):
+
+    def apply_voigt(self, X) -> np.ndarray:
         """
         Apply Voigt reduction scheme to X(3,3) to produce X2(6,).
         11 -> 1; 22 -> 2; 33 -> 3; 23 -> 4; 13 -> 5; 12 -> 6
         """
         return np.array([X[tuple(e)] for e in _voigt3])
-    
-    def invert_voigt(self, X):
+
+    def invert_voigt(self, X) -> np.ndarray:
         """
         Given a Voigt reduced vector, reconstruct 2nd order tensor.
         """
@@ -219,8 +274,8 @@ class Stroh():
             a[tuple(pt)] = X[idx]
             a[tuple(pt[::-1])] = X[idx]
         return a
-        
-    def apply_mandel(self, X):
+
+    def apply_mandel(self, X) -> np.ndarray:
         """
         The extension of Voigt reduction to the 4th rank tensor representing
         proportionality of two 2nd rank tensors.
@@ -228,7 +283,7 @@ class Stroh():
         return np.reshape([X[tuple(e)] for e in _voigt6.reshape(-1,4)], (6,6))
 
     # FIXME can't this be vectorized?
-    def invert_mandel(self, X, case='c'):
+    def invert_mandel(self, X, case='c') -> np.ndarray:
         """
         Given a Voigt reduced 2nd order tensor, reconstruct 4th order tensor.
         """
@@ -245,184 +300,179 @@ class Stroh():
             for idx, jdx in zip(I0, Ip):
                 a[tuple(jdx)] = a[tuple(idx)]
         return a
-    
+
     @functools.cached_property
-    def elastic_symmetry(self):
+    def elastic_symmetry(self) -> np.ndarray:
         """ form symmetry equivalents ijks = jiks = ksij = ijsk """
         shape = (3,3,3,3)
         I = np.transpose(np.indices(shape)).astype(int) # 3, 3, 3, 3, 4
         I = I.reshape((-1, len(shape))) # -1, 4
-        rv = [] 
-        # form symmetry equivalents ijks = jiks = ksij = ijsk 
+        rv = []
+        # form symmetry equivalents ijks = jiks = ksij = ijsk
         rv.append( I[:, (0,1,2,3)] ) # ijks
-        rv.append( I[:, (1,0,2,3)] ) # jiks 
+        rv.append( I[:, (1,0,2,3)] ) # jiks
         rv.append( I[:, (2,3,0,1)] ) # ksij
         rv.append( I[:, (0,1,3,2)] ) # ijsk
         return rv
 
     # FIXME can't this be vectorized?
-    def apply_elastic_symmetry(self, X):
+    def apply_elastic_symmetry(self, X)  -> np.ndarray:
         I0, *I = self.elastic_symmetry
         # - exhaustive equivalence
         for Ip in I[1:]:
             for idx, jdx in zip(I0, Ip):
                 X[tuple(jdx)] = X[tuple(idx)]
-        return X     
-    
+        return X
+
     @property
-    def crystalsystem(self):
+    def crystalsystem(self) -> str:
         print('Warning: crystal symmetry not yet implemented')
         return self._crystalsystem
-    
+
     @crystalsystem.setter
-    def crystalsystem(self, x:str):
+    def crystalsystem(self, x:str) -> None:
         self._crystalsystem = x
-    
+
     # FIXME incomplete
     def apply_crystal_symmetry(self, group):
         """ """
         ...
-        
+
     @functools.cached_property
-    def Q(self):
+    def Q(self) -> np.ndarray:
         r"""
         c.f. pp 137 Ting, Elastic Anisotropy.
-        
+
         .. math::
-            
+
             Q_{ik} = C_{i1k1}
-            
-            Q = 
+
+            Q =
             \begin{bmatrix}
                 C_{11} & C_{16} & C_{15} \\
                 C_{16} & C_{66} & C_{56} \\
-                C_{15} & C_{56} & C_{55} 
+                C_{15} & C_{56} & C_{55}
             \end{bmatrix}
         """
         idx = [(0,0), (0,5), (0,4),
                (0,5), (5,5), (4,5),
                (0,4), (4,5), (4,4)] # NB zero index
         return np.reshape([self.cij[e] for e in idx], (3,3))
-    
+
     @functools.cached_property
-    def R(self):
+    def R(self) -> np.ndarray:
         r"""
         c.f. pp 137 Ting, Elastic Anisotropy.
-        
+
         .. math::
-            
+
             R_{ik} = C_{i1k2}
-            
-            R = 
+
+            R =
             \begin{bmatrix}
                 C_{16} & C_{12} & C_{14} \\
                 C_{66} & C_{26} & C_{46} \\
-                C_{56} & C_{25} & C_{45} 
+                C_{56} & C_{25} & C_{45}
             \end{bmatrix}
         """
         idx = [(0,5), (0,1), (0,3),
                (5,5), (1,5), (3,5),
                (4,5), (1,4), (3,4)] # NB zero index
         return np.reshape([self.cij[e] for e in idx], (3,3))
-        
+
     @functools.cached_property
-    def T(self):
+    def T(self) -> np.ndarray:
         r"""
         c.f. pp 137 Ting, Elastic Anisotropy.
-        
+
         .. math::
-            
+
             T_{ij} = C_{i2k2}
-        
-            T = 
+
+            T =
             \begin{bmatrix}
                 C_{66} & C_{26} & C_{46} \\
                 C_{26} & C_{22} & C_{24} \\
-                C_{46} & C_{24} & C_{44} 
+                C_{46} & C_{24} & C_{44}
             \end{bmatrix}
         """
         idx = [(5,5), (1,5), (3,5),
                (1,5), (1,1), (1,3),
                (3,5), (1,3), (3,3)] # NB zero index
         return np.reshape([self.cij[e] for e in idx], (3,3))
-    
+
     @functools.cached_property
-    def N1(self):
+    def N1(self) -> np.ndarray:
         r"""
         c.f. pp 144 Ting, Elastic Anisotropy.
-        
+
         .. math::
             N_1 = -T^{-1} R^T \ \  [-]
         """
         return -LA.inv(self.T) @ np.transpose(self.R)
-    
+
     @functools.cached_property
-    def N2(self):
+    def N2(self) -> np.ndarray:
         r"""
         c.f. pp 144 Ting, Elastic Anisotropy.
-        
+
         .. math::
             N_2 = T^{-1} \ \ [m^2 \cdot N^{-1}]
         """
         return LA.inv(self.T)
-    
+
     @functools.cached_property
-    def N3(self):
+    def N3(self) -> np.ndarray:
         r"""
         c.f. pp 144 Ting, Elastic Anisotropy.
-        
+
         .. math::
             N_3 = R T^{-1} R^T - Q \ \ [N \cdot m^{-2}]
         """
         return self.R @ LA.inv(self.T) @ np.transpose(self.R) - self.Q
-    
+
     @functools.cached_property
-    def N(self):
+    def N(self) -> np.ndarray:
         r"""
         c.f. pp 144 Ting, Elastic Anisotropy.
-        
+
         fundamental elasticity matrix (Ingebrigtsen & Tonning, 1969)
-        
+
         .. math::
-            
-            N = 
+
+            N =
             \begin{bmatrix}
                 N_1 & N_2 \\
-                N_3 & N_1^T 
+                N_3 & N_1^T
             \end{bmatrix}
-        
+
         """
         if self._flag_N:
-            # NB 20221009 this was incorrectly ordered
-            # self._N = np.column_stack((
-            #     np.concatenate((self.N1, self.N2 )),
-            #     np.concatenate((self.N3, self.N1.T))
-            #     ))
-            self._N = tbx.square((  # list(map(np.column_stack, X))
+            self._N = tbx.square((
                 (self.N1, self.N2  ),
                 (self.N3, self.N1.T)
                 ))
             self._flag_N = 0
         return self._N
-    
+
     @functools.cached_property
-    def p(self):
+    def p(self) -> np.ndarray:
         r"""
         eigenvalues (6,) of the fundamental elasticity matrix
-        
+
         .. math::
-            
+
             N \xi = p \xi
-            
+
             N = \begin{bmatrix}
                     N_1 & N_2 \\
                     N_3 & N_1^T
                 \end{bmatrix},
-                
+
             \xi = \begin{bmatrix}
                     a \\ l
                   \end{bmatrix}
-        
+
         Ref:
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
@@ -431,14 +481,14 @@ class Stroh():
             # self._xi = self._xi.T # 20230209
             self._flag_eig = 0
         return self._p
-    
+
     @functools.cached_property
-    def xi(self):
+    def xi(self) -> np.ndarray:
         r"""
         Right eigenvectors (6,6) of :math:`N \xi = p \xi`, see `p`.
-        
+
         .. math::
-            
+
             \xi = \begin{bmatrix}
                     a \\ l \\
                   \end{bmatrix}
@@ -448,17 +498,16 @@ class Stroh():
         """
         if self._flag_eig:
             self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
-            # self._xi = self._xi.T # 20230209
             self._flag_eig = 0
         return self._xi # .round(tbx._PREC)
-    
+
     @functools.cached_property
-    def eta(self):
+    def eta(self) -> np.ndarray:
         r"""
         Left eigenvectors (6,6) of :math:`N^T \eta = p \eta`, see `p`.
-                
+
         .. math::
-            
+
             \eta = \begin{bmatrix}
                     l \\ a \\
                   \end{bmatrix}
@@ -467,92 +516,140 @@ class Stroh():
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
         # return np.row_stack((self.l, self.a)) # "... the left eigenvector... are in the reverse order"""
-        return (self.conI @ self.xi) # .round(tbx._PREC) # this is equivalent
+        return conI @ self.xi # .round(tbx._PREC) # this is equivalent
         # return self.xi[::-1] # apparently Ting means the former, not reversal by index
-    
+
     # FIXME for some reason np.eig returns column major eigen vectors? This slicing should be adjusted?
     @functools.cached_property
-    def a(self):
+    def a(self) -> np.ndarray:
         r"""
-        Stroh eigenvectors (6,6) solutions to the fundamental elasticity matrix
+        Stroh eigenvectors (3,6) solutions to the fundamental elasticity matrix
         The eigenvector `a` represents the direction of the displacement.
+        NB scipy.linalg.eig returns column eigenvectors
+
+
+        Returns
+        -------
+        np.ndarray (3,6) imaginary
+            Half the redundant right Stroh eigenvectors
+        
+        
+        Reference
+        ---------
+        c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         return self.xi[:3,:]
-        # return np.concatenate((self.xi[:3,:], self.xi[:3,1::2]), axis=1)
-        
+
     @functools.cached_property
-    def l(self):
-        r""" 
-        Stroh eigenvectors (6,6) solutions to the fundamental elasticity matrix
+    def l(self) -> np.ndarray:
+        r"""
+        Stroh eigenvectors (3,6) solutions to the fundamental elasticity matrix
         The eigenvector `l` represents the direction of traction.
+        NB scipy.linalg.eig returns column eigenvectors
+
+        Returns
+        -------
+        np.ndarray (3,6) imaginary
+            Half the redundant right Stroh eigenvectors
+        
+        
+        Reference
+        ---------
+        c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         return self.xi[3:,:]
-    
+
     @functools.cached_property
-    def A(self):
+    def A(self) -> np.ndarray:
         r"""
         Stroh eigen vectors (3,3) obeying :math:`a_{\alpha+3} = \bar{a}_{\alpha}`
         (i.e. half the roots of the sextic equation)
+        :math:`A = [a1, a2, a3]` (NB column vectors)
+        
+        Returns
+        -------
+        np.ndarray (3,3) imaginary
+            Unique half of the right Stroh eigenvectors.
+        
+        
+        Reference
+        ---------
+        c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         return self.xi[:3, ::2]
-    
+
     @functools.cached_property
-    def L(self):
-        r""" 
+    def L(self) -> np.ndarray:
+        r"""
         Stroh eigen vectors (3,3) obeying :math:`l_{\alpha+3} = \bar{l}_{\alpha}`
         (i.e. half the roots of the sextic equation)
+        :math:`B = [b1, b2, b3]` (NB column vectors)
+        
+        Returns
+        -------
+        np.ndarray (3,3) imaginary
+            Unique half of the right Stroh eigenvectors.
+        
+        
+        Reference
+        ---------
+        c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         return self.xi[3:, ::2]
-    
+
     @functools.cached_property
-    def P(self):
-        r""" 
+    def P(self) -> np.ndarray:
+        r"""
         Stroh eigen values (3,) obeying :math:`p_{\alpha+3} = \bar{p}_{\alpha}`
         (i.e. half the roots of the sextic equation)
+        
+        
+        Returns
+        -------
+        np.ndarray (3,) imaginary
+            Unique half of the right Stroh eigenvalues. 
+        
+        
+        Reference
+        ---------
+        ...
         """
         return self.p[::2]
-    
+
     @functools.cached_property
-    def M(self):
+    def M(self) -> np.ndarray:
         r"""
         :math:`M_{\alpha i} L_{i \beta} = \partial _{\alpha \beta}`
-        ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
+        
+        
+        Returns
+        -------
+        np.ndarray (3,3) imaginary
+        
+        
+        Reference
+        ---------
+        Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
         """
         return LA.inv(self.L)
-    
+
     @functools.cached_property
-    def B(self):
+    def B(self) -> np.ndarray:
         r"""
         :math:`B_{ij} = 1/2 i \sum_{\alpha}(A_{i \alpha} M_{\alpha j} - \bar{A}_{i \alpha} \bar{M}_{\alpha j})`
-        ref: Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
+
+
+        Returns
+        -------
+        np.ndarray (3,3) imaginary
+
+
+        Reference
+        ---------
+        Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
         """
         return 0.5j * (self.A @ self.M - np.conjugate(self.A) @ np.conjugate(self.M))
-    
-    # FIXME These letters from Ting clash with the nomenclature of Stroh
-    # --- from Ting ch. 5
-# =============================================================================
-#     @functools.cached_property
-#     def S(self):
-#         r"""
-#         Barnett-Lothe tensors
-#         """
-#         return 1j * (2*self.A @ self.B.T - np.eye(3))
-# 
-#     @functools.cached_property
-#     def H(self):
-#         r"""
-#         Barnett-Lothe tensors
-#         """
-#         return 2j * self.A @ self.A.T
-#     
-#     @functools.cached_property
-#     def L(self):
-#         r"""
-#         Barnett-Lothe tensors
-#         """
-#         return -2j * self.L @ self.L.T
-# =============================================================================
-    
+
     # End Stroh
-    
+
 

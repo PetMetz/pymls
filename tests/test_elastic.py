@@ -17,6 +17,7 @@ from pymls.elastic import Stroh
 # local
 from fixtures import cubic_cij, cubic_stroh
 from fixtures import hexagonal_cij, hexagonal_stroh
+from fixtures import orthorhombic_cij, orthorhombic_stroh
 from fixtures import triclinic_cij, triclinic_stroh
 from fixtures import stroh_suite
 from fixtures import cij_suite
@@ -225,6 +226,7 @@ class TestTingOrthogonalityClosure:
         r"""
         :math:`\left|Q + p(R + R^{T}) + p^2T \right| = 0` (Ting eqn. 5.1-10)
         """
+        # arg = lambda s: s.Q + s.P*(s.R + s.R.T) + s.P**2 * s.T
         A = LA.det(self.s.Q + self.s.P*(self.s.R + self.s.R.T) + self.s.P**2 * self.s.T)
         B = 0 + 0j
         assert tbx.complex_tol(A, B)
@@ -303,7 +305,7 @@ class TestTingOrthogonalityClosure:
         assert tbx.float_tol(A, C)
 
     def test_Ting_558b(self):
-        r""":math:`` (c.f. Ting eqn. 5.5-8) """
+        r""":math:`N^T (\hat{I} \xi) = p (\hat{I} \xi)` (c.f. Ting eqn. 5.5-8) """
         A = np.transpose(self.s.N) @ (self.s.conI @ self.s.xi)
         B = self.s.p * (self.s.conI @ self.s.xi)
         assert tbx.complex_tol(A, B)
@@ -312,7 +314,7 @@ class TestTingOrthogonalityClosure:
         r""":math:`\eta = \hat{I} \xi` (c.f. Ting eqn. 5.5-9)"""
         A = self.s.eta
         B = self.s.conI @ self.s.xi
-        assert tbx.complex_tol(A, B)
+        assert tbx.complex_tol(A, B) # NB this is currently true by definition
 
     # FIXME failing
     def test_Ting_5510(self):

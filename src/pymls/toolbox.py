@@ -14,7 +14,7 @@ from scipy import spatial
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
-
+from tqdm import tqdm
 
 _SMALL = 1e-6
 _PREC  = 9
@@ -69,7 +69,7 @@ def is_orthogonal(X:np.ndarray) -> bool:
 
 
 def is_unit_vector(x: np.ndarray) -> bool:
-    """ |x| == 1 """
+    r""" :math:`\left|\vec{x}\right| == 1` """
     return abs(np.linalg.norm(x) - 1) <= _SMALL
 
 
@@ -238,6 +238,24 @@ def plot_r3(a, b, c, o=None, ax=None, labels=None):
 
 
 def plot_line3(ax, v, o=None, label=None) -> None:
+    """
+    Add a line to an existing matplotlib.axes instance.
+
+    Parameters
+    ----------
+    ax : matplotlib.axis
+        Axis instance to plot on.
+    v : np.ndarray
+        Cartesian coodinate.
+    o : np.ndarray, optional
+        Cartesian coordinate. The default is (0,0,0).
+    label : str, optional
+        Label passed to the line instance. The default is None.
+
+    Returns
+    -------
+    None
+    """
     if o is None:
         o = np.zeros((3,))
     ax.plot(*np.transpose((o, v-o)))
@@ -249,10 +267,9 @@ def rotation_from_axis_angle(vector:np.ndarray, angle:float, degree:bool=True) -
     r"""
     .. math::
         
-        R(u, \theta) = cos(\theta)\ I + sin(\theta)\ u_x + (1-cos(\theta))\ u \otimes u
-        
-    where :math:`u_x` is the cross product matrix
-    
+        R(u, \theta) = \cos(\theta) I + \sin(\theta) u_x + (1 - \cos(\theta)) u \otimes u
+
+    where :math:`u_x` is the cross product matrix.
 
     Parameters
     ----------
@@ -265,12 +282,12 @@ def rotation_from_axis_angle(vector:np.ndarray, angle:float, degree:bool=True) -
 
     Returns
     -------
-    TYPE
-        DESCRIPTION.
+    np.ndarray
+        Rotation matrix (3,3).
 
     Reference
     ---------
-    https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
+        `Wikipedia: Rotation_matrix#Rotation_matrix_from_axis_and_angle <https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle>`_
     """
     if degree:
         angle *= np.pi / 180  # as radian
@@ -281,3 +298,59 @@ def rotation_from_axis_angle(vector:np.ndarray, angle:float, degree:bool=True) -
     cos = np.cos(angle)
     sin = np.sin(angle)
     return cos * I + sin * ux + (1 - cos) * uu
+
+
+def float_tol_pair_in_pairs(pair:np.ndarray, pairs:np.ndarray) -> np.ndarray:
+    """
+    True if abs(a0 - b0) <= tol & abs(a1 - b1) <= tol for (ai1, aj2), (bi1, bj2)
+    in [(a01, a02), ... (aik, ajl)]
+    
+    NB this is expected to be called in iteration so no sanitization is performed.
+
+    Parameters
+    ----------
+    pair : np.ndarray
+        pair of vectors with shape (2, M)
+    pairs : np.ndarray
+        collection of vector pairs with shape (N, 2, M)
+
+    Returns
+    -------
+    np.ndarray
+        (pair in pairs) | (pair[::-1] in pairs).
+    """
+    a = pairs - pair
+    # b = pairs - pair[::-1]
+    m1 = np.sum( LA.norm(a, axis=2) <= (1e-03, 1e-03), axis=1 ) == 2
+    # m2 = np.sum( LA.norm(b, axis=2) <= (1e-03, 1e-03), axis=1 ) == 2
+    return m1 #  | m2
+
+
+# FIXME can accelerate this using sorted input, but not sure how to generalize
+def get_unique_pairs(pairs:np.ndarray, mask=False) -> np.ndarray:
+    """
+    apply float_tol_pair_in_pairs for pair in pairs
+    
+    Parameters
+    ----------
+    pairs : np.ndarray
+        collection of vector pairs with shape (N, 2, M)
+    mask: np.ndarray
+        index of unique pairs
+
+    Returns
+    -------
+    np.ndarray
+        (pair in pairs) | (pair[::-1] in pairs) for pair in pairs
+
+    """
+    pairs = np.asarray(pairs).reshape((len(pairs), 2, -1))
+    rv = [pairs[0]]
+    m  = [0,]
+    for idx, pair in tqdm(enumerate(pairs[1:]), desc='finding unique pairs...'):
+        if not any( float_tol_pair_in_pairs(pair, rv) ):
+            rv.append(pair)
+            m.append(idx+1)
+    if mask is False:
+        return np.array(rv)
+    return m

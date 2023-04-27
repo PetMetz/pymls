@@ -13,15 +13,45 @@ from pymls import toolbox as tbx
 from pymls.lattice import Lattice
 from pymls.geometric import Dislocation
 from pymls.elastic import Stroh, cij_from_group
+from pymls.contrast import MLS
 # from pymls.contrast import MLS
 
 
 # --- suites
-lattice_suite = ['cubic_lattice', 'hexagonal_lattice', 'triclinic_lattice']
-dislocation_suite = ['BCC_dislocation', 'HCP_dislocation', 'triclinic_dislocation']
-stroh_suite   = ['cubic_stroh', 'hexagonal_stroh', 'triclinic_stroh']
-cij_suite     = ['cubic_cij', 'hexagonal_cij', 'triclinic_cij']
+lattice_suite = \
+    ['cubic_lattice',
+     'hexagonal_lattice',
+     'orthorhombic_lattice',
+     'triclinic_lattice'
+    ]
+    
+dislocation_suite = \
+    ['cubic_dislocation',
+     'hexagonal_dislocation',
+     'orthorhombic_dislocation',
+     'triclinic_dislocation'
+    ]
+    
+stroh_suite = \
+    ['cubic_stroh',
+     'hexagonal_stroh',
+     'orthorhombic_stroh', 
+     'triclinic_stroh'
+    ]
+    
+cij_suite = \
+    ['cubic_cij',
+     'hexagonal_cij',
+     'orthorhombic_cij',
+     'triclinic_cij'
+    ]
 
+mls_suite = \
+    ['cubic_interface',
+     'hexagonal_interface',
+     'orthorhombic_interface',
+     'triclinic_interface'
+    ]
 
 # -- cubic crystal systems ----------------------------------------------------
 @pytest.fixture
@@ -44,19 +74,22 @@ def cubic_stroh(cubic_cij):
 
 
 @pytest.fixture
-def BCC_slip():
+def cubic_slip():
     """ (hkl)[uvw] """
     return np.array((1,1,0)), np.array((-1,1,1))
 
 
 @pytest.fixture
-def BCC_dislocation(BCC_slip, cubic_lattice):
-    hkl, uvw = BCC_slip
+def cubic_dislocation(cubic_slip, cubic_lattice):
+    hkl, uvw = cubic_slip
     L = cubic_lattice
     l = np.cross(uvw, hkl) # defines edge dislocation
     phi = tbx.abt(uvw, l, degrees=True) # dislocation character
     return Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi)
 
+@pytest.fixture
+def cubic_interface(cubic_dislocation, cubic_cij):
+    return MLS(dislocation=cubic_dislocation, cij=cubic_cij) 
 
 # --- hexagonal crystal systems -----------------------------------------------
 @pytest.fixture
@@ -78,19 +111,68 @@ def hexagonal_stroh(hexagonal_cij):
 
 
 @pytest.fixture
-def HCP_slip():
+def hexagonal_slip():
     """ (hkl)[uvw] """
     return np.array((1,1,0)), np.array((0,0,2))
     
 
 @pytest.fixture
-def HCP_dislocation(HCP_slip, hexagonal_lattice):
-    hkl, uvw = HCP_slip
+def hexagonal_dislocation(hexagonal_slip, hexagonal_lattice):
+    hkl, uvw = hexagonal_slip
     L = hexagonal_lattice
     l = np.cross(uvw, hkl) # defines edge dislocation
     phi = tbx.abt(uvw, l, degrees=True) # dislocation character
     return Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi)
 
+@pytest.fixture
+def hexagonal_interface(hexagonal_dislocation, hexagonal_cij):
+    return MLS(dislocation=hexagonal_dislocation, cij=hexagonal_cij) 
+
+# --- orthorhombic crystal systems -----------------------------------------------
+@pytest.fixture
+def orthorhombic_lattice():
+    """ Forsterite lattice """
+    return Lattice.from_scalar((4.775, 10.190, 5.978, 90, 90, 90))
+
+@pytest.fixture
+def orthorhombic_cij():
+    """ Forsterite stiffness """
+    return cij_from_group(  # GPa
+              328.7, # c11
+              66.75, # c12
+              68.35, # c13
+              199.8, # c22
+              72.67, # c23
+              235.5, # c33
+              66.78, # c44
+              80.95, # c55
+              80.57, # c66
+              group='mmm'
+              )
+        
+@pytest.fixture
+def orthorhombic_stroh(orthorhombic_cij):
+    """ Forsterite dislocation """
+    return Stroh(orthorhombic_cij)
+
+@pytest.fixture
+def orthorhombic_slip():
+    """ (hkl)<uvw> """
+    hkl = np.array((0,1,0))
+    uvw = np.array((1,0,0))    
+    return hkl, uvw
+
+@pytest.fixture
+def orthorhombic_dislocation(orthorhombic_slip, orthorhombic_lattice):
+    hkl, uvw = orthorhombic_slip
+    L = orthorhombic_lattice
+    l = np.cross(uvw, hkl) # defines edge dislocation
+    phi = tbx.abt(uvw, l, degrees=True) # dislocation character
+    return Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi)
+    
+@pytest.fixture
+def orthorhombic_interface(orthorhombic_dislocation, orthorhombic_cij):
+    return MLS(dislocation=orthorhombic_dislocation, cij=orthorhombic_cij) 
 
 # --- triclinic crystal systems -----------------------------------------------
 @pytest.fixture
@@ -159,3 +241,7 @@ def triclinic_dislocation(triclinic_slip, triclinic_lattice):
     l = np.cross(uvw, hkl) # defines edge dislocation
     phi = tbx.abt(uvw, l, degrees=True) # dislocation character
     return Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi)
+
+@pytest.fixture
+def triclinic_interface(triclinic_dislocation, triclinic_cij):
+    return MLS(dislocation=triclinic_dislocation, cij=triclinic_cij)

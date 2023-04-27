@@ -18,7 +18,7 @@ from . import toolbox as tbx
 
 
 class Lattice():
-    """ simple representation of a lattice """
+    """ Simple representation of a lattice """
     
     # - state variables
     _G = None
@@ -28,30 +28,54 @@ class Lattice():
         return f'<Lattice(a={self.a:.5f}, b={self.b:.5f}, c={self.c:.5f}, alpha={self.al:.5f}, beta={self.be:.5f}, gamma={self.ga:.5f} @ {hex(id(self))} >'
                      
     def __hash__(self):
-        """ overload built in hash """
         return hash((self.a, self.b, self.c, self.al, self.be, self.ga))
 
     def __eq__(self, other):
-        """ overload built-in equal """
         if isinstance(other, Lattice):
-            return self.__hash__() == other.__hash__()
+            return self.__hash__() == other.__hash__()  # FIXME better to use float tolerance
         return NotImplemented
 
     def __ne__(self, other):
-        """ overload built-in not equal """
         result = self.__eq__(other)
         if result is NotImplemented:
             return result
         return not result
 
     def __init__(self, matrix:np.ndarray=None) -> None:
-        """ intialize unit cell parameters ($\AA$ and $\degree$)"""
+        """
+        Simple representation of a Lattice.
+
+        Parameters
+        ----------
+        matrix : np.ndarray, optional
+            Vector basis. The default is I(3).
+
+        Returns
+        -------
+        None
+        """
         self.matrix = matrix
         
     # - constructors
     @classmethod
     def from_scalar(cls, x:tuple) -> Lattice:
-        """ Julian 2014 Foundations of Crystallography, p.17 (eqn. 1.6) """
+        """
+        Constructor method for Lattice instance.
+
+        Parameters
+        ----------
+        x : tuple
+            Scalar lattice (a, b, c, alpha, beta, gamma).
+
+        Returns
+        -------
+        Lattice
+            Instance of Lattice.
+
+        Reference
+        ---------
+        Julian (2014) Foundations of Crystallography, p.17 eqn. 1.6    
+        """
         x = np.asarray(x)
         a, b, c = x[:3] # unpack
         angles = x[3:] * np.pi / 180
@@ -69,19 +93,43 @@ class Lattice():
         
     @classmethod
     def from_matrix(cls, x:np.ndarray) -> Lattice:
-        """ """
+        """
+        Constructor method for Lattice instance
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Vector basis (M).
+
+        Returns
+        -------
+        Lattice
+            Instance of Lattice.
+        """
         return cls(x)
 
     # FIXME there must be a linear algebra route to this.
     @classmethod
     def from_metric(cls, x:np.ndarray) -> Lattice:
         r"""
+        Constructor method for Lattice instance.
+                
         .. math::
             
-            \vec{a}\cdot\vec{b} = a b cos(\theta)
+            \vec{a}\cdot\vec{b} = a\ b\ cos(\theta)
             
             \theta = cos^{-1}\left(\frac{\vec{a}\cdot\vec{b}}{a b}\right)
             
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Lattice metric tensor (G).
+
+        Returns
+        -------
+        Lattice
+            Instance of Lattice.
         """
         abc = np.sqrt(np.diag(x))
         angles = np.array((
@@ -93,7 +141,24 @@ class Lattice():
     
     @classmethod
     def dispatch_constructor(cls, x) -> Lattice:
-        """ """
+        """
+        Dispatcher for Lattice constructor.
+
+        Parameters
+        ----------
+        x : TYPE
+            Scalar vector (6,), vector basis (3,3), or metric tensor (3,3).
+
+        Raises
+        ------
+        Exception
+            Fails provided input doesn't match one of the provided constructor arguments.
+
+        Returns
+        -------
+        Lattice
+            Instance of Lattice.
+        """
         if isinstance(x, Lattice): # don't know why you'd want this
             return x.copy()
         elif isinstance(x, Iterable) and len(x) == 6: # scalar
@@ -107,10 +172,14 @@ class Lattice():
     
     # - mutations
     def copy(self) ->Lattice:
-        """ return new instance of self """
+        """ returns new instance of self from self.M """
         return Lattice(self.matrix) # deepcopy(self)
     
     def transform(self, x:(np.ndarray,sp.spatial.transform.Rotation)) -> Lattice:
+        """
+        Will probably deprecate sp.spatial.Rotation in favor of generalized
+        Affine approach.
+        """
         # - as matrix
         if isinstance(x, np.ndarray):
             assert x.shape == self.matrix.shape, 'invalid transformation matrix'
@@ -125,7 +194,21 @@ class Lattice():
         
     # - metrics
     @property
-    def matrix(self):
+    def matrix(self) -> np.ndarray:
+        r"""
+        Vector basis of lattice, as in
+        
+        .. math::
+            
+            matrix = [\vec{x_1}, \vec{x_2}, \vec{x_3}]
+            
+                   =
+            \begin{bmatrix}
+                  ( x_{11} & x_{12} & x_{13} )\\
+                  ( x_{21} & x_{22} & x_{23} )\\
+                  ( x_{31} & x_{32} & x_{33} )\\
+            \end{bmatrix}
+        """
         return self._matrix
     
     @matrix.setter
@@ -136,85 +219,124 @@ class Lattice():
     
     @property
     def M(self):
-        """ alias """
+        """ Alias of `self.matrix`. """
         return self.matrix
 
     @property
     def metric_tensor(self):
-        """ alias """
+        r"""
+        Metric tensor of the crystal lattice.
+        
+        .. math::
+            
+            G = M \cdot M^T
+        """
         return self.G
     
     @property
     def G(self):
-        """ metric tensor """
+        """ Alias of `self.metric_tensor`. """
         if self._G is None:
             self._G = (self.M @ self.M.T) # .round(tbx._PREC)
         return self._G
 
     @property
     def reciprocal(self):
+        r"""
+        Lattice instance from :math:`M^{-1}`.
+        
+        NB private attribute set on instantiation.
+        """
         if self._reciprocal is None:
-            # V = self.V
-            # x1, x2, x3 = self.M
-            # b1 = np.cross(x2, x3) / V  # 1, 2, 3
-            # b3 = np.cross(x1, x2) / V  # 3, 1, 2
-            # b2 = np.cross(x3, x1) / V  # 2, 3, 1
-            # self._reciprocal = Lattice.from_matrix(np.transpose((b1, b2, b3)))  # [b1,b2,b3]^T = [a1,a2,a3]^-1
             self._reciprocal = Lattice.from_matrix(LA.inv(self.M).T)
         return self._reciprocal
     
     # - properties
     @property
     def volume(self):
+        r"""
+        Lattice volume:
+            
+        .. math::
+           
+            V = \sqrt{ det\ G }
+        """
         return np.sqrt(LA.det(self.G))
     
     @property
     def V(self):
-        """ alias """
+        r""" Alias of `self.volume`. """
         return self.volume
     
     @property
     def a(self):
+        r""" Lattice scalar `a`. """
         return self.length((1,0,0)) # np.sqrt( self.e1 @ self.e1 )
 
     @property
     def b(self):
+        r""" Lattice scalar 'b'. """
         return self.length((0,1,0)) # np.sqrt( self.e2 @ self.e2 )
 
     @property
     def c(self):
+        r""" Lattice scalar 'c'. """
         return self.length((0,0,1)) # np.sqrt( self.e3 @ self.e3 )
 
     @property
     def al(self):
+        r""" Lattice scalar :math:`\alpha`. """
         return self.angle((0,1,0),
                           (0,0,1), degrees=True)
 
     @property
     def be(self):
+        r""" Lattice scalar :math:`\beta`. """
         return self.angle((1,0,0),
                           (0,0,1), degrees=True)
     
     @property
     def ga(self):
+        r""" Lattice scalar :math:`\gamma`. """
         return self.angle((1,0,0),
                           (0,1,0), degrees=True)
 
     @property
     def abc(self):
+        r""" Lattice vector magnitudes `(a, b, c)`. """
         return np.array((self.a, self.b, self.c), dtype=float)
 
     @property
     def angles(self):
+        r""" Lattice vector angles :math:`(\alpha, \beta, \gamma)`. """
         return np.array((self.al, self.be, self.ga), dtype=float)
 
     @property
     def scalar(self) -> np.ndarray:
+        r""" Lattice scalars :math:`(a, b, c, \alpha, \beta, \gamma)`. """
         return np.concatenate((self.abc, self.angles))
 
     # - functions 
     def angle_between(self, x1: np.ndarray, x2: np.ndarray, x3:np.ndarray, degrees=False):
-        """ vertex at x2. default vertex == origin """
+        r"""
+        Angle :math:`\angle(x_1, x_2, x_3)` with vertex at :math:`x_2`.
+
+        Parameters
+        ----------
+        x1 : np.ndarray
+            Cartesian coordinate 1.
+        x2 : np.ndarray
+            Cartesian coordinate 2.
+        x3 : np.ndarray
+            Cartesian coordinate 3.
+        degrees : Bool, optional
+            Return degrees or radians. The default is False (radians).
+
+        Returns
+        -------
+        Float
+            :math:`\angle(x_1,x_2,x_3) = cos^{-1}(x_{12} \cdot G \cdot x_{23} / (|x_{12}|\ |x_{23}|))`.
+        """
         x1 = np.asarray(x1)
         x2 = np.asarray(x2)
         x3 = np.asarray(x3)
@@ -225,27 +347,72 @@ class Lattice():
             return 180 / np.pi * rv
         return rv
 
-    def distance_between(self, x1:np.ndarray, x2: np.ndarray, degrees=False):
+    def distance_between(self, x1:np.ndarray, x2: np.ndarray):
+        """ Alias for `self.length`. """
         x1 = np.asarray(x1)
         x2 = np.asarray(x2)
         x12 = x2 - x1
         return self.length(x12)
     
-    def angle(self, v1:np.ndarray, v2:np.ndarray, degrees=False):
-        r""" :math:`cos \theta := v_1 \cdot v_2 / |v_1||v_2|` """
-        return self.angle_between(v1, np.array((0,0,0)), v2, degrees)
+    def angle(self, x1:np.ndarray, x2:np.ndarray, degrees=False):
+        r"""
+        Angle between cartesian coordinates `x1` and `x2` taking vertex as
+        origin.
+
+        Parameters
+        ----------
+        x1 : np.ndarray
+            Cartesian coordinates 1.
+        x2 : np.ndarray
+            Cartesian coordinates 2.
+        degrees : Bool, optional
+            Return degrees or radians. The default is radians.
+
+        Returns
+        -------
+        Float
+            :math:`\angle(x_1, O, x_2)`.
+        """
+        return self.angle_between(x1, np.array((0,0,0)), x2, degrees)
         
     def length(self, v1:np.ndarray):
-        r""" :math:`v_1 \cdot v_1 == v_1^T G v_1` """
+        r"""
+        Distance between points `x1` and `x2`.
+
+        Parameters
+        ----------
+        x1 : np.ndarray
+            Cartesian coordinate 1.
+        x2 : np.ndarray
+            Cartesian coordinate 2.
+
+        Returns
+        -------
+        Float
+            :math:`\sqrt{x_1 \cdot G \cdot x_2}`.
+        """
         return np.sqrt(v1 @ self.G @ v1)
 
     def dhkl(self, h, k, l):
+        r"""
+        D-spacing for the corresponding Miller indices.
+
+        Parameters
+        ----------
+        h, k, l : Int
+            Miller indices.
+
+        Returns
+        -------
+        Float
+            Reciprocal lattice spacing.
+        """
         return 1 / self.reciprocal.length((h, k, l))
 
     # FIXME under construction 
     @property
     def laue(self):
-        """ return crystal system """
+        r""" Laue group (may be depricated for Lattice class). """
         ... 
         return 'not implemented'
 

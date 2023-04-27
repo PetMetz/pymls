@@ -5,6 +5,7 @@ Created on Wed Jun 29 12:47:54 2022
 @author: pmetz1
 """
 # 3rd party
+import matplotlib.pyplot as plt
 import numpy as np
 
 # package
@@ -12,6 +13,7 @@ from pymls import Lattice, Dislocation, Stroh, MLS
 from pymls.elastic import cij_from_group
 from pymls.toolbox import abt
 
+plt.close('all')
 
 # - 1. crystal lattice
 lattice_scalar = (4.775, 10.190, 5.978, 90, 90, 90)
@@ -19,7 +21,7 @@ lattice_scalar = (4.775, 10.190, 5.978, 90, 90, 90)
 # - 2. slip system
 hkl = np.array((0,1,0))
 uvw = np.array((1,0,0))
-l   = np.cross(hkl, uvw)
+l   = np.array((0,0,1)) # np.cross(hkl, uvw)
 phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 chi = abt(hkl, uvw, degrees=True)
 
@@ -44,11 +46,25 @@ S = Stroh(C) # captures characteristic elastic matrix and eigensolution
 I = MLS(dislocation=D, cij=C) # captures sum computation
 
 # - 5. compute values
-Cmls = I.Chkl(uvw)
-print(Cmls)
-# print(f'Anzic: {Canzic:.6f}; this work: {Cmls:.6f}')
-# print(f'Differs by Canzic / Cmls == {Canzic / Cmls:.6f}')
+sss = np.array(( # c.f. Table 5, MLS (2009)
+    (0,2,0),
+    (1,1,0),
+    (0,2,1),
+    (1,0,1)
+    ))
+cbar = np.array(( # c.f. Table 5, MLS (2009)
+    0.1340,
+    0.4548,
+    0.0449,
+    0.1773
+    ))
 
+for s, c in zip(sss, cbar):
+    Cmls = I.Chkl(s)
+    print(f'MLS (2009): {c:.6f}; this work: {Cmls:.6f}')
+    print(f'Differs by c / Cmls == {c / Cmls:.6f}')
+    print('')
 
 # plot
+plt.close('all')
 D.visualize()

@@ -18,12 +18,14 @@ from . import toolbox as tbx
 #       Probably better to store the Lattice as an attribute and alias it (i.e. as L) for brevity
 class Dislocation(lattice.Lattice):
     """
+    Slip reference frame for the slip system {hkl}<uvw> and geometric
+    aspects of the dislocation contrast factor.
+    
+    
+    Reference
+    ---------
     Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
-    dislocations." Acta Cryst A65, 109-119.
-    
-    construct slip reference frame for the slip system {hkl}<uvw> for the
-    crystal system defined by.
-    
+        dislocations." Acta Cryst A65, 109-119.
     """
     # - class state
     _Rp2 = None
@@ -31,6 +33,7 @@ class Dislocation(lattice.Lattice):
     _P   = None
 
     def _reset(self):
+        """ Reset class state. """
         self._Rp2 = None
         self._e   = None
         self._P   = None
@@ -44,13 +47,13 @@ class Dislocation(lattice.Lattice):
                        uvw: np.ndarray,
                        phi: float,
                        SGno: int=None
-                       ):
+                       ) -> None:
         r"""
 
         Parameters
         ----------
         L : lattice.Lattice
-            A Lattice instance, scalar parameter set, or matrix
+            A Lattice instance, scalar parameter set (6,), or vector basis (3,3)
         hkl : np.ndarray
             (hkl) describing :math:`\vec{n}`, the normal to the slip plane.
         uvw : np.ndarray
@@ -60,11 +63,6 @@ class Dislocation(lattice.Lattice):
         SGno : int, optional
             Space group number. No symmetry operations currently defined.
             The default is None.
-
-        Returns
-        -------
-        None.
-
         """
         # FIXME this needs to __init__ to use as a superclass, so a dispatch doesn't work here
         super().__init__(super().dispatch_constructor(lattice).matrix) 
@@ -74,46 +72,46 @@ class Dislocation(lattice.Lattice):
         self.SG = SGno
             
     @property
-    def SG(self):
+    def SG(self) -> int:
+        """ Space group number. """
         return self._SGno
     
     @SG.setter
-    def SG(self, x):
+    def SG(self, x) -> None:
         self._SGno = x
         
     @property
-    def hkl(self):
+    def hkl(self) -> np.ndarray:
+        """ Miller indices of slip plane. """
         return self._hkl
     
     @hkl.setter
-    def hkl(self, x):
+    def hkl(self, x) -> None:
         self._reset()
         self._hkl = x
 
     @property
-    def uvw(self):
+    def uvw(self) -> np.ndarray:
+        """ Miller indices of slip vector. """
         return self._uvw
     
     @uvw.setter
-    def uvw(self, x):
+    def uvw(self, x) -> None:
         self._reset()
         self._uvw = x
     
     @property
-    def burgers(self):
-        """ alias uvw """
+    def burgers(self) -> np.ndarray:
+        """ Alias of  `self.uvw`. """
         return self.uvw
     
     @property
-    def line(self):
+    def line(self) -> np.ndarray:
+        r""" Line vector defined :math:`R_{p2} \cdot \vec{b}`. """
         return self.Rp2 @ self.uvw
     
     @property
-    def phi(self):
-        return self._phi
-    
-    @phi.setter
-    def phi(self, x):
+    def phi(self) -> float:
         """
         Angle between dislocation line and Burgers vector describes
         dislocation character, :math:`\phi`. [1]
@@ -130,87 +128,109 @@ class Dislocation(lattice.Lattice):
         [2] Martinez-Garcia, Leoni, and Scardi (2009). Diffraction contrast
                 factor of dislocations. Acta Cryst. A65, 109–119.
         """
+        return self._phi
+    
+    @phi.setter
+    def phi(self, x) -> None:
         self._reset()
         self._phi = x
        
-# =============================================================================
-#     # FIXME Should be an axis-angle rotation matrix, should confirm again the
-#     #       convention of the matrix utilized.
-#     @property
-#     @tbx.orthogonal
-#     @tbx.unit_vectors
-#     def Rp2(self):
-#         """
-#         NB this yields a different rotation matrix than expected from conventional
-#         linear algebra, which may again be a convention issue
-#         """
-#         if self._Rp2 is None:
-#             # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
-#             #       e2 = 1/|n| M @ [h,k,l]
-#             # xi2 = self.reciprocal.M.T @ self.hkl / self.reciprocal.length(self.hkl)
-#             xi2 = self.xi2
-#             # - (b1)
-#             phi = np.radians(self.phi)
-#             sinp = np.sin(phi)
-#             cosp = np.cos(phi)
-#             sinp2 = np.sin(phi/2) ** 2
-#             xi21, xi22, xi23 = xi2
-#             # m1 = 2 * sinp2 * np.array((
-#             #     (xi21*xi21,  xi21*xi22, xi21*xi23),
-#             #     (xi22*xi21,  xi22*xi22, xi22*xi23), 
-#             #     (xi23*xi21,  xi23*xi22, xi23*xi23)
-#             #     ))
-#             XI2 = xi2 * np.ones((3,3))
-#             m1 = 2 * sinp2 * XI2 * XI2.T
-#             
-#             m2 = np.array((
-#                 (1,   xi23, xi22),
-#                 (xi23,   1, xi21),     
-#                 (xi22, xi21, 1  )
-#                 ))
-#             m3 = np.array((
-#                 ( cosp,  sinp, -sinp),
-#                 (-sinp,  cosp,  sinp),
-#                 ( sinp, -sinp,  cosp)
-#                 ))
-#             self._Rp2 =  m1 + (m2 * m3)  # element-wise
-#         return self._Rp2
-# =============================================================================
     @property
     @tbx.orthogonal
     @tbx.unit_vectors
-    def Rp2(self):
-        return tbx.rotation_from_axis_angle(vector=self.xi2, angle=-self.phi, degree=True) # MLS shows this rotation of b into l in the negative sense
+    def Rp2(self) -> np.ndarray:
+        """ 
+        Rotation determined by axis :math:`\chi_2` and angle :math:`\phi`.
+        
+        Returns
+        -------
+        np.ndarray (3,3)
+            Rotation matrix transforming Burgers vector `b` into the line vector `l`.
+        
+        
+        Reference
+        ---------
+        Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
+            dislocations." Acta Cryst A65, 109-119. eqns. 5-6.
+        """
+        return tbx.rotation_from_axis_angle(vector=self.xi2, angle=self.phi, degree=True) # MLS shows this rotation of b into l in the negative sense of phi
     
     @property
     @tbx.unit_vector
-    def xi2(self):
-        """ MLS (2009) eqn. 3 """
+    def xi2(self) -> np.ndarray:
+        """
+        Normalized slip plane vector.
+        
+        Returns
+        -------
+        np.ndarray (3,)
+            Dislocation reference frame vector.
+        
+        Reference
+        ---------
+        Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
+        dislocations." Acta Cryst A65, 109-119. eqn. 3
+        """
         return self.reciprocal.M @ self.hkl / self.reciprocal.length(self.hkl)
     
     @property
     @tbx.unit_vector
-    def xib(self):
-        """ normalized burgers vector MLS (2009) eqn. 4 """
+    def xib(self) -> np.ndarray:
+        """
+        Normalized burgers vector.
+
+        Returns
+        -------
+        np.ndarray (3,)
+            Dislocation reference frame vector.
+
+        Reference
+        ---------
+        Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
+        dislocations." Acta Cryst A65, 109-119. eqn. 4
+        """
         return self.M @ self.uvw / self.length(self.uvw)
     
     @property
     @tbx.unit_vector
-    def xi3(self):
-        """ MLS (2009) eqn. 5 """
+    def xi3(self) -> np.ndarray:
+        """
+        Normalized line vector.
+
+        Returns
+        -------
+        np.ndarray (3,)
+            Dislocation reference frame vector.
+
+        Reference
+        ---------
+        Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
+        dislocations." Acta Cryst A65, 109-119. eqn. 5
+        """
         return self.Rp2 @ self.xib
     
     @property
     @tbx.unit_vector
-    def xi1(self):
-        """ MLS (2009) eqn. 7 """
+    def xi1(self) -> np.ndarray:
+        """
+        Line vector `l` cross slip plane vector `hkl`.
+
+        Returns
+        -------
+        np.ndarray (3,)
+            Dislocation reference frame vector.
+
+        Reference
+        ---------
+        Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
+        dislocations." Acta Cryst A65, 109-119. eqn. 7
+        """
         return np.cross(self.xi2, self.xi3)
         
-    
     @property
     @tbx.orthogonal
     @tbx.unit_vectors
-    def P(self):
+    def P(self) -> np.ndarray:
         r""" 
         .. math::
             
@@ -219,148 +239,142 @@ class Dislocation(lattice.Lattice):
             and
             
             P = \xi_{ij}
-            
-            NB MLS (2009) type this in row-major format
         
+        Returns
+        -------
+        np.ndarray (3,3)
+            
+        Reference
+        ---------
+            NB MLS (2009) type this in row-major format
         """
         if self._P is None:
-            # # - (a) e2 := n = Ha* + Kb* + Lc* with coordinates [HKL] in the basis [a*, b*, c*]
-            # #       e2 = 1/|n| M @ [h,k,l]
-            # modn = self.reciprocal.length(self.hkl)
-            # xi2 = 1 / modn * self.reciprocal.M @ self.hkl # np.sqrt( self.hkl @ self.reciprocal.G @ self.hkl)
-            # # - (b) e3 := R(phi, e2) @ [b1, b2, b3]
-            # modb = self.length(self.uvw)
-            # xib = 1 / modb * self.M @ self.uvw #  / np.sqrt(self.uvw @ self.G @ self.uvw)
-            # xi3 = self.Rp2 @ xib
-            # # - (c) e1 := e2 x e3
-            # xi1 = np.cross(xi2, xi3)
             self._P = np.array((self.xi1, self.xi2, self.xi3))
         return self._P
     
-    
+    # FIXME    
     # equation 8 is somewhat perplexing-- it gives e_i = PM[abc], but if M
     # is the reciprocal lattice matrix, and [abc] is the crystal lattice matrix,
     # this is the transform of the identity matrix.
     @property
     @tbx.orthogonal
     @tbx.unit_vectors
-    def e(self):
+    def e(self) -> np.ndarray:
         """
-        Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
-        dislocations." Acta Cryst A65, 109-119.
+        ...
         
-        construct slip reference frame for the slip system {hkl}<uvw> for the
-        crystal system defined by `lattice`.
+        Returns
+        -------
+        np.ndarray (3,3)
+            Dislocation reference frame.
+
+        Reference
+        ---------
+        Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
+        dislocations." Acta Cryst A65, 109-119. eqn. 8
         """
         if self._e is None:
             self._e = self.P @ self.reciprocal.M @ self.M
         return self._e
 
     @property
-    def e1(self):
-        """ dislocation reference frame """
+    def e1(self) -> np.ndarray:
+        """ Dislocation reference frame 1. """
         return self.e[0]
     
     @property
-    def e2(self):
-        """ dislocation reference frame """
+    def e2(self) -> np.ndarray:
+        """ Dislocation reference frame 2. """
         return self.e[1]
     
     @property
-    def e3(self):
-        """ dislocation reference frame """
+    def e3(self) -> np.ndarray:
+        """ Dislocation reference frame 3. """
         return self.e[2]
 
-    # @functools.lru_cache(maxsize=100)  # this isn't a substantial gain, and limits arguments to hashable inputs
     def t1(self, s:tuple) -> float:
-        """ direction cosines. s == diffracting plane. returns (1,) """
-        # version 1
-        # return np.sqrt(1 - self.t2(s)**2 - self.t3(s)**2)
-        # version 2
-        v1 = s / LA.norm(s) # should just be a unit vector/ self.reciprocal.length(s)
-        v2 = self.e1 # should be unit vector by construction / self.length(self.e1)
-        return v1 @ v2
+        r""" Direction cosine between the diffraction vector `s` and :math:`e_1`. """
+        return s / LA.norm(s) @ self.e1
     
-    # @functools.lru_cache(maxsize=100)
     def t2(self, s:tuple) -> float:
-        r"""
-        direction cosines
+        r""" Direction cosine between the diffraction vector `s` and :math:`e_2`. """
+        return s / LA.norm(s) @ self.e2
         
+    def t3(self, s:tuple) -> float:
+        r""" Direction cosine between the diffraction vector `s` and :math:`e_3`. """
+        return s / LA.norm(s) @ self.e3
+    
+    def tau(self, s:np.ndarray) -> np.ndarray:
+        r"""
+        Direction cosines between diffraction vector `s` and slip reference
+        system.
+
         .. math::
             
-            \tau_i = \frac{\vec{d}^*}{d^*} \cdot \vec{e}_i
-        
-        where math:`\vec{d}^*` is coincident with the diffraction vector and 
-        :math:`\vec{e}_i` is a vector in the dislocation reference frame
-        
-        returns (1,)
-        """
-        # return self.reciprocal.angle(s, self.hkl)
-        # Gstar = self.reciprocal.G
-        # version 1
-        # n = s @ Gstar @ self.hkl  # vector @ transform @ vector -> scalar
-        # d = (self.hkl @ Gstar @ self.hkl)**0.5 * (s @ Gstar @ s)**0.5 # length * length
-        # return n / d
-        # version 2
-        # v1 = s / self.reciprocal.length(s)
-        # v2 = self.hkl / self.reciprocal.length(self.hkl)
-        # return v1 @ Gstar @ v2
-        # version 3
-        v1 = s / LA.norm(s) # should just be a unit vector self.reciprocal.length(s)
-        v2 = self.e2  # should be unit vector by construction  / self.length(self.e2)
-        return v1 @ v2
-    
-    # @functools.lru_cache(maxsize=100)
-    def t3(self, s:tuple) -> float:
-        """ direction cosines. s == diffracting plane. returns (1,) """
-        # M = self.M
-        # Gstar = self.reciprocal.G
-        # G = self.G # typo in eqn 11?
-        # version 1
-        # n = s @ M.T @ self.Rp2 @ LA.inv(M.T) @ self.uvw # vector @ transform @ vector -> scalar
-        # d = (self.uvw @ Gstar @ self.uvw )**0.5 * (s @ Gstar @ s)**0.5  # length * length
-        # return n / d
-        # version 2
-        # v1 = s / self.reciprocal.length(s)
-        # v2 = self.uvw / self.reciprocal.length(self.uvw)
-        # T  = self.M.T @ self.Rp2 @ LA.inv(self.M.T)
-        # return v1 @ T @ v2
-        # version 3
-        v1 = s / LA.norm(s) # should just be a unit vector/ self.reciprocal.length(s)
-        v2 = self.e3 # should be unit vector by construction  / self.length(self.e3)
-        return v1 @ v2
+            \tau_i = \vec{s^*}/s^* \cdot \vec{e}_i
 
-    # @functools.lru_cache(maxsize=100)
-    def tau(self, s:tuple) -> np.ndarray:
-        r""" direction cosines :math:`\tau_i = \vec{s^*}/s^* \cdot \vec{e}_i` """
+        Parameters
+        ----------
+        s : np.ndarray (3,)
+            Diffraction vector.
+
+        Returns
+        -------
+        np.ndarray (3,)
+            Vector of direction cosines.
+        """
         return np.array((
             self.t1(s),
             self.t2(s),
             self.t3(s)
             ), dtype=float) # .round(tbx._PREC)
 
-    def Gijmn(self, s) -> np.ndarray:
+    def Gijmn(self, s:np.ndarray) -> np.ndarray:
         r"""
+        Geometric component of the dislocation contrast factor.
+        
         .. math::
             
             G_{ijmn} = \tau_i \tau_j \tau_m \tau_n,
-            (i,m) = 1,2,3,
-            (j,n) = 1,2.
+            
+            (i,m) \in 1,2,3,
+            
+            (j,n) \in 1,2.
+
+        Parameters
+        ----------
+        s : np.ndarray (3,)
+            Diffraction vector `s`.
+
+        Returns
+        -------
+        rv : np.ndarray (3,2,3,2)
+            Geometric component of the dislocation contrast factor.
+
+        Reference
+        ---------
+        Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
+        dislocations." Acta Cryst A65, 109-119. eqn. 10
         """
-        a = np.zeros((3,2,3,2)) # .reshape((-1,4))
+        rv = np.zeros((3,2,3,2))
         I = np.indices((3,2,3,2)).T.reshape((-1,4))
-        tau = self.tau(s) # (-1,)
+        tau = self.tau(s)
         for index in I:
-            a[tuple(index)] = np.product([tau[i] for i in index])
-        return a
-        # rv = np.product(tau[I], axis=1) # NB this works because tau is 1D, hence I is treated as an integer mask
-        # return rv.reshape((3,2,3,2)) # .round(tbx._PREC)
+            rv[tuple(index)] = np.product([tau[i] for i in index])
+        return rv
     
-    def visualize(self):
-        from .toolbox import plot_cell
+    def visualize(self) -> tuple:
+        """
+        Simple rendering of unit cell and relevant reference frames.
+        
+        Returns
+        -------
+        (fig, ax) : tuple
+            (matplotlib.figure, matplotlib.axis).
+        """
         o = np.array((0,0,0))
         # - unit cell        
-        fig, ax = plot_cell(self)
+        fig, ax = tbx.plot_cell(self)
         # - lattice vectors
         for v, s in zip(self.matrix, ('a', 'b', 'c')):
             ax.plot(*np.transpose((o, v))) # (xs, ys, zs, *args)
