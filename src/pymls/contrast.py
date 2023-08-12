@@ -75,7 +75,7 @@ class MLS():
     # - indexed on alpha only
     @functools.cached_property
     def D(self) -> np.ndarray:
-        r"""
+        r"""       
         .. math::
 
             D_{\alpha} = - \frac{(L_{\alpha} \cdot b_{v})}{|b_{v}|(A_{\alpha} \cdot L_{\alpha})}
