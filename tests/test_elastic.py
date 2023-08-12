@@ -36,7 +36,11 @@ I = np.eye(3)
 def test_stroh_instance(thisFixture, request):
     """ does it init """
     result = request.getfixturevalue(thisFixture)
-    return Stroh(result)
+    try:
+        s = Stroh(result)
+        assert True
+    except:
+        assert False
 
 
 @pytest.mark.parametrize('thisFixture', stroh_suite)
