@@ -171,7 +171,7 @@ class Dislocation(lattice.Lattice):
         Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
         dislocations." Acta Cryst A65, 109-119. eqn. 3
         """
-        return self.reciprocal.M @ self.hkl / self.reciprocal.length(self.hkl)
+        return self.reciprocal.M.T @ self.hkl / self.reciprocal.length(self.hkl)
     
     @property
     @tbx.unit_vector
@@ -189,7 +189,7 @@ class Dislocation(lattice.Lattice):
         Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
         dislocations." Acta Cryst A65, 109-119. eqn. 4
         """
-        return self.M @ self.uvw / self.length(self.uvw)
+        return self.M.T @ self.uvw / self.length(self.uvw)
     
     @property
     @tbx.unit_vector
@@ -225,7 +225,8 @@ class Dislocation(lattice.Lattice):
         Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
         dislocations." Acta Cryst A65, 109-119. eqn. 7
         """
-        return np.cross(self.xi2, self.xi3)
+        v = np.cross(self.xi2, self.xi3)
+        return v / LA.norm(v) 
         
     @property
     @tbx.orthogonal
@@ -274,7 +275,7 @@ class Dislocation(lattice.Lattice):
         dislocations." Acta Cryst A65, 109-119. eqn. 8
         """
         if self._e is None:
-            self._e = self.P @ self.reciprocal.M @ self.M
+            self._e = self.P @ self.reciprocal.M.T @ self.M
         return self._e
 
     @property

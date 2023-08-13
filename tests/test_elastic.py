@@ -182,7 +182,7 @@ def test_eig_nontrivial(thisFixture, request):
     """
     s = request.getfixturevalue(thisFixture)
     A = LA.det(s.N - s.p * np.eye(6))
-    B = 0 + 0j
+    B = 0j
     assert tbx.complex_tol(A, B)
 
 

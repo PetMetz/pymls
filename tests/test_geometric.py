@@ -16,9 +16,9 @@ from pymls.geometric import Dislocation
 from pymls import toolbox as tbx
 
 # local
-from fixtures import cubic_lattice, hexagonal_lattice, triclinic_lattice
-from fixtures import cubic_slip, hexagonal_slip, triclinic_slip
-from fixtures import cubic_dislocation, hexagonal_dislocation, triclinic_dislocation
+from fixtures import cubic_lattice, hexagonal_lattice, orthorhombic_lattice, triclinic_lattice
+from fixtures import cubic_slip, hexagonal_slip, orthorhombic_slip, triclinic_slip
+from fixtures import cubic_dislocation, hexagonal_dislocation, orthorhombic_dislocation, triclinic_dislocation
 from fixtures import lattice_suite
 from fixtures import dislocation_suite
 
@@ -106,15 +106,15 @@ class TestOrthogonal:
 
     def test_P(self):
         """ """
-        assert tbx.is_orthogonal(self.d.P)
+        assert tbx.is_orthogonal(self.d.P) is True
     
     def test_e(self):
         """ """
-        assert tbx.is_orthogonal(self.d.e)
+        assert tbx.is_orthogonal(self.d.e) is True
     
     def test_rp2(self):
         """ """
-        assert tbx.is_orthogonal(self.d.Rp2)
+        assert tbx.is_orthogonal(self.d.Rp2) is True
     
     # end TestOrthogonal
 
@@ -154,7 +154,7 @@ class TestSymmetry:
 
     def test_M_asymmetric(self):
         """ """
-        assert tbx.is_symmetric(self.d.M) is False
+        assert tbx.is_symmetric(self.d.M) is self.d.is_orthogonal
 
     def test_G_symmetric(self):
         """ """
@@ -162,7 +162,7 @@ class TestSymmetry:
     
     def test_reciprocal_M_asymmetric(self):
         """ """
-        assert tbx.is_symmetric(self.d.reciprocal.M) is False
+        assert tbx.is_symmetric(self.d.reciprocal.M) is self.d.is_orthogonal
     
     def test_reciprocal_G_symmetric(self):
         """ """

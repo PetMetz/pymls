@@ -15,7 +15,7 @@ from pymls.toolbox import abt
 
 
 # - 1. crystal lattice
-S = (1, 1, 1, 60, 90, 120)
+scalar = (1, 1, 1, 60, 90, 120)
 
 # - 2. slip system
 hkl = np.array((0,0,1))  # BCC slip plane
@@ -27,13 +27,13 @@ phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 C = cij_from_group(116.3, 64.8, 30.9, group='m-3m') # GPa
 
 # - 4. class instances
-lattice = Lattice.from_scalar( S ) 
-dislocation = Dislocation(lattice=lattice, hkl=hkl, uvw=uvw, phi=phi, SGno=None)
-stroh = Stroh(C) # captures characteristic elastic matrix and eigensolution
-calc = MLS(dislocation=dislocation, cij=C) # captures sum computation
+L = Lattice.from_scalar( scalar ) 
+D = Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi, SGno=None)
+S = Stroh(C) # captures characteristic elastic matrix and eigensolution
+I = MLS(dislocation=D, cij=C) # captures sum computation
 
 # - 5. viz
-fig, ax = dislocation.visualize()
+fig, ax = D.visualize()
 
 
 
@@ -62,8 +62,11 @@ def vol_from_scalar(a,b,c,al,be,ga):
     return a*b*c*np.sqrt(1 + 2*cosa*cosb*cosg - cosa**2 - cosb**2 - cosg**2)
 
 
-
-M = MLS_M(lattice)
-L = Lattice(M)
-D = Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi)
-C2 = MLS(D, C)
+# =============================================================================
+# 
+# M = MLS_M(L)
+# L = Lattice(M)
+# D = Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi)
+# C2 = MLS(D, C)
+# 
+# =============================================================================
