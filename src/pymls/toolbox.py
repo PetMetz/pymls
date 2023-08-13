@@ -27,14 +27,14 @@ conI = np.row_stack((
 # ---
 
 
-def abt(a: np.ndarray, b: np.ndarray, degrees=False):
+def abt(a: np.ndarray, b: np.ndarray, degrees=False) -> float:
     rv = np.arccos(a @ b / (np.linalg.norm(a) * np.linalg.norm(b)))
     if degrees:
         return 180 / np.pi * rv
     return rv
 
 
-def square(X):
+def square(X) -> np.ndarray:
     """ 
     X = [(A1,..., AN), ... , (B1, ..., BN)] -> X(NM, NM)
     i.e. [(row_1), (row_2), ...]
@@ -43,14 +43,14 @@ def square(X):
     return np.row_stack(rows)
 
 
-def float_tol(a, b, sig=None):
+def float_tol(a, b, sig=None) -> bool:
     sig = sig or _SMALL
     a = np.asarray(a, dtype=float)
     b = np.asarray(b, dtype=float)
     return all(abs(a - b).ravel() < sig)
 
 
-def complex_tol(a, b, sig=None):
+def complex_tol(a, b, sig=None) -> bool:
     sig = sig or _SMALL
     a = np.asarray(a, dtype=complex)
     b = np.asarray(b, dtype=complex)
@@ -59,7 +59,7 @@ def complex_tol(a, b, sig=None):
     return all(m < sig)
 
 
-def vol_from_scalar(a,b,c,al,be,ga):
+def vol_from_scalar(a,b,c,al,be,ga) -> float:
     cosa = np.cos(al*np.pi/180)
     cosb = np.cos(be*np.pi/180)
     cosg = np.cos(ga*np.pi/180)
@@ -72,12 +72,12 @@ def all_unit_vectors(x) -> bool:
     
 def is_orthogonal(X:np.ndarray) -> bool:
     """ det| X(N,N) | == 1 """
-    return abs(LA.det(X)**2 - 1) <= _SMALL
+    return bool( abs(LA.det(X) - 1) <= _SMALL )
 
 
 def is_unit_vector(x: np.ndarray) -> bool:
     r""" :math:`\left|\vec{x}\right| == 1` """
-    return abs(np.linalg.norm(x) - 1) <= _SMALL
+    return bool( abs(np.linalg.norm(x) - 1) <= _SMALL )
 
 
 def is_symmetric(X: np.ndarray) -> bool:

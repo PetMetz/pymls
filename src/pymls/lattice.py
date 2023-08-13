@@ -315,6 +315,11 @@ class Lattice():
     def scalar(self) -> np.ndarray:
         r""" Lattice scalars :math:`(a, b, c, \alpha, \beta, \gamma)`. """
         return np.concatenate((self.abc, self.angles))
+    
+    @property
+    def is_othogonal(self) -> bool:
+        r"""  """
+        return tbx.is_orthogonal(self.M)
 
     # - functions 
     def angle_between(self, x1: np.ndarray, x2: np.ndarray, x3:np.ndarray, degrees=False):
