@@ -23,13 +23,6 @@ _LAUE = np.array((
     ('-1',        '2/m',        'mmm',          '4/m',        '4/mmm',      '-3',       '-3m',      '6/m',       '6/mmm',     'm-3',   'm-3m' )  # crystal system
     ), dtype=object)
 
-O = np.zeros((3,3))
-I = np.eye(3)
-conI = np.row_stack((
-    np.column_stack((O, I)),
-    np.column_stack((I, O))
-    ))
-
 # FIXME didn't have a reference handy: https://link.springer.com/content/pdf/bbm%3A978-94-007-0350-6%2F1.pdf
 # FIXME more convnient slicing if arranged in rows
 _ELASTIC_RESTRICTIONS = np.array((
@@ -193,6 +186,22 @@ def contract_ij(i, j, index=0) -> int:
     return i if i==j else 9 - i - j - 3 * (1-index)
 
 
+def sijkl_from_cijkl(cijkl):
+    """
+    :math:`cijkl sijkl = 1/2 (\delta_{im} \delta_{jn} + \delta_{in} \delta_{jm}`.
+    Armstring & Lynch (2004) in Diffraction Analysis of the Microstructure of
+       Materials (Mittemeijer & Scardi, eds.)
+    """
+    indices = np.indices(cijkl.shape)
+    indices = indices.T.reshape((-1,4))
+    i, j, k, l = indices.T
+    dik = (i==k).astype(int)
+    djl = (j==l).astype(int)
+    dil = (i==l).astype(int)
+    djk = (j==k).astype(int)
+    A = 1/2 * (dik*djl + dil*djk).reshape(cijkl.shape)
+    ... 
+
 # --- classes
 class Stroh():
     """
@@ -338,7 +347,8 @@ class Stroh():
         """ """
         ...
 
-    @functools.cached_property
+    # @functools.cached_property
+    @property
     def Q(self) -> np.ndarray:
         r"""
         c.f. pp 137 Ting, Elastic Anisotropy.
@@ -354,12 +364,14 @@ class Stroh():
                 C_{15} & C_{56} & C_{55}
             \end{bmatrix}
         """
-        idx = [(0,0), (0,5), (0,4),
-               (0,5), (5,5), (4,5),
-               (0,4), (4,5), (4,4)] # NB zero index
-        return np.reshape([self.cij[e] for e in idx], (3,3))
+        # idx = [(0,0), (0,5), (0,4),
+        #        (0,5), (5,5), (4,5),
+        #        (0,4), (4,5), (4,4)] # NB zero index
+        # return np.reshape([self.cij[e] for e in idx], (3,3))
+        return self.cijkl[:,0,:,0]
 
-    @functools.cached_property
+    # @functools.cached_property
+    @property
     def R(self) -> np.ndarray:
         r"""
         c.f. pp 137 Ting, Elastic Anisotropy.
@@ -375,12 +387,14 @@ class Stroh():
                 C_{56} & C_{25} & C_{45}
             \end{bmatrix}
         """
-        idx = [(0,5), (0,1), (0,3),
-               (5,5), (1,5), (3,5),
-               (4,5), (1,4), (3,4)] # NB zero index
-        return np.reshape([self.cij[e] for e in idx], (3,3))
+        # idx = [(0,5), (0,1), (0,3),
+        #        (5,5), (1,5), (3,5),
+        #        (4,5), (1,4), (3,4)] # NB zero index
+        # return np.reshape([self.cij[e] for e in idx], (3,3))
+        return self.cijkl[:,0,:,1]
 
-    @functools.cached_property
+    # @functools.cached_property
+    @property
     def T(self) -> np.ndarray:
         r"""
         c.f. pp 137 Ting, Elastic Anisotropy.
@@ -396,10 +410,11 @@ class Stroh():
                 C_{46} & C_{24} & C_{44}
             \end{bmatrix}
         """
-        idx = [(5,5), (1,5), (3,5),
-               (1,5), (1,1), (1,3),
-               (3,5), (1,3), (3,3)] # NB zero index
-        return np.reshape([self.cij[e] for e in idx], (3,3))
+        # idx = [(5,5), (1,5), (3,5),
+        #        (1,5), (1,1), (1,3),
+        #        (3,5), (1,3), (3,3)] # NB zero index
+        # return np.reshape([self.cij[e] for e in idx], (3,3))
+        return self.cijkl[:,1,:,1]
 
     @functools.cached_property
     def N1(self) -> np.ndarray:
@@ -482,11 +497,13 @@ class Stroh():
             self._flag_eig = 0
         return self._p
 
+    # FIXME for some reason np.eig returns column major eigen vectors? This slicing should be adjusted?
     @functools.cached_property
     def xi(self) -> np.ndarray:
         r"""
         Right eigenvectors (6,6) of :math:`N \xi = p \xi`, see `p`.
-
+        NB scipy.linalg.eig returns column eigenvectors
+        
         .. math::
 
             \xi = \begin{bmatrix}
@@ -516,23 +533,26 @@ class Stroh():
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
         # return np.row_stack((self.l, self.a)) # "... the left eigenvector... are in the reverse order"""
-        return conI @ self.xi # .round(tbx._PREC) # this is equivalent
+        return tbx.conI @ self.xi # .round(tbx._PREC) # this is equivalent
         # return self.xi[::-1] # apparently Ting means the former, not reversal by index
 
-    # FIXME for some reason np.eig returns column major eigen vectors? This slicing should be adjusted?
     @functools.cached_property
     def a(self) -> np.ndarray:
         r"""
         Stroh eigenvectors (3,6) solutions to the fundamental elasticity matrix
+        obeying
+        
+        .. math::
+            
+            a_{\alpha+3} = \bar{a_{\alpha}} 
+            
         The eigenvector `a` represents the direction of the displacement.
-        NB scipy.linalg.eig returns column eigenvectors
-
+        
 
         Returns
         -------
         np.ndarray (3,6) imaginary
             Half the redundant right Stroh eigenvectors
-        
         
         Reference
         ---------
@@ -544,8 +564,14 @@ class Stroh():
     def l(self) -> np.ndarray:
         r"""
         Stroh eigenvectors (3,6) solutions to the fundamental elasticity matrix
+        obeying
+        
+        .. math::
+            
+            b_{\alpha+3} = \bar{b_\alpha}
+        
         The eigenvector `l` represents the direction of traction.
-        NB scipy.linalg.eig returns column eigenvectors
+
 
         Returns
         -------
@@ -563,7 +589,8 @@ class Stroh():
     def A(self) -> np.ndarray:
         r"""
         Stroh eigen vectors (3,3) obeying :math:`a_{\alpha+3} = \bar{a}_{\alpha}`
-        (i.e. half the roots of the sextic equation)
+        (i.e. half the roots of the sextic equation).
+        The eigenvector `A` represents the direction of displacement.
         :math:`A = [a1, a2, a3]` (NB column vectors)
         
         Returns
@@ -576,13 +603,14 @@ class Stroh():
         ---------
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
-        return self.xi[:3, ::2]
+        return self.xi[:3, ::2] # == self.a[:, ::2]
 
     @functools.cached_property
     def L(self) -> np.ndarray:
         r"""
         Stroh eigen vectors (3,3) obeying :math:`l_{\alpha+3} = \bar{l}_{\alpha}`
-        (i.e. half the roots of the sextic equation)
+        (i.e. half the roots of the sextic equation).
+        The eigenvector `L` represents the direction of traction.
         :math:`B = [b1, b2, b3]` (NB column vectors)
         
         Returns
@@ -595,13 +623,40 @@ class Stroh():
         ---------
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
-        return self.xi[3:, ::2]
+        return self.xi[3:, ::2] # == self.l[:, ::2]
 
+    @property
+    def U(self) -> np.ndarray:
+        r"""
+        :math:`U = [\xi_1,...,\xi_6] = [[A, \bar{A}],[B, \bar{B}]]`
+        
+        
+        Reference
+        ---------
+        Ting (1988) Some identities and the structure of N...
+        Appl. Math. 46(1) 109-120.
+        """
+        return self.xi[:,(0,2,4,1,3,5)]
+
+    @property
+    def J(self) -> np.ndarray:
+        r"""
+        :math:`J = [[O, I],[I, O]]`
+        
+        
+        Reference
+        ---------
+        Ting (1988) Some identities and the structure of N...
+        Appl. Math. 46(1) 109-120.
+        """
+        return tbx.conI
+        
     @functools.cached_property
     def P(self) -> np.ndarray:
         r"""
         Stroh eigen values (3,) obeying :math:`p_{\alpha+3} = \bar{p}_{\alpha}`
-        (i.e. half the roots of the sextic equation)
+        (i.e. half the roots of the sextic equation) with positive imaginary
+        component.
         
         
         Returns

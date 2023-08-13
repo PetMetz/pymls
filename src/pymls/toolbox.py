@@ -12,12 +12,19 @@ import numpy as np
 from numpy import linalg as LA
 from scipy import spatial
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
-from tqdm import tqdm
+# from tqdm import tqdm
 
+# --- constants
 _SMALL = 1e-6
 _PREC  = 9
+O = np.zeros((3,3))
+I = np.eye(3)
+conI = np.row_stack((
+    np.column_stack((O, I)),
+    np.column_stack((I, O))
+    ))
+# ---
 
 
 def abt(a: np.ndarray, b: np.ndarray, degrees=False) -> float:
@@ -347,7 +354,7 @@ def get_unique_pairs(pairs:np.ndarray, mask=False) -> np.ndarray:
     pairs = np.asarray(pairs).reshape((len(pairs), 2, -1))
     rv = [pairs[0]]
     m  = [0,]
-    for idx, pair in tqdm(enumerate(pairs[1:]), desc='finding unique pairs...'):
+    for idx, pair in pairs[1:]: # tqdm(enumerate(pairs[1:]), desc='finding unique pairs...'):
         if not any( float_tol_pair_in_pairs(pair, rv) ):
             rv.append(pair)
             m.append(idx+1)
