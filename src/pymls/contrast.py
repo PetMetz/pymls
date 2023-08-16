@@ -126,12 +126,15 @@ class MLS():
     @functools.cached_property
     def y(self) -> np.ndarray:
         r"""
-        :math:`y = \arctan((\Re{(p_i)} - \Re{(p_j)}) / (\Im{(p_i)} + \Im{(p_j)}))`
+        
+        .. math::
+            
+            y = \arctan(\frac{(\Re{(p_i)} - \Re{(p_j)})}{(\Im{(p_i)} + \Im{(p_j)})})
 
 
         Returns
         -------
-        np.ndarray (a,a`) -> (3,3) (radians)
+        np.ndarray (a,a`) -> (3,3) radians, real, skew-symmetric
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -150,7 +153,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a,a`) -> (3,3) (radians)
+        np.ndarray (a,a`) -> (3,3) radians, real
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -170,7 +173,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a, a`) -> (3, 3) real
+        np.ndarray (a, a`) -> (3, 3) real, symmetric
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -192,7 +195,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a, a`) == (3, 3) real
+        np.ndarray (a, a`) == (3, 3) real, symmetric
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -220,15 +223,18 @@ class MLS():
 
         :math:`\alpha \in 1,2,3, m \in 1,2,3, n \in 1,2`
 
-        NB (n-1) is an *exponent* (rather than an index) resulting from
-        evaluation of the partial differentials (Martinez-Garcia et al. eqn. 15)
+        NB :math:`(n-1) \in (1,2)` is an *exponent* (rather than an index) 
+        resulting from evaluation of the partial differentials 
+        
+        .. math::
 
-        :math:`\frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)`
+            \frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)
+
 
 
         Returns
         -------
-        np.ndarray (a, m, n) == (3, 3, 2) radians
+        np.ndarray (a, m, n) == (3, 3, 2) radians, real
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -239,12 +245,12 @@ class MLS():
         rv = np.zeros((3,3,2), dtype=complex)
         I  = np.indices(rv.shape).T # len, 3, 3, 2 - > 2, 3, 3, len
         I  = I.reshape((-1, len(rv.shape))) # -> N x (a,i,j)
-        A  = self.stroh.A # A_ai
+        A  = self.stroh.A # A_ia
         D  = self.D # D_a
         P  = self.stroh.P # P_a
         for index in I:
-            a, i, j = index
-            rv[tuple(index)] = A[i, a] * D[a] * P[a]**int(j-1)  # NB A are column eigenvectors
+            a, m, n = index
+            rv[tuple(index)] = A[m, a] * D[a] * P[a]**int(n+1-1)  # NB A are column eigenvectors
         # return np.arctan(k.imag / k.real) # https://en.wikipedia.org/wiki/Argument
         return np.angle(rv)
 
@@ -258,7 +264,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a, a`) == (3, 3) radians
+        np.ndarray (a, a`) == (3, 3) radians, real, symmetric
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -303,7 +309,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a, a`) == (3, 3) real valued.
+        np.ndarray (a, a`) == (3, 3) real
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -327,9 +333,9 @@ class MLS():
 
             \Phi_{ij\alpha}^{mn\alpha^`} = 2 |A_{i\alpha}||A_{i\alpha^`}||D_{\alpha}||D_{\alpha^`}||P_{\alpha}^{(j-1)}||P_{\alpha^`}^{(n-1)}|
 
-        NB (n-1) is an *exponent* resulting from evaluation of the partial
-        differentials (rather than an index)
-
+        NB :math:`(n-1) \in (1,2)` is an *exponent* (rather than an index) 
+        resulting from evaluation of the partial differentials 
+        
         .. math::
 
             \frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)
@@ -355,7 +361,7 @@ class MLS():
         I = I.reshape((-1, len(rv.shape)))
         for index in I:
             i, j, a, m, n, b = index
-            rv[tuple(index)] = 2 * modA[i, a] * modA[m, b] * modD[a] * modD[b] * modP[a]**(j-1) * modP[b]**(n-1)
+            rv[tuple(index)] = 2 * modA[i, a] * modA[m, b] * modD[a] * modD[b] * modP[a]**(j+1-1) * modP[b]**(n+1-1)
         return rv
 
     # FIXME NB amn | bij but -> ija mnb (revisit indexing throughout)

@@ -24,10 +24,10 @@ plt.close('all')
 M = 2 * np.eye(3)
 
 # - 2. slip system
-hkl = np.array((1,1,0))  # slip plane normal
-uvw = np.array((-1,1,1))  # burgers vector
-l   = np.array((-1,1,-2))  # dislocation line vector
-phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
+hkl = np.array((0,0,1))  # slip plane normal
+uvw = np.array((1,0,0))  # burgers vector
+l   = np.array((1,-1,0))  # dislocation line vector
+phi = -abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 
 # - 3. elastic constituents
 C = cij_from_group(116.3, 64.8, 30.9, group='m-3m') # GPa

@@ -492,12 +492,14 @@ class Stroh():
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
         if self._flag_eig:
+            order = [0, 2, 4, 1, 3, 5]
             self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
-            # self._xi = self._xi.T # 20230209
+            self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
+            self._xi = self._xi[:, order]
             self._flag_eig = 0
         return self._p
 
-    # FIXME for some reason np.eig returns column major eigen vectors? This slicing should be adjusted?
+    # FIXME np.eig returns column major eigen vectors
     @functools.cached_property
     def xi(self) -> np.ndarray:
         r"""
@@ -509,15 +511,31 @@ class Stroh():
             \xi = \begin{bmatrix}
                     a \\ l \\
                   \end{bmatrix}
+                  
+                =
+                 
+            \begin{bmatrix}
+                a_{11} & \bar{a_{11}} & a_{21} & \bar{a_{21}} & a_{31} & \bar{a_{31}} \\
+                a_{12} & \bar{a_{12}} & a_{22} & \bar{a_{22}} & a_{32} & \bar{a_{32}} \\
+                a_{13} & \bar{a_{13}} & a_{23} & \bar{a_{23}} & a_{33} & \bar{a_{33}} \\ 
+                l_{11} & \bar{l_{11}} & l_{21} & \bar{l_{21}} & l_{31} & \bar{l_{31}} \\
+                l_{12} & \bar{l_{12}} & l_{22} & \bar{l_{22}} & l_{32} & \bar{l_{32}} \\
+                l_{13} & \bar{l_{13}} & l_{23} & \bar{l_{23}} & l_{33} & \bar{l_{33}} \\
+            \end{bmatrix}
+                  
 
         Ref:
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
         if self._flag_eig:
+            order = [0, 2, 4, 1, 3, 5]
             self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
+            self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
+            self._xi = self._xi[:, order]
             self._flag_eig = 0
         return self._xi # .round(tbx._PREC)
 
+    # FIXME eig solution for N^T doesn't return the same result
     @functools.cached_property
     def eta(self) -> np.ndarray:
         r"""
@@ -558,7 +576,8 @@ class Stroh():
         ---------
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
-        return self.xi[:3,:]
+        # return self.xi[:3, (0,2,4,1,3,5)] # ordered
+        return self.xi[:3,:] # paired
 
     @functools.cached_property
     def l(self) -> np.ndarray:
@@ -583,7 +602,8 @@ class Stroh():
         ---------
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
-        return self.xi[3:,:]
+        # return self.xi[3:, (0,2,4,1,3,5)] # ordered
+        return self.xi[3:,:] # paired
 
     @functools.cached_property
     def A(self) -> np.ndarray:
@@ -593,6 +613,8 @@ class Stroh():
         The eigenvector `A` represents the direction of displacement.
         :math:`A = [a1, a2, a3]` (NB column vectors)
         
+        NB the degenerate vector `a` is normalized, the half-vector A is not.
+        
         Returns
         -------
         np.ndarray (3,3) imaginary
@@ -603,7 +625,8 @@ class Stroh():
         ---------
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
-        return self.xi[:3, ::2] # == self.a[:, ::2]
+        # return self.xi[:3, ::2] # == self.a[:, ::2]
+        return self.xi[:3, :3] # ordered
 
     @functools.cached_property
     def L(self) -> np.ndarray:
@@ -613,6 +636,8 @@ class Stroh():
         The eigenvector `L` represents the direction of traction.
         :math:`B = [b1, b2, b3]` (NB column vectors)
         
+        NB the degenerate vector `l` is normalized, the half-vector L is not.
+        
         Returns
         -------
         np.ndarray (3,3) imaginary
@@ -623,7 +648,8 @@ class Stroh():
         ---------
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
-        return self.xi[3:, ::2] # == self.l[:, ::2]
+        # return self.xi[3:, ::2] # == self.l[:, ::2]
+        return self.xi[3:, :3]
 
     @property
     def U(self) -> np.ndarray:
@@ -636,7 +662,8 @@ class Stroh():
         Ting (1988) Some identities and the structure of N...
         Appl. Math. 46(1) 109-120.
         """
-        return self.xi[:,(0,2,4,1,3,5)]
+        # return self.xi[:,(0,2,4,1,3,5)]
+        return self.xi
 
     @property
     def J(self) -> np.ndarray:
@@ -669,7 +696,8 @@ class Stroh():
         ---------
         ...
         """
-        return self.p[::2]
+        # return self.p[::2]
+        return self.p[:3]
 
     @functools.cached_property
     def M(self) -> np.ndarray:
@@ -703,7 +731,7 @@ class Stroh():
         ---------
         Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
         """
-        return 0.5j * (self.A @ self.M - np.conjugate(self.A) @ np.conjugate(self.M))
+        return (0.5j * (self.A @ self.M - np.conjugate(self.A) @ np.conjugate(self.M))).real
 
     # End Stroh
 

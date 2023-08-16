@@ -317,7 +317,7 @@ class Lattice():
         return np.concatenate((self.abc, self.angles))
     
     @property
-    def is_othogonal(self) -> bool:
+    def is_orthogonal(self) -> bool:
         r"""  """
         return tbx.is_orthogonal(self.M)
 

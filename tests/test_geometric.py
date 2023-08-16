@@ -155,7 +155,7 @@ class TestSymmetry:
 
     def test_M_asymmetric(self):
         """ """
-        assert tbx.is_symmetric(self.d.M) and self.d.is_orthogonal is True # False
+        assert tbx.is_symmetric(self.d.M) is self.d.is_orthogonal # False
 
     def test_G_symmetric(self):
         """ """
@@ -163,7 +163,7 @@ class TestSymmetry:
     
     def test_reciprocal_M_asymmetric(self):
         """ """
-        assert tbx.is_symmetric(self.d.reciprocal.M) is False
+        assert tbx.is_symmetric(self.d.reciprocal.M) is self.d.is_orthogonal # False
     
     def test_reciprocal_G_symmetric(self):
         """ """

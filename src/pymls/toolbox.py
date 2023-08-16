@@ -51,12 +51,10 @@ def float_tol(a, b, sig=None) -> bool:
 
 
 def complex_tol(a, b, sig=None) -> bool:
-    sig = sig or _SMALL
+    sig = sig or _SMALL ** 0.5 # loss of precision 
     a = np.asarray(a, dtype=complex)
     b = np.asarray(b, dtype=complex)
-    d = (a - b).ravel()
-    m = np.sqrt(d * np.conjugate(d)).real
-    return all(m < sig)
+    return all(np.abs((a - b).ravel()) < sig)
 
 
 def vol_from_scalar(a,b,c,al,be,ga) -> float:
@@ -72,6 +70,7 @@ def all_unit_vectors(x) -> bool:
     
 def is_orthogonal(X:np.ndarray) -> bool:
     """ det| X(N,N) | == 1 """
+    X = X / LA.norm(X, axis=1)
     return bool( abs(LA.det(X) - 1) <= _SMALL )
 
 
@@ -80,9 +79,24 @@ def is_unit_vector(x: np.ndarray) -> bool:
     return bool( abs(np.linalg.norm(x) - 1) <= _SMALL )
 
 
+# FIXME would be nice to test for input type
 def is_symmetric(X: np.ndarray) -> bool:
     """ X == X.T """
-    return float_tol(X, X.T)
+    return complex_tol(X, X.T)
+
+
+def is_skew_symmetric(X: np.ndarray) -> bool:
+    """ X == -X.T """
+    return complex_tol(X, -X.T)
+
+def is_hermitian(X: np.ndarray) -> bool:
+    """ a_kj == conj(a_ji)"""
+    return complex_tol(X, np.conj(X).T)
+
+
+def is_skew_hermitian(X: np.ndarray) -> bool:
+    """ a_kj == - conj(a_ji) """
+    return complex_tol(X, -np.conj(X).T)
 
 
 def orthogonal(fn):

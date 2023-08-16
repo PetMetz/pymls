@@ -36,6 +36,13 @@ def test_y_algebra(thisFixture, request):
 
 
 @pytest.mark.parametrize('thisFixture', mls_suite)
+def test_y_skew_symmetric(thisFixture, request):
+    """ compact expression yields correct result """
+    mls = request.getfixturevalue(thisFixture)
+    assert tbx.is_skew_symmetric(mls.y)
+
+
+@pytest.mark.parametrize('thisFixture', mls_suite)
 def test_F_algebra(thisFixture, request):
     """ compact expression yields correct result """
     mls = request.getfixturevalue(thisFixture)
@@ -46,6 +53,13 @@ def test_F_algebra(thisFixture, request):
             A[i,j] = (P[i].real - P[j].real)**2 + (P[i].imag - P[j].imag)**2
     B = mls.F
     assert tbx.float_tol(A,B)
+
+
+@pytest.mark.parametrize('thisFixture', mls_suite)
+def test_F_symmetric(thisFixture, request):
+    """ compact expression yields correct result """
+    mls = request.getfixturevalue(thisFixture)
+    assert tbx.is_symmetric(mls.F)
 
 
 @pytest.mark.parametrize('thisFixture', mls_suite)
@@ -64,6 +78,13 @@ def test_Q_algebra(thisFixture, request):
 
 
 @pytest.mark.parametrize('thisFixture', mls_suite)
+def test_Q_symmetric(thisFixture, request):
+    """ compact expression yields correct result """
+    mls = request.getfixturevalue(thisFixture)
+    assert tbx.is_symmetric(mls.Q)
+    
+
+@pytest.mark.parametrize('thisFixture', mls_suite)
 def test_gamma1_algebra(thisFixture, request):
     """ compact expression yields correct result """
     mls = request.getfixturevalue(thisFixture)
@@ -78,6 +99,13 @@ def test_gamma1_algebra(thisFixture, request):
 
 
 @pytest.mark.parametrize('thisFixture', mls_suite)
+def test_gamma1_symmetric(thisFixture, request):
+    """ compact expression yields correct result """
+    mls = request.getfixturevalue(thisFixture)
+    assert tbx.is_symmetric(mls.gamma1)
+    
+
+@pytest.mark.parametrize('thisFixture', mls_suite)
 def test_gamma2_algebra(thisFixture, request):
     """ compact expression yields correct result """
     mls = request.getfixturevalue(thisFixture)
@@ -89,8 +117,8 @@ def test_gamma2_algebra(thisFixture, request):
             A[i,j] = modP[i] - (P[i].real * P[j].real) + (P[i].imag * P[j].imag)
     B = mls.gamma2
     assert tbx.float_tol(A,B)
-
-
+   
+    
 @pytest.mark.parametrize('thisFixture', mls_suite)
 def test_delta_algebra(thisFixture, request):
     """ compact expression yields correct result; (a,m,n) -> (3,3,2) radians """
@@ -102,7 +130,7 @@ def test_delta_algebra(thisFixture, request):
     for n in range(2):
         for m in range(3):
             for a in range(3):
-                rv[a,m,n] = np.angle(A[m,a] * D[a] * P[a] ** (n-1)) 
+                rv[a,m,n] = np.angle(A[m,a] * D[a] * P[a] ** (n+1-1)) 
     B = mls.delta
     assert tbx.float_tol(rv,B)
 
@@ -139,14 +167,14 @@ def test_phi_algebra(thisFixture, request):
     D = np.abs(mls.D)
     P = np.abs(mls.stroh.P)
     rv = np.empty((3,2,3,3,2,3), dtype=float)
-    for l in range(3):
-        for n in range(2):
+    for l in range(3): # eig (col)
+        for n in range(2): # exponent
             for m in range(3):
-                for k in range(3):
-                    for j in range(2):
+                for k in range(3): # eig (col) 
+                    for j in range(2): # exponent
                         for i in range(3):
                             rv[i,j,k,m,n,l] = 2 * A[i,k] * A[m,l] * D[k] \
-                                * D[l] * P[k]**(j-1) * P[l]**(n-1)
+                                * D[l] * P[k]**int(j+1-1) * P[l]**int(n+1-1)
     B = mls.phi
     assert tbx.float_tol(rv,B)
 
