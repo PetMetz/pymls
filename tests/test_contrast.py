@@ -7,6 +7,7 @@ Created on Mon Jun 27 11:03:42 2022
 # 3rd party
 import numpy as np
 import pytest
+import functools
 
 # package
 from pymls.contrast import MLS
@@ -187,6 +188,7 @@ class TestEijmnContraction:
 
     @pytest.fixture(autouse=True)
     def _mls_class_fixture(self, thisFixture, request):
+        """ alias """
         self.mls = request.getfixturevalue(thisFixture)
         self.delta = self.mls.delta
         self.x = self.mls.x
@@ -195,60 +197,58 @@ class TestEijmnContraction:
         self.phi = self.mls.phi
         self.psi = self.mls.psi
 
-    @property
+    @functools.cached_property
     def get_c1(self):
         A = np.zeros((3,3,2))
-        for n in range(2):
+        for n in range(2): # exponent
             for m in range(3):
                 for a in range(3):
-                    A[a,m,n] = np.cos(self.delta[a,m,n] + self.x[a])
-        return A
+                    A[a,m,n] = self.delta[a,m,n] + self.x[a]
+        return np.cos(A)
     
-    @property
+    @functools.cached_property
     def get_c2(self):
-        A = np.zeros((3,3,2))
-        for n in range(2):
-            for m in range(3):
-                for a in range(3):
-                    for b in range(3):
-                        A[a,m,n] = self.delta[a,m,n] - self.y[a,b] + A[a,m,n] # contract arg
-                    A[a,m,n] = np.cos(A[a,m,n]) # eval cos
-        return A
+        A = np.zeros((3,3,3,2))
+        for j in range(2): # exponent
+            for i in range(3):
+                for b in range(3):
+                    for a in range(3):
+                        A[a,b,i,j] = self.delta[b,i,j] - self.y[a,b]
+        return np.cos(A)
     
-    @property
+    @functools.cached_property
     def get_s1(self):
         A = np.zeros((3,3,2))
-        for n in range(2):
+        for n in range(2): # exponent
             for m in range(3):
                 for a in range(3):
-                    A[a,m,n] = np.sin(self.delta[a,m,n])
-        return A
+                    A[a,m,n] = self.delta[a,m,n]
+        return np.sin(A)
     
-    @property
+    @functools.cached_property
     def get_s2(self):
-        A = np.zeros((3,3,2))
-        for n in range(2):
-            for m in range(3):
-                for a in range(3):
-                    for b in range(3):
-                        A[a,m,n] = self.delta[a,m,n] - self.z[a,b] + A[a,m,n] # contract arg
-                    A[a,m,n] = np.sin(A[a,m,n]) # eval sin
-        return A
+        A = np.zeros((3,3,3,2))
+        for j in range(2): # exponent
+            for i in range(3):
+                for b in range(3):
+                    for a in range(3):
+                        A[a,b,i,j] = self.delta[b,i,j] + self.z[a,b]
+        return np.sin(A)
     
-    @property
+    @functools.cached_property
     def get_direction_matrix(self):
         A = np.zeros((3,2,3,3,2,3)) # i, j, a, m, n, b
         c1 = self.get_c1
         c2 = self.get_c2
         s1 = self.get_s1
         s2 = self.get_s2
-        for b in range(3):
-            for n in range(2):
+        for b in range(3): # eig
+            for n in range(2): # exponent
                 for m in range(3):
-                    for a in range(3):
-                        for j in range(2):
+                    for a in range(3): # eig
+                        for j in range(2): # exponent
                             for i in range(3):
-                                A[i,j,a,m,n,b] = c1[a,m,n] * c2[b,i,j] + s1[a,m,n] * s2[b,i,j]
+                                A[i,j,a,m,n,b] = c1[a,m,n] * c2[a,b,i,j] + s1[a,m,n] * s2[a,b,i,j]
         return A
     
     def test_c1(self):
@@ -287,7 +287,7 @@ class TestEijmnContraction:
         s1 = self.get_s1
         s2 = self.get_s2
         A = self.get_direction_matrix
-        B = np.einsum('amn,bij->ijamnb', c1, c2) + np.einsum('amn,bij->ijamnb', s1, s2)
+        B = np.einsum('amn,abij->ijamnb', c1, c2) + np.einsum('amn,abij->ijamnb', s1, s2)
         assert tbx.float_tol(A,B)
         
     def test_eijmn_contraction(self):

@@ -421,8 +421,8 @@ class MLS():
         # =============================================================================
         # Try again...
         # =============================================================================
-        C = np.einsum('amn,bij->ijamnb', self._c1, self._c2) + np.einsum('amn,bij->ijamnb', self._s1, self._s2) # (i,j,a,m,n,b) == (3,2,3,3,2,3)
-        B = np.einsum('ijamnb,ijamnb->ijamnb', self.phi, C)
+        C = np.einsum('amn,abij->ijamnb', self._c1, self._c2) + np.einsum('amn,abij->ijamnb', self._s1, self._s2) # (i,j,a,m,n,b) == (3,2,3,3,2,3)
+        B = np.einsum('ijamnb,ijamnb->ijamnb', self.phi, C) # just element-wise multiplication
         A = np.einsum('ab,ijamnb->ijmn', self.psi, B)
         return A # (i,j,m,n) == (3,2,3,2)
 
@@ -435,7 +435,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (3,3,2) real
+        np.ndarray (a,m,n) = (3,3,2) real
             Component of :math:`E_{ijmn}` calculation.
         """
         # return np.cos( np.einsum('amn,a->amn', self.delta, self.x) ) # addition not multiplication
@@ -443,8 +443,8 @@ class MLS():
         for n in range(2):
             for m in range(3):
                 for a in range(3):
-                    A[a,m,n] = np.cos(self.delta[a,m,n] + self.x[a])
-        return A
+                    A[a,m,n] = self.delta[a,m,n] + self.x[a]
+        return np.cos(A)
 
     @functools.cached_property
     def _c2(self) -> np.ndarray:
@@ -455,18 +455,17 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (3,3,2) real
+        np.ndarray (a,b,i,j) = (3,3,2) real
             Component of :math:`E_{ijmn}` calculation.
         """
         # return np.cos( np.einsum('bmn,ab->amn', self.delta, -self.y) )
-        A = np.zeros((3,3,2))
-        for n in range(2):
-            for m in range(3):
-                for a in range(3):
-                    for b in range(3):
-                        A[a,m,n] = self.delta[a,m,n] - self.y[a,b] + A[a,m,n] # contract arg
-                    A[a,m,n] = np.cos(A[a,m,n]) # eval cos
-        return A
+        A = np.zeros((3,3,3,2))
+        for j in range(2):
+            for i in range(3):
+                for b in range(3):
+                    for a in range(3):
+                        A[a,b,i,j] = self.delta[b,i,j] - self.y[a,b]
+        return np.cos(A)
 
     @functools.cached_property
     def _s1(self) -> np.ndarray:
@@ -476,7 +475,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (3,3,2) real
+        np.ndarray (a,m,n) = (3,3,2) real
             Component of :math:`E_{ijmn}` calculation.
         """
         return np.sin(self.delta)
@@ -490,18 +489,17 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (3,3,2) real
+        np.ndarray (a,b,i,j) = (3,3,3,2) real
             Component of :math:`E_{ijmn}` calculation.
         """
         # return np.sin( np.einsum('bmn,ab->amn', self.delta, self.z) )
-        A = np.zeros((3,3,2))
-        for n in range(2):
-            for m in range(3):
-                for a in range(3):
-                    for b in range(3):
-                        A[a,m,n] = self.delta[a,m,n] - self.z[a,b] + A[a,m,n] # contract arg
-                    A[a,m,n] = np.sin(A[a,m,n]) # eval sin
-        return A
+        A = np.zeros((3,3,3,2))
+        for j in range(2):
+            for i in range(3):
+                for b in range(3):
+                    for a in range(3):
+                        A[a,b,i,j] = self.delta[b,i,j] + self.z[a,b]
+        return np.sin(A)
 
     def Chkl(self, s:np.ndarray) -> float:
         r"""
@@ -525,7 +523,7 @@ class MLS():
         ---------
         c.f. eqn. 9, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
         """
-        return np.einsum('ijmn,ijmn->', self.Gijmn(s) ,self.Eijmn)
+        return np.einsum('ijmn,ijmn->', self.Gijmn(s), self.Eijmn)
 
     # End Martinez
 
