@@ -63,15 +63,24 @@ class Voigt():
     def contract_ijkl(i,j,k,l):
         """ Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-5b """
         i, j, k, l = map(int, (i,j,k,l))
-        a = i if i == j else 9 - i - j
-        b = k if k == l else 9 - k - l
+        if i == j:
+            a = i 
+        else:
+            a = 9 - i - j
+        if k == l:
+            b = k 
+        else:
+            b = 9 - k - l
         return a, b
     
     @staticmethod
     def contract_ij(i, j):
         """ Ting, Anisotropic Elasticity: Theory and Applications. (1996) eqn. 2.3-1 """
         i, j = map(int, (i,j))
-        return i if i==j else 9 - i - j
+        if i == j:
+            return i 
+        else:
+            return 9 - i - j
     
     def to_mandel(self):
         """ return Mandel object """

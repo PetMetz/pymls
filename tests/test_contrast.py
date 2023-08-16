@@ -281,13 +281,8 @@ class TestEijmnContraction:
     
     def test_direction_matrix(self):
         r""" [_c1 * _c2 + _s1 * _s2] """
-        # C = np.einsum('amn,bij->ijamnb', self._c1, self._c2) + np.einsum('amn,bij->ijamnb', self._s1, self._s2) # (i,j,a,m,n,b) == (3,2,3,3,2,3)
-        c1 = self.get_c1
-        c2 = self.get_c2
-        s1 = self.get_s1
-        s2 = self.get_s2
         A = self.get_direction_matrix
-        B = np.einsum('amn,abij->ijamnb', c1, c2) + np.einsum('amn,abij->ijamnb', s1, s2)
+        B = self.mls._dm
         assert tbx.float_tol(A,B)
         
     def test_eijmn_contraction(self):

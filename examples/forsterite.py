@@ -19,23 +19,23 @@ plt.close('all')
 lattice_scalar = (4.775, 10.190, 5.978, 90, 90, 90)
 
 # - 2. slip system
-hkl = np.array((0,1,0))
-uvw = np.array((1,0,0))
+hkl = np.array((0,1,0)) # {HKL}
+uvw = np.array((1,0,0)) # <uvw>
 l   = np.array((0,0,1)) # np.cross(hkl, uvw)
 phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 chi = abt(hkl, uvw, degrees=True)
 
 # - 3. elastic constituents
 C = cij_from_group(  # GPa
-          328.7, # c11
-          66.75, # c12
-          68.35, # c13
-          199.8, # c22
-          72.67, # c23
-          235.5, # c33
-          66.78, # c44
-          80.95, # c55
-          80.57, # c66
+          328 , # c11
+          69  , # c12
+          69  , # c13
+          200 , # c22
+          73  , # c23
+          235 , # c33
+          66.7, # c44
+          81.3, # c55
+          80.9, # c66
           group='mmm'
           )
 

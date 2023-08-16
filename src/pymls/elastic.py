@@ -183,7 +183,10 @@ def contract_ij(i, j, index=0) -> int:
     Ting, T.C.T. (1996) Anisotropic Elasticity: Theory and Applications. c.f. eqn. 2.3-1
     """
     i, j = map(int, (i,j))
-    return i if i==j else 9 - i - j - 3 * (1-index)
+    if i == j:
+        return i
+    else:
+        return 9 - i - j - 3 * (1-index)
 
 
 def sijkl_from_cijkl(cijkl):
@@ -289,7 +292,14 @@ class Stroh():
         The extension of Voigt reduction to the 4th rank tensor representing
         proportionality of two 2nd rank tensors.
         """
-        return np.reshape([X[tuple(e)] for e in _voigt6.reshape(-1,4)], (6,6))
+        rv = np.zeros((6,6))
+        for ijkl in _voigt6.reshape((-1,4)):
+            try:
+                ij = contract_ijkl(*ijkl)
+                rv[ij] = X[tuple(ijkl)]
+            except IndexError:
+                print(f'Warning: unable to set {ijkl} -> {ij}')
+        return rv
 
     # FIXME can't this be vectorized?
     def invert_mandel(self, X, case='c') -> np.ndarray:
