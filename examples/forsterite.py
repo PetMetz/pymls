@@ -58,13 +58,24 @@ cbar = np.array(( # c.f. Table 5, MLS (2009)
     0.0449,
     0.1773
     ))
-
+pi = np.array([1.543j, 0.829j, 1.104j])
+Eij = np.zeros((6,6))
+Eij[0,0] = 0.473
+Eij[1,1] = 0.605
+Eij[3,3] = 2.189
+Eij[4,4] = 0.134
+Eij[4,0] = -0.079
+Eij[3,1] = -0.868
+              
 for s, c in zip(sss, cbar):
     Cmls = I.Chkl(s)
     print(f'MLS (2009): {c:.6f}; this work: {Cmls:.6f}')
     print(f'Differs by c / Cmls == {c / Cmls:.6f}')
     print('')
 
+
+
 # plot
 plt.close('all')
 D.visualize()
+fig, ax = I.plot_u()

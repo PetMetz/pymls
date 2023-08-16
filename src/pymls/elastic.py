@@ -227,7 +227,7 @@ class Stroh():
 
     # - overloads
     def __repr__(self) -> str:
-        return f'<Stroh(cij=\n{self.cij}, crystalSystem={self.crystalsystem}) @ {hex(id(self))}>'
+        return f'<Stroh(cij=\n{self.cij}, crystalSystem={self.crystalsystem}) @ {hex(id(self))}>\nP_i = {self.P.round(3)}'
 
     def __init__(self,
                  cij:np.ndarray=None,
@@ -587,7 +587,7 @@ class Stroh():
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[:3, (0,2,4,1,3,5)] # ordered
-        return self.xi[:3,:] # paired
+        return self.xi[:3,:] / LA.norm(self.xi[:3,:], axis=0) # paired
 
     @functools.cached_property
     def l(self) -> np.ndarray:
@@ -613,7 +613,7 @@ class Stroh():
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[3:, (0,2,4,1,3,5)] # ordered
-        return self.xi[3:,:] # paired
+        return self.xi[3:,:] / LA.norm(self.xi[3:,:], axis=0) # paired
 
     @functools.cached_property
     def A(self) -> np.ndarray:
@@ -636,7 +636,7 @@ class Stroh():
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[:3, ::2] # == self.a[:, ::2]
-        return self.xi[:3, :3] # ordered
+        return self.xi[:3, :3] / LA.norm(self.xi[:3, :3], axis=0)  # ordered
 
     @functools.cached_property
     def L(self) -> np.ndarray:
@@ -659,7 +659,7 @@ class Stroh():
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[3:, ::2] # == self.l[:, ::2]
-        return self.xi[3:, :3]
+        return self.xi[3:, :3] / LA.norm(self.xi[3:, :3], axis=0) 
 
     @property
     def U(self) -> np.ndarray:

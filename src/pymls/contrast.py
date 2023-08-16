@@ -43,7 +43,7 @@ class MLS():
         dislocations." Acta Cryst. A65, 109–119. `doi:10.1107/S010876730804186X <https://dx.doi.org/10.1107/S010876730804186X>`_
     """
     def __repr__(self):
-        return f'<Martinez(\ndislocation={self.dislocation.__repr__()},\ncij={self.stroh.cij} @ {hex(id(self))}>'
+        return f'<Martinez(\ndislocation={self.dislocation.__repr__()},\nstroh={self.stroh} @ {hex(id(self))}>\nEij =\n{self.Eij.round(3)}'
 
     def __init__(self,
                  dislocation: Dislocation=None, # dislocation geometry (carries around a lattice instance)
@@ -513,7 +513,7 @@ class MLS():
         import matplotlib.pyplot as plt
         
         # compute
-        x1 = np.linspace(-1, 1)
+        x1 = np.linspace(-10, 10, 101)
         x2 = x1
         x12 = np.transpose(np.meshgrid(x1,x2)).reshape((-1,2))
         l12 = np.zeros((3, x1.size, x2.size), dtype=complex)
