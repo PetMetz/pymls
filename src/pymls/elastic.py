@@ -7,10 +7,12 @@ Created on Mon Jun 27 14:40:09 2022
 # built-ins
 import functools
 from typing import Union
+from collections import namedtuple
 
 # 3rd party
 import numpy as np
 from numpy import linalg as LA
+import scipy.linalg as sla
 
 # package
 from . import toolbox as tbx
@@ -49,6 +51,8 @@ _ELASTIC_RESTRICTIONS = np.array((
     (56, 0 , 0 , 0 , 0 , 14, 14, 0 , 0 , 0 , 0 ),
     (66, 66, 66, 66, 66, 99, 99, 99, 99, 44, 44)
     ), dtype=int)
+
+_QZSOLUTION = namedtuple('qz_solution', ['alpha', 'beta', 'vl', 'vr', 'nvl', 'nvr', 'work', 'info', 'S', 'T', 'Q', 'Z', 'eigv'])
 
 # - conventions
 _voigt3 = np.array(((0,0), (1,1), (2,2), (1,2), (0,2), (0,1)), dtype=int)
@@ -427,6 +431,48 @@ class Stroh():
         return self.cijkl[:,1,:,1]
 
     @functools.cached_property
+    def _gA(self) -> np.ndarray:
+        """
+        Left matrix of the generalized eigenproblem (Ting 5.5-1)
+        e.g. for qz decomposition
+        """
+        return tbx.square([(-self.Q,  tbx.O),
+                           (-self.R.T, tbx.I)
+                           ])
+    
+    @functools.cached_property
+    def _gB(self) -> np.ndarray:
+        """
+        Right matrix of the generalized eigenproblem (Ting 5.5-1)
+        e.g. for qz decomposition
+        """
+        return tbx.square([(self.R, tbx.I),
+                           (self.T, tbx.O)
+                          ])
+    
+    @functools.cached_property
+    def qz(self):
+        """
+        Eigenvalue solution by method of qz decomposition, and ordered such that
+        conjugate pairs occur [a1, a2, a3, a1*, a2*, a3*].
+        
+        References:
+            https://www.netlib.org/lapack/lug/node56.html
+            https://www.netlib.org/lapack/lug/node35.html#1803
+            https://stackoverflow.com/questions/49007201/scipy-qz-generalized-eigenvectors
+        """
+        S, T, Q, Z = sla.qz(self._gA, self._gB, output='complex') # this is redundant
+        alpha, beta, vl, vr, work, info = sla.lapack.zggev(self._gA, self._gB)
+        eigv = alpha / beta # == Sii / Tii
+        nvl = vl / LA.norm(vl, axis=0)
+        nvr = vr / LA.norm(vr, axis=0)
+        m = np.argsort(-np.sign(eigv.imag)) # I'm not sure why this maintains ordering, but it appears to up to triclinic
+        return _QZSOLUTION(alpha=alpha, beta=beta, work=work, info=info, S=S,
+                           T=T, Q=Q, Z=Z, 
+                           eigv=eigv[m], vl=vl[:,m], vr=vr[:,m],
+                           nvl=nvl[:,m], nvr=nvr[:,m])
+                           # eigv=eigv, vl=vl, vr=vr, nvl=nvl, nvr=nvr)
+    @functools.cached_property
     def N1(self) -> np.ndarray:
         r"""
         c.f. pp 144 Ting, Elastic Anisotropy.
@@ -501,13 +547,16 @@ class Stroh():
         Ref:
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
-        if self._flag_eig:
-            order = [0, 2, 4, 1, 3, 5]
-            self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
-            self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
-            self._xi = self._xi[:, order]
-            self._flag_eig = 0
-        return self._p
+# =============================================================================
+#         if self._flag_eig:
+#             order = [0, 2, 4, 1, 3, 5]
+#             self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
+#             self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
+#             self._xi = self._xi[:, order]
+#             self._flag_eig = 0
+#         return self._p
+# =============================================================================
+        return self.qz.eigv
 
     # FIXME np.eig returns column major eigen vectors
     @functools.cached_property
@@ -537,13 +586,16 @@ class Stroh():
         Ref:
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
-        if self._flag_eig:
-            order = [0, 2, 4, 1, 3, 5]
-            self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
-            self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
-            self._xi = self._xi[:, order]
-            self._flag_eig = 0
-        return self._xi # .round(tbx._PREC)
+# =============================================================================
+#         if self._flag_eig:
+#             order = [0, 2, 4, 1, 3, 5]
+#             self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
+#             self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
+#             self._xi = self._xi[:, order]
+#             self._flag_eig = 0
+#         return self._xi # .round(tbx._PREC)
+# =============================================================================
+        return self.qz.vr
 
     # FIXME eig solution for N^T doesn't return the same result
     @functools.cached_property
@@ -560,9 +612,12 @@ class Stroh():
         Ref:
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
-        # return np.row_stack((self.l, self.a)) # "... the left eigenvector... are in the reverse order"""
-        return tbx.conI @ self.xi # .round(tbx._PREC) # this is equivalent
-        # return self.xi[::-1] # apparently Ting means the former, not reversal by index
+# =============================================================================
+#         # return np.row_stack((self.l, self.a)) # "... the left eigenvector... are in the reverse order"""
+#         return tbx.conI @ self.xi # .round(tbx._PREC) # this is equivalent
+#         # return self.xi[::-1] # apparently Ting means the former, not reversal by index
+# =============================================================================
+        return self.qz.vl
 
     @functools.cached_property
     def a(self) -> np.ndarray:
@@ -587,7 +642,7 @@ class Stroh():
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[:3, (0,2,4,1,3,5)] # ordered
-        return self.xi[:3,:] / LA.norm(self.xi[:3,:], axis=0) # paired
+        return self.xi[:3,:] # / LA.norm(self.xi[:3,:], axis=0) # paired
 
     @functools.cached_property
     def l(self) -> np.ndarray:
@@ -613,7 +668,7 @@ class Stroh():
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[3:, (0,2,4,1,3,5)] # ordered
-        return self.xi[3:,:] / LA.norm(self.xi[3:,:], axis=0) # paired
+        return self.xi[3:,:] # / LA.norm(self.xi[3:,:], axis=0) # paired
 
     @functools.cached_property
     def A(self) -> np.ndarray:
@@ -636,7 +691,7 @@ class Stroh():
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[:3, ::2] # == self.a[:, ::2]
-        return self.xi[:3, :3] / LA.norm(self.xi[:3, :3], axis=0)  # ordered
+        return self.xi[:3, :3] # / LA.norm(self.xi[:3, :3], axis=0)  # ordered
 
     @functools.cached_property
     def L(self) -> np.ndarray:
@@ -659,7 +714,7 @@ class Stroh():
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[3:, ::2] # == self.l[:, ::2]
-        return self.xi[3:, :3] / LA.norm(self.xi[3:, :3], axis=0) 
+        return self.xi[3:, :3] # / LA.norm(self.xi[3:, :3], axis=0) 
 
     @property
     def U(self) -> np.ndarray:

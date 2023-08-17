@@ -231,6 +231,73 @@ def test_p_ordering(thisFixture, request):
 
 
 @pytest.mark.parametrize('thisFixture', stroh_suite)
+class TestQZSolution:
+    """ test qz solution to generalized eigenproblem (Ting. 5.5-1)"""
+
+    @pytest.fixture(autouse=True)
+    def _s_class_fixture(self, thisFixture, request):
+        self.s = request.getfixturevalue(thisFixture)
+        
+    def test_recovers_A(self):
+        """ A = Q S Z^H """
+        A = self.s.qz.Q @ self.s.qz.S @ np.conj(self.s.qz.Z).T
+        B = self.s._gA # real
+        assert tbx.float_tol(A, B) is True
+
+    def test_recovers_B(self):
+        """ B = Q T Z^H """
+        A = self.s.qz.Q @ self.s.qz.T @ np.conj(self.s.qz.Z).T
+        B = self.s._gB # real
+        assert tbx.float_tol(A, B) is True
+    
+    def test_relation_to_N(self):
+        """ B^-1 A = N """
+        A = LA.inv(self.s._gB) @ self.s._gA
+        B = self.s.N
+        assert tbx.complex_tol(A,B) is True
+
+    def test_by_definition(self):
+        """ A x = p B x """
+        A = self.s._gA @ self.s.qz.vr
+        B = self.s.qz.eigv * self.s._gB @ self.s.qz.vr
+        assert tbx.complex_tol(A, B) is True
+
+    def test_solution_to_N(self):
+        """ N x = p x """
+        A = self.s.N @ self.s.qz.vr
+        B = self.qz.eigv * np.eye(6) @ self.s.qz.vr
+        assert tbx.complex_tol(A, B) is True
+
+    def test_right_column_vectors(self):
+        """ A x[i] = lam[i] x[i] """
+        A = [self.s.N @ self.s.qz.vr[:, ii] for ii in range(6)]
+        B = [self.s.qz.eigv[ii] * self.s.qz.vr[:, ii] for ii in range(6)]
+        C = [self.s.N @ self.s.qz.vr[ii] for ii in range(6)]
+        D = [self.s.qz.eigv[ii] * self.s.qz.vr[ii] for ii in range(6)]
+        assert tbx.complex_tol(A, B) is True
+        assert tbx.complex_tol(C, D) is False
+
+    def test_left_column_vectors(self):
+        """ A x[i] = lam[i] x[i] """
+        A = [self.s.qz.vl[ii] @ self.s.N for ii in range(6)]
+        B = [self.s.qz.eigv[ii] * self.s.qz.vl[ii] for ii in range(6)]
+        C = [self.s.qz.vl[:,ii] @ self.s.N for ii in range(6)]
+        D = [self.s.qz.eigv[ii] * self.s.qz.vl[ii] for ii in range(6)]
+        assert tbx.complex_tol(A, B) is True
+        assert tbx.complex_tol(C, D) is False
+
+    def test_vl_vr_orthogonal(self):
+        """ vl[ii] @ vr[jj] == 0 if eigv[ii] != eigv[jj] """
+        # for i in range(6):
+        #     for j in range(6):
+        #         ans[i,j] = np.abs(S.qz.vl[:,i]@S.qz.vr[:,j]) < tbx._SMALL
+        A = np.abs(self.s.qz.nvl.T @ self.s.qz.nvr) < tbx._SMALL
+        B = np.abs((self.s.qz.eigv * np.ones((6,6))).T - self.s.qz.eigv * np.ones((6,6))) < tbx._SMALL
+        assert all(A == B) is True
+
+    # End TestQZSolution
+
+@pytest.mark.parametrize('thisFixture', stroh_suite)
 class TestTingOrthogonalityClosure:
     """ c.f. Ting 5.5 Orthogonality and Closure Relations """
 

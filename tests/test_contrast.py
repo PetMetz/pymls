@@ -29,9 +29,9 @@ def test_y_algebra(thisFixture, request):
     mls = request.getfixturevalue(thisFixture)
     P = mls.stroh.P
     A = np.empty((3,3))
-    for j in range(3):
-        for i in range(3):
-            A[i,j] = np.arctan((P[i].real - P[j].real) / (P[i].imag + P[j].imag))
+    for b in range(3):
+        for a in range(3):
+            A[a,b] = np.arctan((P[a].real - P[b].real) / (P[a].imag + P[b].imag))
     B = mls.y
     assert tbx.float_tol(A,B)
 
@@ -160,7 +160,6 @@ def test_phi_algebra(thisFixture, request):
     """
     compact expression yields correct result;
     (i,j,a,m,n,a`) == 
-    (i,j,k,m,n,l ) ==
     (3,2,3,3,2,3 ) 
     """
     mls = request.getfixturevalue(thisFixture)
@@ -168,14 +167,13 @@ def test_phi_algebra(thisFixture, request):
     D = np.abs(mls.D)
     P = np.abs(mls.stroh.P)
     rv = np.empty((3,2,3,3,2,3), dtype=float)
-    for l in range(3): # eig (col)
+    for b in range(3): # eig (col)
         for n in range(2): # exponent
             for m in range(3):
-                for k in range(3): # eig (col) 
+                for a in range(3): # eig (col) 
                     for j in range(2): # exponent
                         for i in range(3):
-                            rv[i,j,k,m,n,l] = 2 * A[i,k] * A[m,l] * D[k] \
-                                * D[l] * P[k]**int(j+1-1) * P[l]**int(n+1-1)
+                            rv[i,j,a,m,n,b] = 2 * A[i,a] * A[m,b] * D[a] * D[b] * P[a]**int(j+1-1) * P[b]**int(n+1-1)
     B = mls.phi
     assert tbx.float_tol(rv,B)
 

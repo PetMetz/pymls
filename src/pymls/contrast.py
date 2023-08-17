@@ -88,7 +88,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a,) -> (3,) complex (length**-1)
+        np.ndarray (a,) -> (3,) complex (N length**-1)
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -101,8 +101,8 @@ class MLS():
         A = self.stroh.A # column vectors
         L = self.stroh.L # column vectors
         D = np.empty((3,), dtype=complex)
-        for i in range(3):
-            D[i] = -1 / modb * (L[:,i] @ b) / (A[:,i] @ L[:,i])
+        for a in range(3):
+            D[a] = -1 / modb * (L[:,a] @ b) / (A[:,a] @ L[:,a])
         return D
 
     @functools.cached_property
@@ -223,13 +223,12 @@ class MLS():
 
         :math:`\alpha \in 1,2,3, m \in 1,2,3, n \in 1,2`
 
-        NB :math:`(n-1) \in (1,2)` is an *exponent* (rather than an index) 
+        NB :math:`(n-1), n \in (1,2)` is an *exponent* (rather than an index) 
         resulting from evaluation of the partial differentials 
         
         .. math::
 
             \frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)
-
 
 
         Returns
@@ -252,7 +251,7 @@ class MLS():
             a, m, n = index
             rv[tuple(index)] = A[m, a] * D[a] * P[a]**int(n+1-1)  # NB A are column eigenvectors
         # return np.arctan(k.imag / k.real) # https://en.wikipedia.org/wiki/Argument
-        return np.angle(rv)
+        return np.angle(rv) # radians
 
     @functools.cached_property
     def gamma1(self) -> np.ndarray:
@@ -333,7 +332,7 @@ class MLS():
 
             \Phi_{ij\alpha}^{mn\alpha^`} = 2 |A_{i\alpha}||A_{i\alpha^`}||D_{\alpha}||D_{\alpha^`}||P_{\alpha}^{(j-1)}||P_{\alpha^`}^{(n-1)}|
 
-        NB :math:`(n-1) \in (1,2)` is an *exponent* (rather than an index) 
+        NB :math:`(n-1), n \in (1,2)` is an *exponent* (rather than an index) 
         resulting from evaluation of the partial differentials 
         
         .. math::
@@ -352,16 +351,16 @@ class MLS():
         c.f. eqn. 18.2, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
         """
         # - alias
-        modA = np.abs(self.stroh.A) # |A_ia| == | stroh eigen vectors |
-        modD = np.abs(self.D) # |D_a|  == | quantity containing direction cosines |
-        modP = np.abs(self.stroh.P) # |P_a|  == | stroh eigen values |
+        A = np.abs(self.stroh.A) # |A_ia| == | stroh eigen vectors |
+        D = np.abs(self.D) # |D_a|  == | quantity containing direction cosines |
+        P = np.abs(self.stroh.P) # |P_a|  == | stroh eigen values |
         # - setup
         rv = np.zeros((3,2,3,3,2,3), dtype=float) # <--- note this is a real valued tensor
         I = np.indices(rv.shape).T
         I = I.reshape((-1, len(rv.shape)))
         for index in I:
             i, j, a, m, n, b = index
-            rv[tuple(index)] = 2 * modA[i, a] * modA[m, b] * modD[a] * modD[b] * modP[a]**(j+1-1) * modP[b]**(n+1-1)
+            rv[tuple(index)] = 2 * A[i, a] * A[m, b] * D[a] * D[b] * P[a]**(j+1-1) * P[b]**(n+1-1)
         return rv
 
     # FIXME NB amn | bij but -> ija mnb (revisit indexing throughout)
@@ -473,16 +472,29 @@ class MLS():
         """
         return np.einsum('amn,abij->ijamnb', self._c1, self._c2) + np.einsum('amn,abij->ijamnb', self._s1, self._s2)
 
-    @functools.cached_property
-    def Eij(self) -> np.ndarray:
-        """ """
-        I  = np.indices(self.Eijmn.shape).T # len, 3, 3, 2 - > 2, 3, 3, len
-        IJKL = I.reshape((-1, len(self.Eijmn.shape))) # -> N x (a,i,j)
+    @staticmethod
+    def _contract_ijkl(X: np.ndarray):
+        """ contract and arbitrary 4th rank tensor """
+        I  = np.indices(X.shape).T # len, 3, 3, 2 - > 2, 3, 3, len
+        IJKL = I.reshape((-1, len(X.shape))) # -> N x (a,i,j)
         IJ = np.array([contract_ijkl(*e) for e in IJKL])
         rv = np.zeros(np.max(IJ+1, axis=0))
         for ijkl, ij in zip(IJKL, IJ):
-            rv[tuple(ij)] = self.Eijmn[tuple(ijkl)]
+            rv[tuple(ij)] = X[tuple(ijkl)]
         return rv
+
+    @functools.cached_property
+    def Eij(self) -> np.ndarray:
+        """ """
+# =============================================================================
+#         I  = np.indices(self.Eijmn.shape).T # len, 3, 3, 2 - > 2, 3, 3, len
+#         IJKL = I.reshape((-1, len(self.Eijmn.shape))) # -> N x (a,i,j)
+#         IJ = np.array([contract_ijkl(*e) for e in IJKL])
+#         rv = np.zeros(np.max(IJ+1, axis=0))
+#         for ijkl, ij in zip(IJKL, IJ):
+#             rv[tuple(ij)] = self.Eijmn[tuple(ijkl)]
+# =============================================================================
+        return self._contract_ijkl(self.Eijmn)
 
     def Chkl(self, s:np.ndarray) -> float:
         r"""
