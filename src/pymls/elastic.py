@@ -152,47 +152,6 @@ def cij_order(group) -> np.ndarray:
     return get_unique(laue)
 
 
-def contract_ijkl(i, j, k, l, index=0) -> tuple:
-    """
-    Contraction of 4th rank elastic tensor into 2nd rank elastic matrix.
-
-    Parameters
-    ----------
-    i,j,k,l : int
-        DESCRIPTION.
-    index : TYPE, optional
-        DESCRIPTION. The default is 0.
-
-    Returns
-    -------
-    tuple
-        DESCRIPTION.
-
-    Reference
-    ---------
-    Ting, T.C.T. (1996) Anisotropic Elasticity: Theory and Applications. c.f. eqn. 2.3-5b
-    """
-    i, j, k, l = map(int, (i,j,k,l))
-    a = contract_ij(i, j, index)
-    b = contract_ij(k, l, index)
-    return a, b
-
-
-def contract_ij(i, j, index=0) -> int:
-    """ 
-    Contraction of 2nd rank matrix into 1st rank vector.
-
-    Reference
-    ---------
-    Ting, T.C.T. (1996) Anisotropic Elasticity: Theory and Applications. c.f. eqn. 2.3-1
-    """
-    i, j = map(int, (i,j))
-    if i == j:
-        return i
-    else:
-        return 9 - i - j - 3 * (1-index)
-
-
 def sijkl_from_cijkl(cijkl):
     """
     :math:`cijkl sijkl = 1/2 (\delta_{im} \delta_{jn} + \delta_{in} \delta_{jm}`.
@@ -299,7 +258,7 @@ class Stroh():
         rv = np.zeros((6,6))
         for ijkl in _voigt6.reshape((-1,4)):
             try:
-                ij = contract_ijkl(*ijkl)
+                ij = tbx.map_ijkl(*ijkl)
                 rv[ij] = X[tuple(ijkl)]
             except IndexError:
                 print(f'Warning: unable to set {ijkl} -> {ij}')
@@ -316,7 +275,7 @@ class Stroh():
         I0 = I[0]
         # - apply mapping
         for ijkl in I0:
-            mn = contract_ijkl(*ijkl)
+            mn = tbx.map_ijkl(*ijkl)
             a[tuple(ijkl)] = X[tuple(mn)]
         # - exhaustive equivalence
         for Ip in I[1:]:
@@ -547,18 +506,15 @@ class Stroh():
         Ref:
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
-# =============================================================================
-#         if self._flag_eig:
-#             order = [0, 2, 4, 1, 3, 5]
-#             self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
-#             self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
-#             self._xi = self._xi[:, order]
-#             self._flag_eig = 0
-#         return self._p
-# =============================================================================
-        return self.qz.eigv
+        if self._flag_eig:
+            order = [0, 2, 4, 1, 3, 5]
+            self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
+            self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
+            self._xi = self._xi[:, order]
+            self._flag_eig = 0
+        return self._p
+        # return self.qz.eigv
 
-    # FIXME np.eig returns column major eigen vectors
     @functools.cached_property
     def xi(self) -> np.ndarray:
         r"""
@@ -574,28 +530,26 @@ class Stroh():
                 =
                  
             \begin{bmatrix}
-                a_{11} & \bar{a_{11}} & a_{21} & \bar{a_{21}} & a_{31} & \bar{a_{31}} \\
-                a_{12} & \bar{a_{12}} & a_{22} & \bar{a_{22}} & a_{32} & \bar{a_{32}} \\
-                a_{13} & \bar{a_{13}} & a_{23} & \bar{a_{23}} & a_{33} & \bar{a_{33}} \\ 
-                l_{11} & \bar{l_{11}} & l_{21} & \bar{l_{21}} & l_{31} & \bar{l_{31}} \\
-                l_{12} & \bar{l_{12}} & l_{22} & \bar{l_{22}} & l_{32} & \bar{l_{32}} \\
-                l_{13} & \bar{l_{13}} & l_{23} & \bar{l_{23}} & l_{33} & \bar{l_{33}} \\
+                a_{11} & a_{21} &  a_{31} & \bar{a_{11}} & \bar{a_{21}} & \bar{a_{31}} \\
+                a_{12} & a_{22} &  a_{32} & \bar{a_{12}} & \bar{a_{22}} & \bar{a_{32}} \\
+                a_{13} & a_{23} &  a_{33} & \bar{a_{13}} & \bar{a_{23}} & \bar{a_{33}} \\ 
+                l_{11} & l_{21} &  l_{31} & \bar{l_{11}} & \bar{l_{21}} & \bar{l_{31}} \\
+                l_{12} & l_{22} &  l_{32} & \bar{l_{12}} & \bar{l_{22}} & \bar{l_{32}} \\
+                l_{13} & l_{23} &  l_{33} & \bar{l_{13}} & \bar{l_{23}} & \bar{l_{33}} \\
             \end{bmatrix}
                   
 
         Ref:
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
-# =============================================================================
-#         if self._flag_eig:
-#             order = [0, 2, 4, 1, 3, 5]
-#             self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
-#             self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
-#             self._xi = self._xi[:, order]
-#             self._flag_eig = 0
-#         return self._xi # .round(tbx._PREC)
-# =============================================================================
-        return self.qz.vr
+        if self._flag_eig:
+            order = [0, 2, 4, 1, 3, 5]
+            self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
+            self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
+            self._xi = self._xi[:, order]
+            self._flag_eig = 0
+        return self._xi # .round(tbx._PREC)
+        # return self.qz.vr
 
     # FIXME eig solution for N^T doesn't return the same result
     @functools.cached_property
@@ -612,12 +566,10 @@ class Stroh():
         Ref:
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
-# =============================================================================
-#         # return np.row_stack((self.l, self.a)) # "... the left eigenvector... are in the reverse order"""
-#         return tbx.conI @ self.xi # .round(tbx._PREC) # this is equivalent
-#         # return self.xi[::-1] # apparently Ting means the former, not reversal by index
-# =============================================================================
-        return self.qz.vl
+        # return np.row_stack((self.l, self.a)) # "... the left eigenvector... are in the reverse order"""
+        return tbx.conI @ self.xi # .round(tbx._PREC) # this is equivalent
+        # return self.xi[::-1] # apparently Ting means the former, not reversal by index
+        # return self.qz.vl
 
     @functools.cached_property
     def a(self) -> np.ndarray:
@@ -691,7 +643,7 @@ class Stroh():
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[:3, ::2] # == self.a[:, ::2]
-        return self.xi[:3, :3] # / LA.norm(self.xi[:3, :3], axis=0)  # ordered
+        return self.xi[:3, :3] / LA.norm(self.xi[:3, :3], axis=0)  # ordered
 
     @functools.cached_property
     def L(self) -> np.ndarray:
@@ -714,7 +666,7 @@ class Stroh():
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[3:, ::2] # == self.l[:, ::2]
-        return self.xi[3:, :3] # / LA.norm(self.xi[3:, :3], axis=0) 
+        return self.xi[3:, :3] / LA.norm(self.xi[3:, :3], axis=0) 
 
     @property
     def U(self) -> np.ndarray:

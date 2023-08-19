@@ -265,7 +265,7 @@ class TestQZSolution:
     def test_solution_to_N(self):
         """ N x = p x """
         A = self.s.N @ self.s.qz.vr
-        B = self.qz.eigv * np.eye(6) @ self.s.qz.vr
+        B = self.s.qz.eigv * np.eye(6) @ self.s.qz.vr
         assert tbx.complex_tol(A, B) is True
 
     def test_right_column_vectors(self):
@@ -293,7 +293,7 @@ class TestQZSolution:
         #         ans[i,j] = np.abs(S.qz.vl[:,i]@S.qz.vr[:,j]) < tbx._SMALL
         A = np.abs(self.s.qz.nvl.T @ self.s.qz.nvr) < tbx._SMALL
         B = np.abs((self.s.qz.eigv * np.ones((6,6))).T - self.s.qz.eigv * np.ones((6,6))) < tbx._SMALL
-        assert all(A == B) is True
+        assert all(A.ravel() == B.ravel()) is True
 
     # End TestQZSolution
 
@@ -354,6 +354,7 @@ class TestTingOrthogonalityClosure:
     def test_Ting_551(self):
         """  """
         x = self.s.xi
+        # x = np.row_stack((self.s.A, self.s.L))
         p = self.s.p
         L = tbx.square([(-self.s.Q,   O),
                         (-self.s.R.T, I)

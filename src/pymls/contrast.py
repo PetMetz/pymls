@@ -19,7 +19,7 @@ from numpy import linalg as LA
 
 # package imports
 # from .lattice import Lattice # Lattice
-from .elastic import Stroh, contract_ijkl   # anisotropic strain
+from .elastic import Stroh  # anisotropic strain
 from .geometric import Dislocation # crystal reference frame
 from . import toolbox as tbx # orthogonal, unit_vectors, float_tol
 
@@ -72,7 +72,7 @@ class MLS():
         """
         return self.dislocation.Gijmn(s)
 
-    # - indexed on alpha only
+    # FIXME for properly normalized A/L the denominator is (1,1,1)
     @functools.cached_property
     def D(self) -> np.ndarray:
         r"""       
@@ -472,17 +472,6 @@ class MLS():
         """
         return np.einsum('amn,abij->ijamnb', self._c1, self._c2) + np.einsum('amn,abij->ijamnb', self._s1, self._s2)
 
-    @staticmethod
-    def _contract_ijkl(X: np.ndarray):
-        """ contract and arbitrary 4th rank tensor """
-        I  = np.indices(X.shape).T # len, 3, 3, 2 - > 2, 3, 3, len
-        IJKL = I.reshape((-1, len(X.shape))) # -> N x (a,i,j)
-        IJ = np.array([contract_ijkl(*e) for e in IJKL])
-        rv = np.zeros(np.max(IJ+1, axis=0))
-        for ijkl, ij in zip(IJKL, IJ):
-            rv[tuple(ij)] = X[tuple(ijkl)]
-        return rv
-
     @functools.cached_property
     def Eij(self) -> np.ndarray:
         """ """
@@ -494,7 +483,7 @@ class MLS():
 #         for ijkl, ij in zip(IJKL, IJ):
 #             rv[tuple(ij)] = self.Eijmn[tuple(ijkl)]
 # =============================================================================
-        return self._contract_ijkl(self.Eijmn)
+        return tbx.contract_ijkl(self.Eijmn)
 
     def Chkl(self, s:np.ndarray) -> float:
         r"""

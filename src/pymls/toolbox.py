@@ -145,6 +145,74 @@ def get_smallest(X):
     return min(a)
 
 
+def map_ijkl(i, j, k, l, index=0) -> tuple:
+    """
+    Contraction of 4th rank elastic tensor into 2nd rank elastic matrix.
+
+    Parameters
+    ----------
+    i,j,k,l : int
+        DESCRIPTION.
+    index : TYPE, optional
+        DESCRIPTION. The default is 0.
+
+    Returns
+    -------
+    tuple
+        DESCRIPTION.
+
+    Reference
+    ---------
+    Ting, T.C.T. (1996) Anisotropic Elasticity: Theory and Applications. c.f. eqn. 2.3-5b
+    """
+    i, j, k, l = map(int, (i,j,k,l))
+    a = map_ij(i, j, index)
+    b = map_ij(k, l, index)
+    return a, b
+
+
+def map_ij(i, j, index=0) -> int:
+    """ 
+    Contraction of 2nd rank matrix into 1st rank vector.
+    
+    11 22 33 23 13 23 
+    1  2  3  4  5  6
+
+    Reference
+    ---------
+    Ting, T.C.T. (1996) Anisotropic Elasticity: Theory and Applications. c.f. eqn. 2.3-1
+    """
+    i, j = map(int, (i,j))
+    if i == j:
+        return i
+    else:
+        return 9 - i - j - 3 * (1-index)
+
+
+def contract_ijkl(X: np.ndarray):
+    """ contract and arbitrary 4th rank tensor """
+    X = np.asarray(X)
+    ind  = np.indices(X.shape).T # len, 3, 3, 2 - > 2, 3, 3, len
+    IJKL = ind.reshape((-1, len(X.shape))) # -> N x (a,i,j)
+    IJ = np.array([map_ijkl(*e) for e in IJKL])
+    rv = np.zeros(np.max(IJ+1, axis=0))
+    for ijkl, ij in zip(IJKL, IJ):
+        rv[tuple(ij)] = X[tuple(ijkl)]
+    return rv
+
+
+def contract_ij(X: np.ndarray):
+    """ contract and arbitrary 2nd rank tensor """
+    X = np.asarray(X)
+    ind  = np.indices(X.shape).T 
+    IJ = ind.reshape((-1, len(X.shape)))
+    I = np.array([map_ij(*e) for e in IJ])
+    rv = np.zeros(np.max(I+1, axis=0), dtype=X.dtype)
+    for ij, i in zip(IJ, I):
+        rv[i] = X[tuple(ij)]
+    return rv
+
+
 def generate_hull(matrix, o=None):
     # - defaults
     if o is None:

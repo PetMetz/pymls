@@ -49,9 +49,9 @@ def test_F_algebra(thisFixture, request):
     mls = request.getfixturevalue(thisFixture)
     P = mls.stroh.P
     A = np.empty((3,3))
-    for j in range(3):
-        for i in range(3):
-            A[i,j] = (P[i].real - P[j].real)**2 + (P[i].imag - P[j].imag)**2
+    for b in range(3):
+        for a in range(3):
+            A[a,b] = (P[a].real - P[b].real)**2 + (P[a].imag - P[b].imag)**2
     B = mls.F
     assert tbx.float_tol(A,B)
 
@@ -70,10 +70,10 @@ def test_Q_algebra(thisFixture, request):
     P = mls.stroh.P
     modP = np.abs(P)**2 # (p * np.conjugate(p).T).real 
     A = np.empty((3,3), dtype=float)
-    for j in range(3):
-        for i in range(3):
-            A[i,j] = (modP[i] - modP[j])**2 + \
-                     4 * (P[i].real - P[j].real) * (modP[j] * P[i].real - modP[i] * P[j].real)
+    for b in range(3):
+        for a in range(3):
+            A[a,b] = (modP[a] - modP[b])**2 + \
+                     4 * (P[a].real - P[b].real) * (modP[b] * P[a].real - modP[a] * P[b].real)
     B = mls.Q
     assert tbx.float_tol(A,B)
 
@@ -149,7 +149,7 @@ def test_psi_algebra(thisFixture, request):
         for i in range(3):
             if i == j:
                 A[i,i] = modP[i] / (2 * P[i].imag**2)
-            elif i != j:
+            else:
                 A[i,j] = (modP[i] / P[i].imag) * (F[i,j] / Q[i,j]) ** 0.5
     B = mls.psi
     assert tbx.float_tol(A,B)
@@ -176,6 +176,15 @@ def test_phi_algebra(thisFixture, request):
                             rv[i,j,a,m,n,b] = 2 * A[i,a] * A[m,b] * D[a] * D[b] * P[a]**int(j+1-1) * P[b]**int(n+1-1)
     B = mls.phi
     assert tbx.float_tol(rv,B)
+
+
+@pytest.mark.parametrize('thisFixture', mls_suite)
+def test_Eij_symmetric(thisFixture, request):
+    """
+    per KK (1988) GKL and EKL are symmetric
+    """
+    mls = request.getfixturevalue(thisFixture)
+    assert tbx.is_symmetric(mls.Eij)
 
 
 # --- classes
