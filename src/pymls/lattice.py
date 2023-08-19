@@ -243,13 +243,12 @@ class Lattice():
     @property
     def reciprocal(self):
         r"""
-        Lattice instance from :math:`G^{-1}`.
+        Lattice instance from :math:`M^{-1}`.
         
         NB private attribute set on instantiation.
         """
         if self._reciprocal is None:
-            # self._reciprocal = Lattice.from_metric(LA.inv(self.G))
-            self._reciprocal = Lattice.from_matrix(LA.inv(self.M.T))
+            self._reciprocal = Lattice.from_matrix(LA.inv(self.M).T)
         return self._reciprocal
     
     # - properties
@@ -318,9 +317,9 @@ class Lattice():
         return np.concatenate((self.abc, self.angles))
     
     @property
-    def is_orthogonal(self):
-        r""" angles == (pi/3,)*3 """
-        return all((self.angles - 90) < tbx._SMALL)
+    def is_orthogonal(self) -> bool:
+        r"""  """
+        return tbx.is_orthogonal(self.M)
 
     # - functions 
     def angle_between(self, x1: np.ndarray, x2: np.ndarray, x3:np.ndarray, degrees=False):

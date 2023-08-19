@@ -19,7 +19,7 @@ from numpy import linalg as LA
 
 # package imports
 # from .lattice import Lattice # Lattice
-from .elastic import Stroh   # anisotropic strain
+from .elastic import Stroh  # anisotropic strain
 from .geometric import Dislocation # crystal reference frame
 from . import toolbox as tbx # orthogonal, unit_vectors, float_tol
 
@@ -43,7 +43,7 @@ class MLS():
         dislocations." Acta Cryst. A65, 109–119. `doi:10.1107/S010876730804186X <https://dx.doi.org/10.1107/S010876730804186X>`_
     """
     def __repr__(self):
-        return f'<Martinez(\ndislocation={self.dislocation.__repr__()},\ncij={self.stroh.cij} @ {hex(id(self))}>'
+        return f'<Martinez(\ndislocation={self.dislocation.__repr__()},\nstroh={self.stroh} @ {hex(id(self))}>\nEij =\n{self.Eij.round(3)}'
 
     def __init__(self,
                  dislocation: Dislocation=None, # dislocation geometry (carries around a lattice instance)
@@ -72,7 +72,7 @@ class MLS():
         """
         return self.dislocation.Gijmn(s)
 
-    # - indexed on alpha only
+    # FIXME for properly normalized A/L the denominator is (1,1,1)
     @functools.cached_property
     def D(self) -> np.ndarray:
         r"""       
@@ -88,7 +88,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a,) -> (3,) complex (length**-1)
+        np.ndarray (a,) -> (3,) complex (N length**-1)
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -96,13 +96,13 @@ class MLS():
         ---------
         c.f. eqn. 13, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
         """
-        b = self.dislocation.uvw # b_j
-        modb = self.dislocation.length(self.dislocation.uvw) # |b_j|
+        b = self.dislocation.uvw # b
+        modb = self.dislocation.length(self.dislocation.uvw) # |b|
         A = self.stroh.A # column vectors
         L = self.stroh.L # column vectors
         D = np.empty((3,), dtype=complex)
-        for i in range(3):
-            D[i] = -(L[:,i] @ b) / (modb * (A[:,i] @ L[:,i]))
+        for a in range(3):
+            D[a] = -1 / modb * (L[:,a] @ b) / (A[:,a] @ L[:,a])
         return D
 
     @functools.cached_property
@@ -126,12 +126,15 @@ class MLS():
     @functools.cached_property
     def y(self) -> np.ndarray:
         r"""
-        :math:`y = \arctan((\Re{(p_i)} - \Re{(p_j)}) / (\Im{(p_i)} + \Im{(p_j)}))`
+        
+        .. math::
+            
+            y = \arctan(\frac{(\Re{(p_i)} - \Re{(p_j)})}{(\Im{(p_i)} + \Im{(p_j)})})
 
 
         Returns
         -------
-        np.ndarray (a,a`) -> (3,3) (radians)
+        np.ndarray (a,a`) -> (3,3) radians, real, skew-symmetric
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -150,7 +153,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a,a`) -> (3,3) (radians)
+        np.ndarray (a,a`) -> (3,3) radians, real
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -170,7 +173,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a, a`) -> (3, 3) real
+        np.ndarray (a, a`) -> (3, 3) real, symmetric
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -192,7 +195,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a, a`) == (3, 3) real
+        np.ndarray (a, a`) == (3, 3) real, symmetric
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -220,15 +223,17 @@ class MLS():
 
         :math:`\alpha \in 1,2,3, m \in 1,2,3, n \in 1,2`
 
-        NB (n-1) is an *exponent* (rather than an index) resulting from
-        evaluation of the partial differentials (Martinez-Garcia et al. eqn. 15)
+        NB :math:`(n-1), n \in (1,2)` is an *exponent* (rather than an index) 
+        resulting from evaluation of the partial differentials 
+        
+        .. math::
 
-        :math:`\frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)`
+            \frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)
 
 
         Returns
         -------
-        np.ndarray (a, m, n) == (3, 3, 2) radians
+        np.ndarray (a, m, n) == (3, 3, 2) radians, real
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -239,14 +244,14 @@ class MLS():
         rv = np.zeros((3,3,2), dtype=complex)
         I  = np.indices(rv.shape).T # len, 3, 3, 2 - > 2, 3, 3, len
         I  = I.reshape((-1, len(rv.shape))) # -> N x (a,i,j)
-        A  = self.stroh.A # A_ai
+        A  = self.stroh.A # A_ia
         D  = self.D # D_a
         P  = self.stroh.P # P_a
         for index in I:
-            a, i, j = index
-            rv[tuple(index)] = A[i, a] * D[a] * P[a]**int(j-1)  # NB A are column eigenvectors
+            a, m, n = index
+            rv[tuple(index)] = A[m, a] * D[a] * P[a]**int(n+1-1)  # NB A are column eigenvectors
         # return np.arctan(k.imag / k.real) # https://en.wikipedia.org/wiki/Argument
-        return np.angle(rv)
+        return np.angle(rv) # radians
 
     @functools.cached_property
     def gamma1(self) -> np.ndarray:
@@ -258,7 +263,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a, a`) == (3, 3) radians
+        np.ndarray (a, a`) == (3, 3) radians, real, symmetric
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -303,7 +308,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a, a`) == (3, 3) real valued.
+        np.ndarray (a, a`) == (3, 3) real
             Component of :math:`E_{ijmn}` calculation.
 
 
@@ -327,9 +332,9 @@ class MLS():
 
             \Phi_{ij\alpha}^{mn\alpha^`} = 2 |A_{i\alpha}||A_{i\alpha^`}||D_{\alpha}||D_{\alpha^`}||P_{\alpha}^{(j-1)}||P_{\alpha^`}^{(n-1)}|
 
-        NB (n-1) is an *exponent* resulting from evaluation of the partial
-        differentials (rather than an index)
-
+        NB :math:`(n-1), n \in (1,2)` is an *exponent* (rather than an index) 
+        resulting from evaluation of the partial differentials 
+        
         .. math::
 
             \frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)
@@ -346,16 +351,16 @@ class MLS():
         c.f. eqn. 18.2, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
         """
         # - alias
-        modA = np.abs(self.stroh.A) # |A_ia| == | stroh eigen vectors |
-        modD = np.abs(self.D) # |D_a|  == | quantity containing direction cosines |
-        modP = np.abs(self.stroh.P) # |P_a|  == | stroh eigen values |
+        A = np.abs(self.stroh.A) # |A_ia| == | stroh eigen vectors |
+        D = np.abs(self.D) # |D_a|  == | quantity containing direction cosines |
+        P = np.abs(self.stroh.P) # |P_a|  == | stroh eigen values |
         # - setup
         rv = np.zeros((3,2,3,3,2,3), dtype=float) # <--- note this is a real valued tensor
         I = np.indices(rv.shape).T
         I = I.reshape((-1, len(rv.shape)))
         for index in I:
             i, j, a, m, n, b = index
-            rv[tuple(index)] = 2 * modA[i, a] * modA[m, b] * modD[a] * modD[b] * modP[a]**(j-1) * modP[b]**(n-1)
+            rv[tuple(index)] = 2 * A[i, a] * A[m, b] * D[a] * D[b] * P[a]**(j+1-1) * P[b]**(n+1-1)
         return rv
 
     # FIXME NB amn | bij but -> ija mnb (revisit indexing throughout)
@@ -364,7 +369,7 @@ class MLS():
         r"""
         .. math::
 
-            E_{ijmn} = \Sigma_{\alpha, \alpha'}^{3} \Psi_{\alpha}^{\alpha'} \Phi_{ij\alpha}^{mn\alpha'} \left[ \cos(\Delta_{\alpha}^{mn} + x_{\alpha}) \cos(\Delta_{ij}^{\alpha'} - y_{\alpha}^{\alpha'}) + \sin(\Delta_{\alpha}^{mn}) \sin(\Delta_{ij}^{\alpha'} - z_{\alpha}^{\alpha'}) \right]
+            E_{ijmn} = \Sigma_{\alpha, \alpha'}^{3} \Psi_{\alpha}^{\alpha'} \Phi_{ij\alpha}^{mn\alpha'} \left[ \cos(\Delta_{\alpha}^{mn} + x_{\alpha}) \cos(\Delta_{ij}^{\alpha'} - y_{\alpha}^{\alpha'}) + \sin(\Delta_{\alpha}^{mn}) \sin(\Delta_{ij}^{\alpha'} + z_{\alpha}^{\alpha'}) \right]
 
         Returns
         -------
@@ -375,50 +380,8 @@ class MLS():
         Reference
         ---------
         c.f. eqn. 17, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
-            """
-        # =============================================================================
-        #         # - setup return array
-        #         rv = np.zeros((3,2,3,3,2,3), dtype=float) # <--- note this is a real valued tensor
-        #         I = np.indices(rv.shape, dtype=np.intp).T # len(shape), *shape -> *shape. len(shape)
-        #         I = I.reshape((-1, len(rv.shape)))
-        #         # - alias objects
-        #         psi = self.psi  # (a, a`)  == (3,3)
-        #         phi = self.phi  # (i,j,a,m,n,a`) == (3,2,3,3,2,3)
-        #         delta = self.delta  # (a, m, n) == (3,3,2)
-        #         x = self.x  # (a,) == (3,)
-        #         y = self.y  # (a, a`) == (3,3)
-        #         z = self.z  # (a, a`) == (3,3)
-        #         # - compute elements
-        #         for index in I:
-        #             i, j, a, m, n, b = index
-        #             rv[tuple(index)] = \
-        #                 psi[a,b] * phi[i,j,a,m,n,b] * (\
-        #                     np.cos(delta[a,m,n] + x[a]) * np.cos(delta[b,i,j] - y[a,b]) \
-        #                   + np.sin(delta[a,m,n]) * np.sin(delta[b,i,j] + z[a,b])
-        #                     )
-        #         # - contract
-        #         # equivalent to rv.sum(axis=2).sum(axis=-1)
-        #         rv = np.einsum('ijamnb->ijmn', rv) # .round(tbx._PREC)
-        #         return rv
-        # =============================================================================
-        # - alternative
-        # =============================================================================
-        #         pp = np.einsum('ab,ijamnb->ijamnb', psi, phi)
-        #         a1 = np.transpose(delta.T - np.eye(3)*x)
-        #         a2 = np.transpose(delta.T - y)
-        #         b1 = delta
-        #         b2 = np.transpose(delta.T - z)
-        #         cos = np.einsum('amn,bij->ijamnb', np.cos(a1), np.cos(a2))
-        #         sin = np.einsum('amn,bij->ijamnb', np.sin(b1), np.sin(b2))
-        #         con = np.einsum('ijamnb,ijamnb,ijamnb->ijmn', pp, cos, sin)
-        #         ...
-        # =============================================================================
-        # Try again...
-        # =============================================================================
-        C = np.einsum('amn,bij->ijamnb', self._c1, self._c2) + np.einsum('amn,bij->ijamnb', self._s1, self._s2) # (i,j,a,m,n,b) == (3,2,3,3,2,3)
-        B = np.einsum('ijamnb,ijamnb->ijamnb', self.phi, C)
-        A = np.einsum('ab,ijamnb->ijmn', self.psi, B)
-        return A # (i,j,m,n) == (3,2,3,2)
+        """
+        return np.einsum('ab,ijamnb->ijmn', self.psi, self.phi * self._dm)
 
     @functools.cached_property
     def _c1(self) -> np.ndarray:
@@ -429,7 +392,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (3,3,2) real
+        np.ndarray (a,m,n) = (3,3,2) real
             Component of :math:`E_{ijmn}` calculation.
         """
         # return np.cos( np.einsum('amn,a->amn', self.delta, self.x) ) # addition not multiplication
@@ -437,8 +400,8 @@ class MLS():
         for n in range(2):
             for m in range(3):
                 for a in range(3):
-                    A[a,m,n] = np.cos(self.delta[a,m,n] + self.x[a])
-        return A
+                    A[a,m,n] = self.delta[a,m,n] + self.x[a]
+        return np.cos(A)
 
     @functools.cached_property
     def _c2(self) -> np.ndarray:
@@ -449,18 +412,17 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (3,3,2) real
+        np.ndarray (a,b,i,j) = (3,3,2) real
             Component of :math:`E_{ijmn}` calculation.
         """
         # return np.cos( np.einsum('bmn,ab->amn', self.delta, -self.y) )
-        A = np.zeros((3,3,2))
-        for n in range(2):
-            for m in range(3):
-                for a in range(3):
-                    for b in range(3):
-                        A[a,m,n] = self.delta[a,m,n] - self.y[a,b] + A[a,m,n] # contract arg
-                    A[a,m,n] = np.cos(A[a,m,n]) # eval cos
-        return A
+        A = np.zeros((3,3,3,2))
+        for j in range(2):
+            for i in range(3):
+                for b in range(3):
+                    for a in range(3):
+                        A[a,b,i,j] = self.delta[b,i,j] - self.y[a,b]
+        return np.cos(A)
 
     @functools.cached_property
     def _s1(self) -> np.ndarray:
@@ -470,7 +432,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (3,3,2) real
+        np.ndarray (a,m,n) = (3,3,2) real
             Component of :math:`E_{ijmn}` calculation.
         """
         return np.sin(self.delta)
@@ -484,18 +446,44 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (3,3,2) real
+        np.ndarray (a,b,i,j) = (3,3,3,2) real
             Component of :math:`E_{ijmn}` calculation.
         """
         # return np.sin( np.einsum('bmn,ab->amn', self.delta, self.z) )
-        A = np.zeros((3,3,2))
-        for n in range(2):
-            for m in range(3):
-                for a in range(3):
-                    for b in range(3):
-                        A[a,m,n] = self.delta[a,m,n] - self.z[a,b] + A[a,m,n] # contract arg
-                    A[a,m,n] = np.sin(A[a,m,n]) # eval sin
-        return A
+        A = np.zeros((3,3,3,2))
+        for j in range(2):
+            for i in range(3):
+                for b in range(3):
+                    for a in range(3):
+                        A[a,b,i,j] = self.delta[b,i,j] + self.z[a,b]
+        return np.sin(A)
+    
+    @functools.cached_property
+    def _dm(self) -> np.ndarray:
+        r"""
+        .. math::
+            
+            \left[ \cos(\Delta_{\alpha}^{mn} + x_{\alpha}) \cos(\Delta_{ij}^{\alpha'} - y_{\alpha}^{\alpha'}) + \sin(\Delta_{\alpha}^{mn}) \sin(\Delta_{ij}^{\alpha'} + z_{\alpha}^{\alpha'}) \right]
+        
+        Returns
+        -------
+        np.ndarray (i,j,a,m,n,b) = (3,2,3,3,2,3) real
+            Component of :math:`E_{ijmn}` calculation.
+        """
+        return np.einsum('amn,abij->ijamnb', self._c1, self._c2) + np.einsum('amn,abij->ijamnb', self._s1, self._s2)
+
+    @functools.cached_property
+    def Eij(self) -> np.ndarray:
+        """ """
+# =============================================================================
+#         I  = np.indices(self.Eijmn.shape).T # len, 3, 3, 2 - > 2, 3, 3, len
+#         IJKL = I.reshape((-1, len(self.Eijmn.shape))) # -> N x (a,i,j)
+#         IJ = np.array([contract_ijkl(*e) for e in IJKL])
+#         rv = np.zeros(np.max(IJ+1, axis=0))
+#         for ijkl, ij in zip(IJKL, IJ):
+#             rv[tuple(ij)] = self.Eijmn[tuple(ijkl)]
+# =============================================================================
+        return tbx.contract_ijkl(self.Eijmn)
 
     def Chkl(self, s:np.ndarray) -> float:
         r"""
@@ -519,7 +507,34 @@ class MLS():
         ---------
         c.f. eqn. 9, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
         """
-        return np.einsum('ijmn,ijmn->', self.Gijmn(s) ,self.Eijmn)
+        return np.einsum('ijmn,ijmn->', self.Gijmn(s), self.Eijmn)
 
+    def plot_u(self) -> tuple:
+        r""" c.f. eqn. 13, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_  """
+        import matplotlib.pyplot as plt
+        
+        # compute
+        x1 = np.linspace(-10, 10, 101)
+        x2 = x1
+        x12 = np.transpose(np.meshgrid(x1,x2)).reshape((-1,2))
+        l12 = np.zeros((3, x1.size, x2.size), dtype=complex)
+        z12 = np.zeros((x1.size, x2.size))
+        for a in range(3):
+            l12[a] = np.log(np.sum(x12 * (1, self.stroh.P[a]), axis=1)).reshape(z12.shape)
+        z12 = np.sum(l12, axis=0).imag * self.dislocation.length(self.dislocation.uvw) / (2 * np.pi) 
+
+        # instance
+        fig, ax = plt.subplots()
+        extent = (x1.min(), x1.max(), x2.min(), x2.max())
+        im = ax.imshow(z12, origin='lower', extent=extent, cmap='PRGn')
+        cb = fig.colorbar(im)
+        ax.set_xlabel(r'$x_1 \parallel \vec{e_1}\; [a.u.]$')
+        ax.set_ylabel(r'$x_2 \parallel \vec{e_2}\; [a.u.]$')
+        ax.set_title(r'$u_m(x_1,x_2) = \frac{b_v}{2\pi}\, Im \left[ \Sigma_{\alpha=1}^{3} A_{m\alpha}D_{\alpha}ln\left(x_1 + p_{\alpha}x_2\right)\right]$')
+        cb.set_label(r'$displacement,\, u(x_1,x_2)$')
+        fig.tight_layout()
+        
+        return fig, ax
+    
     # End Martinez
 

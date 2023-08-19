@@ -153,7 +153,7 @@ class Dislocation(lattice.Lattice):
         Martinez-Garcia, Leoni, & Scardi (2009) "Diffraction contrast factor of
             dislocations." Acta Cryst A65, 109-119. eqns. 5-6.
         """
-        return tbx.rotation_from_axis_angle(vector=self.xi2, angle=self.phi, degree=True) # MLS shows this rotation of b into l in the negative sense of phi
+        return tbx.rotation_from_axis_angle(vector=self.xi2, angle=-self.phi, degree=True) # MLS shows this rotation of b into l in the negative sense of phi
     
     @property
     @tbx.unit_vector

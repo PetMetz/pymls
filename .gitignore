@@ -114,5 +114,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# other misc
+# references
+/reference
 .pdf

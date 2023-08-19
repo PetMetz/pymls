@@ -16,9 +16,10 @@ from pymls.geometric import Dislocation
 from pymls import toolbox as tbx
 
 # local
-from fixtures import cubic_lattice, hexagonal_lattice, orthorhombic_lattice, triclinic_lattice
-from fixtures import cubic_slip, hexagonal_slip, orthorhombic_slip, triclinic_slip
-from fixtures import cubic_dislocation, hexagonal_dislocation, orthorhombic_dislocation, triclinic_dislocation
+#from fixtures import cubic_lattice, hexagonal_lattice, triclinic_lattice
+#from fixtures import cubic_slip, hexagonal_slip, triclinic_slip
+#from fixtures import cubic_dislocation, hexagonal_dislocation, triclinic_dislocation
+from fixtures import *
 from fixtures import lattice_suite
 from fixtures import dislocation_suite
 
@@ -81,6 +82,19 @@ def rotation_from_axis_angle(vector, angle, degree=True):
     sin = np.sin(angle)
     return cos * I + sin * ux + (1 - cos) * uu
 
+def rotation_from_mls_convention(D):
+    p = D.phi
+    sp = np.sin(p * np.pi/180)
+    sp2 = np.sin(p/2 * np.pi/180)**2
+    cp = np.cos(p * np.pi/180)
+    x1, x2, x3 = D.xi2
+    B = np.array([
+        (2*x1*x1*sp2+1*cp, 2*x1*x2*sp2+x3*sp, 2*x1*x3*sp2-x2*sp),
+        (2*x1*x2*sp2-x3*sp, 2*x2*x2*sp2+1*cp, 2*x2*x3*sp2+x1*sp),
+        (2*x1*x3*sp2+x2*sp, 2*x2*x3*sp2-x1*sp, 2*x3*x3*sp2+1*cp)
+        ])
+    return B
+
 # --- constants
 
 # --- fixtures
@@ -106,15 +120,15 @@ class TestOrthogonal:
 
     def test_P(self):
         """ """
-        assert tbx.is_orthogonal(self.d.P) is True
+        assert tbx.is_orthogonal(self.d.P)
     
     def test_e(self):
         """ """
-        assert tbx.is_orthogonal(self.d.e) is True
+        assert tbx.is_orthogonal(self.d.e)
     
     def test_rp2(self):
         """ """
-        assert tbx.is_orthogonal(self.d.Rp2) is True
+        assert tbx.is_orthogonal(self.d.Rp2)
     
     # end TestOrthogonal
 
@@ -154,7 +168,7 @@ class TestSymmetry:
 
     def test_M_asymmetric(self):
         """ """
-        assert tbx.is_symmetric(self.d.M) is self.d.is_orthogonal
+        assert tbx.is_symmetric(self.d.M) is self.d.is_orthogonal # False
 
     def test_G_symmetric(self):
         """ """
@@ -162,7 +176,7 @@ class TestSymmetry:
     
     def test_reciprocal_M_asymmetric(self):
         """ """
-        assert tbx.is_symmetric(self.d.reciprocal.M) is self.d.is_orthogonal
+        assert tbx.is_symmetric(self.d.reciprocal.M) is self.d.is_orthogonal # False
     
     def test_reciprocal_G_symmetric(self):
         """ """
@@ -208,6 +222,12 @@ class TestComputation:
         A = self.d.reciprocal.G
         B = LA.inv(self.d.G)
         assert tbx.float_tol(A, B) is True
+        
+    def test_rotation_matrix(self):
+        """ """
+        A = self.d.Rp2
+        B = rotation_from_mls_convention(self.d)
+        assert tbx.float_tol(A, B)
         
 # =============================================================================
 #     def test_MLS_M_is_transposed(self):

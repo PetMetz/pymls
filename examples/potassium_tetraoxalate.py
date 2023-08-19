@@ -29,7 +29,7 @@ scalar = (1, 1, 1, 60, 90, 120)
 hkl = np.array((0,0,1))  # BCC slip plane
 uvw = np.array((1,1,1))  # burgers vector
 l   = np.cross(hkl, uvw)  # dislocation line vector
-phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
+phi = 90 #  abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 
 # - 3. elastic constituents
 def triclinic_cij():
@@ -74,4 +74,7 @@ I = MLS(dislocation=D, cij=C) # captures sum computation
 
 # - 5. viz
 fig, ax = D.visualize()
+fig, ax = I.plot_u()
 
+Cmls = I.Chkl(uvw)
+print(Cmls)

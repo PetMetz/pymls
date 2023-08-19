@@ -30,21 +30,18 @@ chi = abt(hkl, uvw, degrees=True)
 C = cij_from_group(116.3, 64.8, 30.9, group='m-3m') # GPa
 
 # - 4. class instances
-lattice = Lattice.from_scalar( lattice_scalar )
-dislocation = Dislocation(lattice=lattice, hkl=hkl, uvw=uvw, phi=phi, SGno=None)
-stroh = Stroh(C) # captures characteristic elastic matrix and eigensolution
-calc = MLS(dislocation=dislocation, cij=C) # captures sum computation
+L = Lattice.from_scalar( lattice_scalar )
+D = Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi, SGno=None)
+S = Stroh(C) # captures characteristic elastic matrix and eigensolution
+I = MLS(dislocation=D, cij=C) # captures sum computation
 
 # - 5. compute values
 # Anizc
 # b[1,-1,0]; n[1,1,1]; l[-1,-1,2]; g[1,-1,0]
 Canzic = 0.51008962
-Cmls = calc.Chkl(uvw)
+Cmls = I.Chkl(uvw)
 print(f'Anzic: {Canzic:.6f}; this work: {Cmls:.6f}')
 print(f'Differs by Canzic / Cmls == {Canzic / Cmls:.6f}')
-
-# alias
-D = dislocation
 
 # plot
 D.visualize()
