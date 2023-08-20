@@ -229,6 +229,63 @@ class TestComputation:
         B = rotation_from_mls_convention(self.d)
         assert tbx.float_tol(A, B)
         
+    def get_tau1(self, s: np.ndarray) -> float:
+        r"""
+        .. math::
+            
+            \tau_1 = (1 - \tau_2^2 - \tau_3^2) ^{1/2}
+        """
+        s = np.asarray(s)
+        t2 = self.get_tau2(s)
+        t3 = self.get_tau3(s)
+        return (1 - t2**2 - t3**2) ** 0.5
+        
+    def get_tau2(self, s: np.ndarray) -> float:
+        r""" 
+        .. math::
+            
+            \tau_2 = \frac{s \cdot G^* \cdot n}{|n||s|}
+        """
+        s = np.asarray(s)
+        num = s @ self.d.reciprocal.G @ self.d.hkl
+        den = self.d.reciprocal.length(self.d.hkl) *\
+              self.d.reciprocal.length(s)
+        return num / den
+
+    def get_tau3(self, s: np.ndarray) -> float:
+        r"""
+        .. math::
+            
+            \tau_3 = \frac{s \cdot M^T \cdot R(\phi,2) \cdot [M^T]^{-1} \cdot b }{|b| |s|}
+        """
+        s = np.array(s)
+        o = self.d
+        r = self.d.reciprocal
+        num = s @ r.M.T @ self.d.Rp2 @ o.M @ self.d.uvw
+        den = o.length(self.d.uvw) * r.length(s)
+        return num / den
+        
+    def test_tau1_by_definition(self):
+        """ """
+        s = np.array((1,2,3))
+        A = self.d.t1(s)
+        B = self.get_tau1(s)
+        return tbx.float_tol(A, B)
+        
+    def test_tau2_by_definition(self):
+        """ """
+        s = np.array((1,2,3))
+        A = self.d.t2(s)
+        B = self.get_tau2(s)
+        return tbx.float_tol(A, B)
+        
+    def test_tau3_by_definition(self):
+        """ """
+        s = np.array((1,2,3))
+        A = self.d.t3(s)
+        B = self.get_tau3(s)
+        return tbx.float_tol(A, B)
+
 # =============================================================================
 #     def test_MLS_M_is_transposed(self):
 #         """ """

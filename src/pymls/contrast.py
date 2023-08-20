@@ -43,7 +43,7 @@ class MLS():
         dislocations." Acta Cryst. A65, 109–119. `doi:10.1107/S010876730804186X <https://dx.doi.org/10.1107/S010876730804186X>`_
     """
     def __repr__(self):
-        return f'<Martinez(\ndislocation={self.dislocation.__repr__()},\nstroh={self.stroh} @ {hex(id(self))}>\nEij =\n{self.Eij.round(3)}'
+        return f'<MLS(\ndislocation={self.dislocation.__repr__()},\nstroh={self.stroh} @ {hex(id(self))}>\nEij =\n{self.Eij.round(3)}'
 
     def __init__(self,
                  dislocation: Dislocation=None, # dislocation geometry (carries around a lattice instance)
