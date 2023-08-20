@@ -485,6 +485,17 @@ class Stroh():
             self._flag_N = 0
         return self._N
 
+    def _get_eig(self) -> None:
+        if self._flag_eig:
+            # order = [1, 3, 5, 0, 2, 4]
+            order = [0, 2, 4, 1, 3, 5]
+            # order = [0, 1, 2, 3, 4, 5]
+            self._p, self._eta, self._xi = sla.eig(self.N, left=True, right=True) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
+            self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
+            self._xi = self._xi[:, order]
+            self._eta = self._eta[:, order]
+            self._flag_eig = 0        
+
     @functools.cached_property
     def p(self) -> np.ndarray:
         r"""
@@ -507,11 +518,7 @@ class Stroh():
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
         if self._flag_eig:
-            order = [0, 2, 4, 1, 3, 5]
-            self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
-            self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
-            self._xi = self._xi[:, order]
-            self._flag_eig = 0
+            self._get_eig()
         return self._p
         # return self.qz.eigv
 
@@ -543,15 +550,11 @@ class Stroh():
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
         if self._flag_eig:
-            order = [0, 2, 4, 1, 3, 5]
-            self._p, self._xi = LA.eig(self.N) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
-            self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
-            self._xi = self._xi[:, order]
-            self._flag_eig = 0
+            self._get_eig()
         return self._xi # .round(tbx._PREC)
         # return self.qz.vr
 
-    # FIXME eig solution for N^T doesn't return the same result
+    # FIXME eta* = conI @ xi (instead of eta)
     @functools.cached_property
     def eta(self) -> np.ndarray:
         r"""
@@ -566,9 +569,10 @@ class Stroh():
         Ref:
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
         """
-        # return np.row_stack((self.l, self.a)) # "... the left eigenvector... are in the reverse order"""
-        return tbx.conI @ self.xi # .round(tbx._PREC) # this is equivalent
-        # return self.xi[::-1] # apparently Ting means the former, not reversal by index
+        # return tbx.conI @ self.xi # .round(tbx._PREC) # this is equivalent
+        if self._flag_eig:
+            self._get_eig()
+        return self._eta # .round(tbx._PREC)
         # return self.qz.vl
 
     @functools.cached_property

@@ -45,7 +45,7 @@ print(f'Differs by Canzic / Cmls == {Canzic / Cmls:.6f}')
 
 # plot
 D.visualize()
-
+I.plot_u()
 
 
 # =============================================================================

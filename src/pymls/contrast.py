@@ -520,7 +520,7 @@ class MLS():
         l12 = np.zeros((3, x1.size, x2.size), dtype=complex)
         z12 = np.zeros((x1.size, x2.size))
         for a in range(3):
-            l12[a] = np.log(np.sum(x12 * (1, self.stroh.P[a]), axis=1)).reshape(z12.shape)
+            l12[a] = np.log(np.sum(x12 * (1, self.stroh.p[a]), axis=1)).reshape(z12.shape)
         z12 = np.sum(l12, axis=0).imag * self.dislocation.length(self.dislocation.uvw) / (2 * np.pi) 
 
         # instance
