@@ -37,7 +37,7 @@ def test_stroh_instance(thisFixture, request):
     """ does it init """
     result = request.getfixturevalue(thisFixture)
     try:
-        s = Stroh(result)
+        _ = Stroh(result)
         assert True
     except:
         assert False
