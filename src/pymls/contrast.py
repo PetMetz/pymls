@@ -96,13 +96,13 @@ class MLS():
         ---------
         c.f. eqn. 13, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
         """
-        b = self.dislocation.uvw # b
-        modb = self.dislocation.length(self.dislocation.uvw) # |b|
+        b = self.dislocation.uvw / LA.norm(self.dislocation.uvw) # b
+        # modb = self.dislocation.length(self.dislocation.uvw) # |b|
         A = self.stroh.A # column vectors
         L = self.stroh.L # column vectors
         D = np.empty((3,), dtype=complex)
         for a in range(3):
-            D[a] = -1 / modb * (L[:,a] @ b) / (A[:,a] @ L[:,a])
+            D[a] = -1 * (L[:,a] @ b) / (A[:,a] @ L[:,a])
         return D
 
     @functools.cached_property
