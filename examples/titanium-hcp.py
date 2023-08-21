@@ -17,8 +17,8 @@ from pymls.toolbox import abt
 lattice_scalar = (2.95, 2.95, 4.69, 90, 90, 120)
 
 # 2. slip system
-hkl = np.array((0,0,1))  # HCP basal slip
-uvw = np.array((2,-1,0)) # burgers vector
+hkl = np.array((0,0,2))  # HCP basal slip
+uvw = np.array((1,1,0)) # burgers vector
 l   = np.cross(uvw, hkl) # defines edge dislocation
 phi = abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 chi = abt(hkl, uvw, degrees=True)

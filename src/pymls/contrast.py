@@ -72,7 +72,6 @@ class MLS():
         """
         return self.dislocation.Gijmn(s)
 
-    # FIXME for properly normalized A/L the denominator is (1,1,1)
     @functools.cached_property
     def D(self) -> np.ndarray:
         r"""       
@@ -97,7 +96,6 @@ class MLS():
         c.f. eqn. 13, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
         """
         b = self.dislocation.uvw / LA.norm(self.dislocation.uvw) # b
-        # modb = self.dislocation.length(self.dislocation.uvw) # |b|
         A = self.stroh.A # column vectors
         L = self.stroh.L # column vectors
         D = np.empty((3,), dtype=complex)
@@ -520,8 +518,11 @@ class MLS():
         l12 = np.zeros((3, x1.size, x2.size), dtype=complex)
         z12 = np.zeros((x1.size, x2.size))
         for a in range(3):
-            l12[a] = np.log(np.sum(x12 * (1, self.stroh.p[a]), axis=1)).reshape(z12.shape)
-        z12 = np.sum(l12, axis=0).imag * self.dislocation.length(self.dislocation.uvw) / (2 * np.pi) 
+            arg = np.sum(x12 * (1, self.stroh.p[a]), axis=1).reshape(z12.shape)
+            m = arg != 0j
+            l12[a][m] = np.log(arg[m])
+            # l12[a] = np.log(arg)
+        z12 = np.sum(l12, axis=0).imag * LA.norm(self.dislocation.uvw) / (2 * np.pi) 
 
         # instance
         fig, ax = plt.subplots()
