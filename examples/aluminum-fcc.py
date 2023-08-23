@@ -32,7 +32,7 @@ C = cij_from_group(116.3, 64.8, 30.9, group='m-3m') # GPa
 # - 4. class instances
 L = Lattice.from_scalar( lattice_scalar )
 D = Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi, SGno=None)
-S = Stroh(C) # captures characteristic elastic matrix and eigensolution
+S = Stroh(C, ) # captures characteristic elastic matrix and eigensolution
 I = MLS(dislocation=D, cij=C) # captures sum computation
 
 # - 5. compute values
@@ -46,6 +46,7 @@ print(f'Differs by Canzic / Cmls == {Canzic / Cmls:.6f}')
 # plot
 D.visualize()
 I.plot_u()
+I.plot_beta()
 
 
 # =============================================================================

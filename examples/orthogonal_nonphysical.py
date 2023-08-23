@@ -24,10 +24,10 @@ plt.close('all')
 M = 2 * np.eye(3)
 
 # - 2. slip system
-hkl = np.array((0,0,1))  # slip plane normal
-uvw = np.array((1,0,0))  # burgers vector
-l   = np.array((1,-1,0))  # dislocation line vector
-phi = -abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
+hkl = np.array((1,0,0))  # slip plane normal
+uvw = np.array((0,0,1))  # burgers vector
+l   = np.cross(hkl, uvw) # np.array((1,-1,0))  # dislocation line vector
+phi = 45 #  abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 
 # - 3. elastic constituents
 C = cij_from_group(116.3, 64.8, 30.9, group='m-3m') # GPa
@@ -35,7 +35,7 @@ C = cij_from_group(116.3, 64.8, 30.9, group='m-3m') # GPa
 # - 4. class instances
 lattice = Lattice.from_matrix( M ) 
 dislocation = Dislocation(lattice=lattice, hkl=hkl, uvw=uvw, phi=phi, SGno=None)
-stroh = Stroh(C) # captures characteristic elastic matrix and eigensolution
+stroh = Stroh(C, dislocation=dislocation) # captures characteristic elastic matrix and eigensolution
 calc = MLS(dislocation=dislocation, cij=C) # captures sum computation
 
 # - 5. viz
@@ -44,6 +44,8 @@ fig, ax = dislocation.visualize()
 
 # alias
 D = dislocation
+I = calc
+S = stroh
 
 # - direct calc
 h, k, l = 1, 1, 1

@@ -507,35 +507,150 @@ class MLS():
         """
         return np.einsum('ijmn,ijmn->', self.Gijmn(s), self.Eijmn)
 
-    def plot_u(self) -> tuple:
-        r""" c.f. eqn. 13, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_  """
-        import matplotlib.pyplot as plt
+    # FIXME refactor D_a and displacement calculations to Stroh class
+    def u(self, x1: np.ndarray, x2: np.ndarray) -> np.ndarray:
+        r"""
+        .. math::
+           
+            u = \frac{b_v}{2\pi} Im\left\{\Sigma_{\alpha}^{3} A_{m\alpha}D_{alpha}ln(x_1+p_{\alpha}x_2) \right\}
+            
+        NB :math:`Re\{z\} = \frac{z + \bar{z}}{2}` and :math:`Im\{z\} = \frac{z - \bar{z}}{2}`
+        and hence this equation utilizes the relationship between the Stroh eigenvalues
         
-        # compute
-        x1 = np.linspace(-10, 10, 101)
-        x2 = x1
+        Returns
+        -------
+        np.ndarray
+            u_m(x1,x2) (3,N,M)
+        
+        Reference
+        ---------
+        eqn. 13, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
+        """
         x12 = np.transpose(np.meshgrid(x1,x2)).reshape((-1,2))
-        l12 = np.zeros((3, x1.size, x2.size), dtype=complex)
-        z12 = np.zeros((x1.size, x2.size))
-        for a in range(3):
-            arg = np.sum(x12 * (1, self.stroh.p[a]), axis=1).reshape(z12.shape)
-            m = arg != 0j
-            l12[a][m] = np.log(arg[m])
-            # l12[a] = np.log(arg)
-        z12 = np.sum(l12, axis=0).imag * LA.norm(self.dislocation.uvw) / (2 * np.pi) 
+        z12 = np.zeros((3, x1.size, x2.size), dtype=complex)
+        i12 = np.zeros((x1.size, x2.size))
+        sh  = (x1.size, x2.size)
+        for i in range(3):
+            for a in range(3):
+                arg = np.sum(x12 * (1, self.stroh.P[a]), axis=1).reshape(sh)
+                m = arg != 0j
+                z12[i][m] += self.stroh.A[i,a] * self.D[a] * np.log(arg[m])
+        i12 = z12.imag * LA.norm(self.dislocation.uvw) / (2 * np.pi) 
+        return i12, z12
 
+    def beta_cartesian(self, x1: np.ndarray, x2: np.ndarray) -> np.ndarray:
+        r""" 
+        .. math::
+            
+            \beta_{mn} = r Im\left[ \Sigma_{\alpha=1}^3 A_{m\alpha} D_{\alpha} \frac{\delta}{\delta x_n} ln(x_1 + p_{\alpha}x_2) \right]
+            
+            r = (x_1 + x_2)^\frac{1}{2}
+            
+        
+        Returns
+        -------
+        beta : np.ndarray (3,2)
+            real-valued tensor proportional to :math:`\delta u_m(x_1,x_2) / \delta x_n`
+        
+        Reference
+        ---------
+        c.f. eqn. 15, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
+        """
+        # square arrays
+        x12 = np.transpose(np.meshgrid(x1,x2))
+        r = LA.norm(x12[:-1,:-1], axis=-1)
+        con = 2 * np.pi * r / LA.norm(self.dislocation.burgers)
+        dxn = np.diff(np.transpose((x1,x2)), axis=0)
+        dxn = np.transpose(np.meshgrid(*dxn.T))
+        um, im = self.u(x1, x2)
+        rv = np.zeros((3, 2, x1.size-1, x2.size-1))
+        rv[:,0,:,:] = con * np.diff(um, axis=1)[:,:,:-1] / dxn[:,:,0]
+        rv[:,1,:,:] = con * np.diff(um, axis=2)[:,:-1,:] / dxn[:,:,1] 
+        return rv
+        
+    def beta_polar(self, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
+        r"""  c.f. eqn. 16, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_   """
+        ...
+        return
+        
+    def plot_u(self, x1=None, x2=None) -> tuple:
+        r""" c.f. eqn. 13, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_  """
+        # config
+        style = {'figure.figsize':(6.5,3)}
+        # compute
+        if x1 is None:
+            x1 = np.linspace(-3, 3, 101)
+        if x2 is None:
+            x2 = x1
+        um, _ = self.u(x1, x2)
         # instance
-        fig, ax = plt.subplots()
-        extent = (x1.min(), x1.max(), x2.min(), x2.max())
-        im = ax.imshow(z12, origin='lower', extent=extent, cmap='PRGn')
-        cb = fig.colorbar(im)
-        ax.set_xlabel(r'$x_1 \parallel \vec{e_1}\; [a.u.]$')
-        ax.set_ylabel(r'$x_2 \parallel \vec{e_2}\; [a.u.]$')
-        ax.set_title(r'$u_m(x_1,x_2) = \frac{b_v}{2\pi}\, Im \left[ \Sigma_{\alpha=1}^{3} A_{m\alpha}D_{\alpha}ln\left(x_1 + p_{\alpha}x_2\right)\right]$')
-        cb.set_label(r'$displacement,\, u(x_1,x_2)$')
-        fig.tight_layout()
+        import matplotlib.pyplot as plt
+        with plt.style.context(style):
+            fig = plt.figure()
+            n = 7
+            gs = fig.add_gridspec(nrows=1, ncols=2*n+1)
+            axes = [fig.add_subplot(gs[0,:n]), fig.add_subplot(gs[0,n:2*n]), fig.add_subplot(gs[0,-1])]
+            extent = (x1.min(), x1.max(), x2.min(), x2.max())
+            for ii, ax in enumerate(axes[:2]):
+                im = ax.imshow(um[ii], origin='lower', extent=extent, cmap='PRGn')
+                if ii==0:
+                    ax.set_ylabel(r'$x_2 \parallel \vec{e_2}\; [a.u.]$')
+                if ii>0:
+                    ax.set_yticks([])
+                ax.set_title(rf'$n\ =\ {ii+1}$')
+                ax.set_xlabel(r'$x_1 \parallel \vec{e_1}\; [a.u.]$')
+            cb = fig.colorbar(im,cax=axes[2])
+            # ax.set_title(r'$u_m(x_1,x_2) = \frac{b_v}{2\pi}\, Im \left[ \Sigma_{\alpha=1}^{3} A_{m\alpha}D_{\alpha}ln\left(x_1 + p_{\alpha}x_2\right)\right]$')
+            # cb.set_label(r'$u_m(x_1,x_2) = \frac{b_v}{2\pi}\, Im \left[ \Sigma_{\alpha=1}^{3} A_{m\alpha}D_{\alpha}ln\left(x_1 + p_{\alpha}x_2\right)\right]$')
+            cb.set_label(r'$u_n(x_1, x_2)$')
+            
+            # fig.tight_layout()
+            fig.subplots_adjust(0.125,0.150,0.875,0.95, wspace=0.1)
         
         return fig, ax
     
+    def plot_beta(self, x1=None, x2=None) -> tuple:
+        r""" c.f. eqn. 14, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_  """
+        # config
+        style = {'figure.figsize':(6.5,4.0)}
+        # compute
+        if x1 is None:
+            x1 = np.linspace(-3, 3, 101)
+        if x2 is None:
+            x2 = x1
+        bmn = self.beta_cartesian(x1, x2)
+        # instance
+        import matplotlib.pyplot as plt
+        with plt.style.context(style):
+            fig = plt.figure()
+            n = 5
+            gs = fig.add_gridspec(nrows=2, ncols=3*n+1)
+            axes = np.array([
+                            [fig.add_subplot(gs[0,:n]), fig.add_subplot(gs[0,1*n:2*n]), fig.add_subplot(gs[0,2*n:3*n])],
+                            [fig.add_subplot(gs[1,:n]), fig.add_subplot(gs[1,1*n:2*n]), fig.add_subplot(gs[1,2*n:3*n])],
+                            ])
+            cax = fig.add_subplot(gs[:,-1])
+            extent = (x1.min(), x1.max(), x2.min(), x2.max())
+            for ii in range(3):
+                for jj in range(2):
+                    obj = bmn[ii,jj]
+                    ax = axes[jj,ii]
+                    im = ax.imshow(obj, origin='lower', extent=extent, cmap='PRGn')
+                    if ii==0:
+                        ax.set_ylabel(r'$x_2 \parallel \vec{e_2}\; [a.u.]$')
+                    if ii>0:
+                        ax.set_yticks([])
+                    if jj==0:
+                        ax.set_title(rf'$m\ =\ {ii+1}$')
+                        ax.set_xticks([])
+                    if jj >0:
+                        ax.set_xlabel(r'$x_1 \parallel \vec{e_1}\; [a.u.]$')
+            cb = fig.colorbar(im,cax=cax)
+            cb.set_label(r'$\beta_{mn}(x_1, x_2)$')
+            
+            # fig.tight_layout()
+            fig.subplots_adjust(0.125,0.150,0.875,0.95, wspace=0.15, hspace=0.025)
+        
+        return fig, ax
     # End Martinez
 

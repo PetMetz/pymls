@@ -194,7 +194,8 @@ class Stroh():
 
     def __init__(self,
                  cij:np.ndarray=None,
-                 crystalSystem:str=None
+                 crystalSystem:str=None,
+                 dislocation=None
                  ) -> None:
         """
         Elastic aspects of the dislocation contrast factor obtained by solution to
@@ -206,6 +207,8 @@ class Stroh():
             DESCRIPTION. The default is None.
         crystalSystem : str, optional
             DESCRIPTION. The default is None.
+        dislocation : ..., optional
+            Description. The default is None.
 
         Reference
         ---------
@@ -213,7 +216,9 @@ class Stroh():
         """
         self.cij = cij
         self.crystalsystem = crystalSystem
+        self.dislocation = dislocation
 
+    # FIXME apply state flags when setter is called
     @property
     def cijkl(self) -> np.ndarray:
         """ Elastic stiffness tensor. """
@@ -227,11 +232,34 @@ class Stroh():
     def cij(self) -> np.ndarray:
         """ Reduced stiffness matrix. """
         return self.apply_mandel(self._cijkl)
-
+    
     @cij.setter
     def cij(self, X) -> None:
         if not X is None:
             self._cijkl = self.invert_mandel(X)
+
+    # FIXME This differs from the treatment by Ting, not sure it's necessary
+    @functools.cached_property
+    def tcijkl(self) -> np.ndarray:
+        r"""
+        Martinez-Garcia, PHYSICAL REVIEW B 76, 174117, 2007
+        """
+        H = self.cij[0,0] - self.cij[0,1] - 2*self.cij[3,3]
+        c12 = self.cij[0,1]
+        c44 = self.cij[3,3]
+        P = LA.inv(self.dislocation.P) # transform of {e1, e2, e3} into {x1, x2, x3}
+        dij = lambda i, j: 1 if i==j else 0
+        I = np.indices(self.cijkl.shape).T.reshape((-1,4))
+        rv = np.zeros(self.cijkl.shape)
+        for index in I:
+            i,j,k,l = index
+            rv[tuple(index)] = c12*dij(i,j)*dij(k,l) + c44*dij(i,j)*dij(k,l) +\
+                H * np.sum([np.product((P[r,i],P[r,j],P[r,k],P[r,l])) for r in range(3)])
+        return rv
+
+    @functools.cached_property
+    def tcij(self) -> np.ndarray:
+        return tbx.contract_ijkl(self.tcijkl)
 
     def apply_voigt(self, X) -> np.ndarray:
         """
