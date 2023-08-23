@@ -268,35 +268,3 @@ if __name__ == "__main__":
     pts4 = np.concatenate((SO(pts2), SO(pts3)))
 
 
-    #%%
-    from topotools.utils import plot_scatter_3d
-    
-    fig, ax = plot_scatter_3d([])
-    ax.plot((1,1), (1,1), (-2,2), 'k:')
-    ax.plot((0,0), (0,0), (-2,2), 'k:')
-    
-    for pt in pts2:
-        ax.scatter(*pt, color='red')
-    
-    for pt in pts3:
-        ax.scatter(*pt, color='blue')
-
-    for pt in pts4:
-        ax.scatter(*pt, color='green')
-
-
-    #%%
-    # -43m
-    # 1
-    # 3 || 111
-    # 2 || 100
-    # -4 || 001
-    # m || 110
-    R3 = Symmetry.rotation((1,1,1), 120)
-    R2 = Symmetry.rotation((1,0,0), 180)
-    R4b = Symmetry.rotation((0,0,1), 90) * Symmetry.inversion()
-    M110 = Symmetry.reflection((1,1,0))
-
-    pt = (0.123, 0.123, 0.246) # (x,x,z); s.g. 217 wyk pos 24g
-    pts = [pt,]
-    

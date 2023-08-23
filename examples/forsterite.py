@@ -42,7 +42,7 @@ C = cij_from_group(  # GPa
 # - 4. class instances
 L = Lattice.from_scalar( lattice_scalar )
 D = Dislocation(lattice=L, hkl=hkl, uvw=uvw, phi=phi, SGno=None)
-S = Stroh(C) # captures characteristic elastic matrix and eigensolution
+S = Stroh(C, dislocation=D) # captures characteristic elastic matrix and eigensolution
 I = MLS(dislocation=D, cij=C) # captures sum computation
 
 # - 5. compute values
@@ -79,3 +79,5 @@ for s, c in zip(sss, cbar):
 plt.close('all')
 D.visualize()
 fig, ax = I.plot_u()
+fig, ax = I.plot_beta()
+

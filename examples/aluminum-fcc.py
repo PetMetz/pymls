@@ -20,8 +20,8 @@ import pymls.toolbox as tbx
 lattice_scalar = (4.03,) * 3 + (90,) * 3
 
 # - 2. slip system
-hkl = np.array((1,1,1))  # FCC slip plane
-uvw = np.array((1,-1,0)) # burgers vector
+hkl = np.array((1,-1,-1))  # FCC slip plane
+uvw = np.array((0,1,-1)) # burgers vector
 l   = np.cross(uvw, hkl) # defines edge dislocation
 phi =  abt(uvw, l, degrees=True) # 90 degrees == edge dislocation
 chi = abt(hkl, uvw, degrees=True)

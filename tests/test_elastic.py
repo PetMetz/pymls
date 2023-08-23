@@ -310,46 +310,37 @@ class TestTingOrthogonalityClosure:
         r"""
         :math:`\left|Q + p(R + R^{T}) + p^2T \right| = 0` (Ting eqn. 5.1-10)
         """
-        arg = lambda s: s.Q + s.P * (s.R + s.R.T) + s.P**2 * s.T
-        # A = LA.det(self.s.Q + self.s.P*(self.s.R + self.s.R.T) + self.s.P**2 * self.s.T)
-        A = LA.det( arg(self.s) )
-        B = 0j
-        assert tbx.complex_tol(A, B)
+        arg = lambda s, i: s.Q + s.P[i] * (s.R + s.R.T) + s.P[i]**2 * s.T
+        A = [LA.det(arg(self.s, i)) for i in range(3)]
+        B = np.zeros(3, dtype=complex)
+        assert tbx.complex_tol(A, B) is True
 
-    # FIXME failing
     def test_Ting_532a(self):
         r"""
         :math:`b = (R^T + pT)a` (c.f. Ting eqn. 5.3-2)
         NB this is the notation of Ting, but given R(3,3) a must be the half-
            set later denoted A
         """
-        # A = self.s.L  # S.L # b
-        # arg = lambda s: (s.R.T + s.P * s.T) @ s.A
-        # B = (self.s.R.T + self.s.P * self.s.T) @ self.s.A # (R^T + pT)a
-        # assert tbx.complex_tol(A, B)
         arg = lambda s, i:  (s.R.T + s.P[i] * s.T) @ s.A[:, i] 
-        rv = np.zeros(3, dtype=bool)
+        A = np.zeros((3,3), dtype=complex)
         for i in range(3):
-            rv[i] = tbx.complex_tol(self.s.B[:, i],  arg(self.s, i) )
-        return all(rv == True)
+            A[:,i] = arg(self.s, i)
+        B = self.s.L
+        return tbx.complex_tol(A, B) is True
 
-    # FIXME failing
     def test_Ting_532b(self):
         r"""
         :math:`b = (R^T + pT)a = -1/p (Q +pR)a` (c.f. Ting eqn. 5.3-2)
         NB this is the notation of Ting, but given R(3,3) a must be the half-
            set later denoted A
         """
-        # A = self.s.L # S.L # b
-        # B = -1 / self.s.P * (self.s.Q + self.s.P * self.s.R) @ self.s.A # (R^T + pT)a
-        # assert tbx.complex_tol(A, B)
-        rv = np.zeros(3, dtype=bool)
+        arg = lambda s, i:  -1 / s.P[i] * (s.Q + s.P[i] * s.R) @ s.A[:, i] 
+        A = np.zeros((3,3), dtype=complex)
         for i in range(3):
-            rv[i] = tbx.complex_tol(self.s.B[:, i],
-                                    -1 / self.s.P[i] * (self.s.Q + self.s.P[i] * self.s.R) @ self.s.A[:,i]
-                                    )
-        return all(rv == True)
-
+            A[:,i] = arg(self.s, i)
+        B = self.s.L
+        return tbx.complex_tol(A, B) is True
+    
     # FIXME failing
     def test_Ting_551(self):
         """  """
@@ -376,7 +367,7 @@ class TestTingOrthogonalityClosure:
                         ])
         A = L @ R
         B = np.eye(6)
-        assert tbx.float_tol(A, B)
+        assert tbx.float_tol(A, B) is True
 
     def test_Ting_553_right_eigenequation(self):
         r"""
@@ -385,13 +376,13 @@ class TestTingOrthogonalityClosure:
         """
         A = self.s.N @ self.s.xi
         B = self.s.p * self.s.xi
-        assert tbx.complex_tol(A, B)
+        assert tbx.complex_tol(A, B) is True
 
     def test_Ting_556_left_eigenequation(self):
         r""":math:`N^T \eta = p \eta` (c.f. Ting eqn. 5.5-6) """
         A = np.transpose(self.s.N) @ self.s.eta
         B = self.s.p * self.s.eta
-        assert tbx.complex_tol(A, B)
+        assert tbx.complex_tol(A, B) is True
 
     def test_Ting_558a(self):
         r""":math:`\hat{I} N == (\hat{I} N)^T == N^T \hat{I}` (c.f. Ting eqn. 5.5-8)"""

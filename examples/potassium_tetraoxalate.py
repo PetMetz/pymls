@@ -75,6 +75,7 @@ I = MLS(dislocation=D, cij=C) # captures sum computation
 # - 5. viz
 fig, ax = D.visualize()
 fig, ax = I.plot_u()
+fig, ax = I.plot_beta()
 
 Cmls = I.Chkl(uvw)
 print(Cmls)

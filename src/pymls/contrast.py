@@ -95,7 +95,7 @@ class MLS():
         ---------
         c.f. eqn. 13, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
         """
-        b = self.dislocation.uvw / LA.norm(self.dislocation.uvw) # b
+        b = self.dislocation.uvw / LA.norm(self.dislocation.uvw) # unit burgers vector
         A = self.stroh.A # column vectors
         L = self.stroh.L # column vectors
         D = np.empty((3,), dtype=complex)
@@ -649,7 +649,7 @@ class MLS():
             cb.set_label(r'$\beta_{mn}(x_1, x_2)$')
             
             # fig.tight_layout()
-            fig.subplots_adjust(0.125,0.150,0.875,0.95, wspace=0.15, hspace=0.025)
+            fig.subplots_adjust(0.1,0.150,0.875,0.875, wspace=0.15, hspace=0.025)
         
         return fig, ax
     # End Martinez

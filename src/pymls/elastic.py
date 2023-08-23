@@ -455,8 +455,8 @@ class Stroh():
         nvr = vr / LA.norm(vr, axis=0)
         m = np.argsort(-np.sign(eigv.imag)) # I'm not sure why this maintains ordering, but it appears to up to triclinic
         return _QZSOLUTION(alpha=alpha, beta=beta, work=work, info=info, S=S,
-                           T=T, Q=Q, Z=Z, 
-                           eigv=eigv[m], vl=vl[:,m], vr=vr[:,m],
+                           T=T, Q=Q, Z=Z, eigv=eigv[m],
+                           vl=vl[:,m], vr=vr[:,m],
                            nvl=nvl[:,m], nvr=nvr[:,m])
                            # eigv=eigv, vl=vl, vr=vr, nvl=nvl, nvr=nvr)
     @functools.cached_property
@@ -515,13 +515,13 @@ class Stroh():
 
     def _get_eig(self) -> None:
         if self._flag_eig:
-            # order = [1, 3, 5, 0, 2, 4]
-            order = [0, 2, 4, 1, 3, 5]
-            # order = [0, 1, 2, 3, 4, 5]
-            self._p, self._eta, self._xi = sla.eig(self.N, left=True, right=True) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
-            self._p = self._p[order] # numpy returns ordered pairs, Ting shows ordered conjugates
-            self._xi = self._xi[:, order]
-            self._eta = self._eta[:, order]
+            # order = [0, 1, 2, 3, 4, 5] # unordered
+            order = [0, 2, 4, 1, 3, 5] # ordered imag(p_alphha) > 0
+            # order = [1, 3, 5, 0, 2, 4] # ordered imag(p_alphha) < 0
+            w, vl, vr = sla.eig(self.N, left=True, right=True) # The normalized (unit "length") eigenvectors, such that the column v[:,i] is the eigenvector corresponding to the eigenvalue w[i].
+            self._p   = w[order] # numpy returns ordered pairs, Ting shows ordered conjugates
+            self._eta = vl[:, order]
+            self._xi  = vr[:, order]
             self._flag_eig = 0        
 
     @functools.cached_property
@@ -675,7 +675,7 @@ class Stroh():
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[:3, ::2] # == self.a[:, ::2]
-        return self.xi[:3, :3] / LA.norm(self.xi[:3, :3], axis=0)  # ordered
+        return self.xi[:3, :3] #  / LA.norm(self.xi[:3, :3], axis=0)  # ordered
 
     @functools.cached_property
     def L(self) -> np.ndarray:
@@ -698,35 +698,8 @@ class Stroh():
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[3:, ::2] # == self.l[:, ::2]
-        return self.xi[3:, :3] / LA.norm(self.xi[3:, :3], axis=0) 
-
-    @property
-    def U(self) -> np.ndarray:
-        r"""
-        :math:`U = [\xi_1,...,\xi_6] = [[A, \bar{A}],[B, \bar{B}]]`
-        
-        
-        Reference
-        ---------
-        Ting (1988) Some identities and the structure of N...
-        Appl. Math. 46(1) 109-120.
-        """
-        # return self.xi[:,(0,2,4,1,3,5)]
-        return self.xi
-
-    @property
-    def J(self) -> np.ndarray:
-        r"""
-        :math:`J = [[O, I],[I, O]]`
-        
-        
-        Reference
-        ---------
-        Ting (1988) Some identities and the structure of N...
-        Appl. Math. 46(1) 109-120.
-        """
-        return tbx.conI
-        
+        return self.xi[3:, :3] #  / LA.norm(self.xi[3:, :3], axis=0) 
+       
     @functools.cached_property
     def P(self) -> np.ndarray:
         r"""
@@ -750,37 +723,46 @@ class Stroh():
 
     @functools.cached_property
     def M(self) -> np.ndarray:
-        r"""
-        :math:`M_{\alpha i} L_{i \beta} = \partial _{\alpha \beta}`
-        
-        
-        Returns
-        -------
-        np.ndarray (3,3) imaginary
-        
-        
-        Reference
-        ---------
-        Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
+        r""" 
+        Impedance tensor `M`
         """
-        return LA.inv(self.L)
+        return -1j * self.L @ LA.inv(self.A)
 
-    @functools.cached_property
-    def B(self) -> np.ndarray:
-        r"""
-        :math:`B_{ij} = 1/2 i \sum_{\alpha}(A_{i \alpha} M_{\alpha j} - \bar{A}_{i \alpha} \bar{M}_{\alpha j})`
-
-
-        Returns
-        -------
-        np.ndarray (3,3) imaginary
-
-
-        Reference
-        ---------
-        Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
-        """
-        return (0.5j * (self.A @ self.M - np.conjugate(self.A) @ np.conjugate(self.M))).real
+# =============================================================================
+#     @functools.cached_property
+#     def M(self) -> np.ndarray:
+#         r"""
+#         :math:`M_{\alpha i} L_{i \beta} = \partial _{\alpha \beta}`
+#         
+#         
+#         Returns
+#         -------
+#         np.ndarray (3,3) imaginary
+#         
+#         
+#         Reference
+#         ---------
+#         Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
+#         """
+#         return LA.inv(self.L)
+# 
+#     @functools.cached_property
+#     def B(self) -> np.ndarray:
+#         r"""
+#         :math:`B_{ij} = 1/2 i \sum_{\alpha}(A_{i \alpha} M_{\alpha j} - \bar{A}_{i \alpha} \bar{M}_{\alpha j})`
+# 
+# 
+#         Returns
+#         -------
+#         np.ndarray (3,3) imaginary
+# 
+# 
+#         Reference
+#         ---------
+#         Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
+#         """
+#         return (0.5j * (self.A @ self.M - np.conjugate(self.A) @ np.conjugate(self.M))).real
+# =============================================================================
 
     # End Stroh
 
