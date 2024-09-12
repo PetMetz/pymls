@@ -410,7 +410,7 @@ class MLS():
 
         Returns
         -------
-        np.ndarray (a,b,i,j) = (3,3,2) real
+        np.ndarray (a,b,i,j) = (3,3,3,2) real
             Component of :math:`E_{ijmn}` calculation.
         """
         # return np.cos( np.einsum('bmn,ab->amn', self.delta, -self.y) )
@@ -473,14 +473,6 @@ class MLS():
     @functools.cached_property
     def Eij(self) -> np.ndarray:
         """ """
-# =============================================================================
-#         I  = np.indices(self.Eijmn.shape).T # len, 3, 3, 2 - > 2, 3, 3, len
-#         IJKL = I.reshape((-1, len(self.Eijmn.shape))) # -> N x (a,i,j)
-#         IJ = np.array([contract_ijkl(*e) for e in IJKL])
-#         rv = np.zeros(np.max(IJ+1, axis=0))
-#         for ijkl, ij in zip(IJKL, IJ):
-#             rv[tuple(ij)] = self.Eijmn[tuple(ijkl)]
-# =============================================================================
         return tbx.contract_ijkl(self.Eijmn)
 
     def Chkl(self, s:np.ndarray) -> float:

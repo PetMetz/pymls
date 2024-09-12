@@ -436,7 +436,7 @@ def get_unique_pairs(pairs:np.ndarray, mask=False) -> np.ndarray:
     pairs = np.asarray(pairs).reshape((len(pairs), 2, -1))
     rv = [pairs[0]]
     m  = [0,]
-    for idx, pair in pairs[1:]: # tqdm(enumerate(pairs[1:]), desc='finding unique pairs...'):
+    for idx, pair in enumerate(pairs[1:]): # tqdm(enumerate(pairs[1:]), desc='finding unique pairs...'):
         if not any( float_tol_pair_in_pairs(pair, rv) ):
             rv.append(pair)
             m.append(idx+1)
