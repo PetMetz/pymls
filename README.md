@@ -8,8 +8,8 @@ This is mostly linear algebra, so it's pretty fast. For some slopy profiling, ru
 
 ## Problems
 Well, just look at the test coverage. These are largely based on the discussion of the Stroh method given by Ting (ch. 5).[^2]
-So far, values computed for titanium disagree with ANZIC.[^3]
-Further, values computed for Forsterite (a-Mg2SiO4) disagree with this reported in Martinez-Garcia et al.[^1]
+So far, values computed for titanium disagree with ANIZC.[^3]
+Further, values computed for Forsterite (a-Mg2SiO4) disagree with those reported in Martinez-Garcia et al.[^1]
 The algebra is failing at some point I haven't understood.
 
 ## Installation
