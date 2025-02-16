@@ -19,14 +19,14 @@ from . import toolbox as tbx
 
 class Lattice():
     """ Simple representation of a lattice """
-    
+
     # - state variables
     _G = None
     _reciprocal = None
-    
+
     def __repr__(self):
         return f'<Lattice(a={self.a:.5f}, b={self.b:.5f}, c={self.c:.5f}, alpha={self.al:.5f}, beta={self.be:.5f}, gamma={self.ga:.5f} @ {hex(id(self))} >'
-                     
+
     def __hash__(self):
         return hash((self.a, self.b, self.c, self.al, self.be, self.ga))
 
@@ -55,7 +55,7 @@ class Lattice():
         None
         """
         self.matrix = matrix
-        
+
     # - constructors
     @classmethod
     def from_scalar(cls, x:tuple) -> Lattice:
@@ -74,7 +74,7 @@ class Lattice():
 
         Reference
         ---------
-        Julian (2014) Foundations of Crystallography, p.17 eqn. 1.6    
+        Julian (2014) Foundations of Crystallography, p.17 eqn. 1.6
         """
         x = np.asarray(x)
         a, b, c = x[:3] # unpack
@@ -90,7 +90,7 @@ class Lattice():
                       (c1        , c2        , c3)
                       ))
         return cls(X)
-        
+
     @classmethod
     def from_matrix(cls, x:np.ndarray) -> Lattice:
         """
@@ -113,13 +113,13 @@ class Lattice():
     def from_metric(cls, x:np.ndarray) -> Lattice:
         r"""
         Constructor method for Lattice instance.
-                
+
         .. math::
-            
+
             \vec{a}\cdot\vec{b} = a\ b\ cos(\theta)
-            
+
             \theta = cos^{-1}\left(\frac{\vec{a}\cdot\vec{b}}{a b}\right)
-            
+
 
         Parameters
         ----------
@@ -138,7 +138,7 @@ class Lattice():
             np.arccos(x[0,1] / np.prod(abc[[0,1]]))  # arccos(ab cos(gamma) / ab)
             )) * 180 / np.pi
         return cls.from_scalar(np.concatenate((abc, angles)))
-    
+
     @classmethod
     def dispatch_constructor(cls, x) -> Lattice:
         """
@@ -169,12 +169,12 @@ class Lattice():
             return cls.from_matrix(x)
         else:
             raise Exception(f'Unable to dispatch lattice constructor: {x}')
-    
+
     # - mutations
     def copy(self) ->Lattice:
         """ returns new instance of self from self.M """
         return Lattice(self.matrix) # deepcopy(self)
-    
+
     def transform(self, x:(np.ndarray,sp.spatial.transform.Rotation)) -> Lattice:
         """
         Will probably deprecate sp.spatial.Rotation in favor of generalized
@@ -191,17 +191,17 @@ class Lattice():
             return Lattice( x.apply(self.matrix) )
         else:
             print(f"Warning: transformation not understoor: {x}")
-        
+
     # - metrics
     @property
     def matrix(self) -> np.ndarray:
         r"""
         Vector basis of lattice, as in
-        
+
         .. math::
-            
+
             matrix = [\vec{x_1}, \vec{x_2}, \vec{x_3}]
-            
+
                    =
             \begin{bmatrix}
                   ( x_{11} & x_{12} & x_{13} )\\
@@ -210,13 +210,13 @@ class Lattice():
             \end{bmatrix}
         """
         return self._matrix
-    
+
     @matrix.setter
     def matrix(self, x:np.ndarray):
         self._matrix = x # .round(tbx._PREC)
         self._G = None
         self._reciprocal = None
-    
+
     @property
     def M(self):
         """ Alias of `self.matrix`. """
@@ -226,13 +226,13 @@ class Lattice():
     def metric_tensor(self):
         r"""
         Metric tensor of the crystal lattice.
-        
+
         .. math::
-            
+
             G = M \cdot M^T
         """
         return self.G
-    
+
     @property
     def G(self):
         """ Alias of `self.metric_tensor`. """
@@ -244,30 +244,30 @@ class Lattice():
     def reciprocal(self):
         r"""
         Lattice instance from :math:`M^{-1}`.
-        
+
         NB private attribute set on instantiation.
         """
         if self._reciprocal is None:
             self._reciprocal = Lattice.from_matrix(LA.inv(self.M).T)
         return self._reciprocal
-    
+
     # - properties
     @property
     def volume(self):
         r"""
         Lattice volume:
-            
+
         .. math::
-           
+
             V = \sqrt{ det\ G }
         """
         return np.sqrt(LA.det(self.G))
-    
+
     @property
     def V(self):
         r""" Alias of `self.volume`. """
         return self.volume
-    
+
     @property
     def a(self):
         r""" Lattice scalar `a`. """
@@ -294,7 +294,7 @@ class Lattice():
         r""" Lattice scalar :math:`\beta`. """
         return self.angle((1,0,0),
                           (0,0,1), degrees=True)
-    
+
     @property
     def ga(self):
         r""" Lattice scalar :math:`\gamma`. """
@@ -315,13 +315,13 @@ class Lattice():
     def scalar(self) -> np.ndarray:
         r""" Lattice scalars :math:`(a, b, c, \alpha, \beta, \gamma)`. """
         return np.concatenate((self.abc, self.angles))
-    
+
     @property
     def is_orthogonal(self) -> bool:
         r"""  """
         return tbx.is_orthogonal(self.M)
 
-    # - functions 
+    # - functions
     def angle_between(self, x1: np.ndarray, x2: np.ndarray, x3:np.ndarray, degrees=False):
         r"""
         Angle :math:`\angle(x_1, x_2, x_3)` with vertex at :math:`x_2`.
@@ -358,7 +358,7 @@ class Lattice():
         x2 = np.asarray(x2)
         x12 = x2 - x1
         return self.length(x12)
-    
+
     def angle(self, x1:np.ndarray, x2:np.ndarray, degrees=False):
         r"""
         Angle between cartesian coordinates `x1` and `x2` taking vertex as
@@ -379,7 +379,7 @@ class Lattice():
             :math:`\angle(x_1, O, x_2)`.
         """
         return self.angle_between(x1, np.array((0,0,0)), x2, degrees)
-        
+
     def length(self, v1:np.ndarray):
         r"""
         Distance between points `x1` and `x2`.
@@ -414,13 +414,12 @@ class Lattice():
         """
         return 1 / self.reciprocal.length((h, k, l))
 
-    # FIXME under construction 
+    # FIXME under construction
     @property
     def laue(self):
         r""" Laue group (may be depricated for Lattice class). """
-        ... 
+        ...
         return 'not implemented'
 
     # Lattice
-  
-    
+

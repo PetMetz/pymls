@@ -10,7 +10,8 @@ import numpy as np
 
 # package
 from pymls import Lattice, Dislocation, Stroh, MLS
-from pymls.elastic import cij_from_group, cij_from_dict
+from pymls.elastic import cij_from_group
+# from pymls.elastic import cij_from_dict
 from pymls.toolbox import abt
 from pymls.symmetry import Symmetry as SO
 import pymls.toolbox as tbx

@@ -74,7 +74,7 @@ class MLS():
 
     @functools.cached_property
     def D(self) -> np.ndarray:
-        r"""       
+        r"""
         .. math::
 
             D_{\alpha} = - \frac{(L_{\alpha} \cdot b_{v})}{|b_{v}|(A_{\alpha} \cdot L_{\alpha})}
@@ -124,9 +124,9 @@ class MLS():
     @functools.cached_property
     def y(self) -> np.ndarray:
         r"""
-        
+
         .. math::
-            
+
             y = \arctan(\frac{(\Re{(p_i)} - \Re{(p_j)})}{(\Im{(p_i)} + \Im{(p_j)})})
 
 
@@ -221,9 +221,9 @@ class MLS():
 
         :math:`\alpha \in 1,2,3, m \in 1,2,3, n \in 1,2`
 
-        NB :math:`(n-1), n \in (1,2)` is an *exponent* (rather than an index) 
-        resulting from evaluation of the partial differentials 
-        
+        NB :math:`(n-1), n \in (1,2)` is an *exponent* (rather than an index)
+        resulting from evaluation of the partial differentials
+
         .. math::
 
             \frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)
@@ -330,9 +330,9 @@ class MLS():
 
             \Phi_{ij\alpha}^{mn\alpha^`} = 2 |A_{i\alpha}||A_{i\alpha^`}||D_{\alpha}||D_{\alpha^`}||P_{\alpha}^{(j-1)}||P_{\alpha^`}^{(n-1)}|
 
-        NB :math:`(n-1), n \in (1,2)` is an *exponent* (rather than an index) 
-        resulting from evaluation of the partial differentials 
-        
+        NB :math:`(n-1), n \in (1,2)` is an *exponent* (rather than an index)
+        resulting from evaluation of the partial differentials
+
         .. math::
 
             \frac{\partial}{\partial x_n} ln(x_1 + p_{\alpha} x_2)
@@ -367,7 +367,11 @@ class MLS():
         r"""
         .. math::
 
-            E_{ijmn} = \Sigma_{\alpha, \alpha'}^{3} \Psi_{\alpha}^{\alpha'} \Phi_{ij\alpha}^{mn\alpha'} \left[ \cos(\Delta_{\alpha}^{mn} + x_{\alpha}) \cos(\Delta_{ij}^{\alpha'} - y_{\alpha}^{\alpha'}) + \sin(\Delta_{\alpha}^{mn}) \sin(\Delta_{ij}^{\alpha'} + z_{\alpha}^{\alpha'}) \right]
+            E_{ijmn} = \Sigma_{\alpha, \alpha'}^{3} \Psi_{\alpha}^{\alpha'}
+            \Phi_{ij\alpha}^{mn\alpha'} \left[ \cos(\Delta_{\alpha}^{mn} + x_{\alpha})
+                             \cos(\Delta_{ij}^{\alpha'} - y_{\alpha}^{\alpha'})
+                             + \sin(\Delta_{\alpha}^{mn}) \sin(\Delta_{ij}^{\alpha'}
+                             + z_{\alpha}^{\alpha'}) \right]
 
         Returns
         -------
@@ -377,7 +381,8 @@ class MLS():
 
         Reference
         ---------
-        c.f. eqn. 17, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
+        c.f. eqn. 17, `Martinez-Garcia, Leoni, Scardi (2009). 
+                        <https://dx.doi.org/10.1107/S010876730804186X>`_
         """
         return np.einsum('ab,ijamnb->ijmn', self.psi, self.phi * self._dm)
 
@@ -455,14 +460,14 @@ class MLS():
                     for a in range(3):
                         A[a,b,i,j] = self.delta[b,i,j] + self.z[a,b]
         return np.sin(A)
-    
+
     @functools.cached_property
     def _dm(self) -> np.ndarray:
         r"""
         .. math::
-            
+
             \left[ \cos(\Delta_{\alpha}^{mn} + x_{\alpha}) \cos(\Delta_{ij}^{\alpha'} - y_{\alpha}^{\alpha'}) + \sin(\Delta_{\alpha}^{mn}) \sin(\Delta_{ij}^{\alpha'} + z_{\alpha}^{\alpha'}) \right]
-        
+
         Returns
         -------
         np.ndarray (i,j,a,m,n,b) = (3,2,3,3,2,3) real
@@ -503,17 +508,17 @@ class MLS():
     def u(self, x1: np.ndarray, x2: np.ndarray) -> np.ndarray:
         r"""
         .. math::
-           
+
             u = \frac{b_v}{2\pi} Im\left\{\Sigma_{\alpha}^{3} A_{m\alpha}D_{alpha}ln(x_1+p_{\alpha}x_2) \right\}
-            
+
         NB :math:`Re\{z\} = \frac{z + \bar{z}}{2}` and :math:`Im\{z\} = \frac{z - \bar{z}}{2}`
         and hence this equation utilizes the relationship between the Stroh eigenvalues
-        
+
         Returns
         -------
         np.ndarray
             u_m(x1,x2) (3,N,M)
-        
+
         Reference
         ---------
         eqn. 13, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
@@ -527,23 +532,23 @@ class MLS():
                 arg = np.sum(x12 * (1, self.stroh.P[a]), axis=1).reshape(sh)
                 m = arg != 0j
                 z12[i][m] += self.stroh.A[i,a] * self.D[a] * np.log(arg[m])
-        i12 = z12.imag * LA.norm(self.dislocation.uvw) / (2 * np.pi) 
+        i12 = z12.imag * LA.norm(self.dislocation.uvw) / (2 * np.pi)
         return i12, z12
 
     def beta_cartesian(self, x1: np.ndarray, x2: np.ndarray) -> np.ndarray:
-        r""" 
+        r"""
         .. math::
-            
+
             \beta_{mn} = r Im\left[ \Sigma_{\alpha=1}^3 A_{m\alpha} D_{\alpha} \frac{\delta}{\delta x_n} ln(x_1 + p_{\alpha}x_2) \right]
-            
+
             r = (x_1 + x_2)^\frac{1}{2}
-            
-        
+
+
         Returns
         -------
         beta : np.ndarray (3,2)
             real-valued tensor proportional to :math:`\delta u_m(x_1,x_2) / \delta x_n`
-        
+
         Reference
         ---------
         c.f. eqn. 15, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_
@@ -557,14 +562,17 @@ class MLS():
         um, im = self.u(x1, x2)
         rv = np.zeros((3, 2, x1.size-1, x2.size-1))
         rv[:,0,:,:] = con * np.diff(um, axis=1)[:,:,:-1] / dxn[:,:,0]
-        rv[:,1,:,:] = con * np.diff(um, axis=2)[:,:-1,:] / dxn[:,:,1] 
+        rv[:,1,:,:] = con * np.diff(um, axis=2)[:,:-1,:] / dxn[:,:,1]
         return rv
-        
-    def beta_polar(self, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
-        r"""  c.f. eqn. 16, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_   """
-        ...
-        return
-        
+
+    # FIXME
+    # =============================================================================
+    #     def beta_polar(self, r: np.ndarray, phi: np.ndarray) -> np.ndarray:
+    #         r"""  c.f. eqn. 16, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_   """
+    #         ...
+    #         return
+    # =============================================================================
+
     def plot_u(self, x1=None, x2=None) -> tuple:
         r""" c.f. eqn. 13, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_  """
         # config
@@ -595,12 +603,12 @@ class MLS():
             # ax.set_title(r'$u_m(x_1,x_2) = \frac{b_v}{2\pi}\, Im \left[ \Sigma_{\alpha=1}^{3} A_{m\alpha}D_{\alpha}ln\left(x_1 + p_{\alpha}x_2\right)\right]$')
             # cb.set_label(r'$u_m(x_1,x_2) = \frac{b_v}{2\pi}\, Im \left[ \Sigma_{\alpha=1}^{3} A_{m\alpha}D_{\alpha}ln\left(x_1 + p_{\alpha}x_2\right)\right]$')
             cb.set_label(r'$u_n(x_1, x_2)$')
-            
+
             # fig.tight_layout()
             fig.subplots_adjust(0.125,0.150,0.875,0.95, wspace=0.1)
-        
+
         return fig, ax
-    
+
     def plot_beta(self, x1=None, x2=None) -> tuple:
         r""" c.f. eqn. 14, `Martinez-Garcia, Leoni, Scardi (2009). <https://dx.doi.org/10.1107/S010876730804186X>`_  """
         # config
@@ -639,10 +647,10 @@ class MLS():
                         ax.set_xlabel(r'$x_1 \parallel \vec{e_1}\; [a.u.]$')
             cb = fig.colorbar(im,cax=cax)
             cb.set_label(r'$\beta_{mn}(x_1, x_2)$')
-            
+
             # fig.tight_layout()
             fig.subplots_adjust(0.1,0.150,0.875,0.875, wspace=0.15, hspace=0.025)
-        
+
         return fig, ax
     # End Martinez
 

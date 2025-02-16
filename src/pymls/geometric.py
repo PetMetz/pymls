@@ -141,7 +141,7 @@ class Dislocation(lattice.Lattice):
     def Rp2(self) -> np.ndarray:
         """
         Rotation determined by axis :math:`\chi_2` and angle :math:`\phi`.
-        
+
         NB rotation is defined *clockwise*.
 
         Returns
@@ -236,9 +236,9 @@ class Dislocation(lattice.Lattice):
     @tbx.unit_vectors
     def P(self) -> np.ndarray:
         r"""
-        The matrix transforming the orthogonal O{ijk} frame into the 
+        The matrix transforming the orthogonal O{ijk} frame into the
         dislocation reference frame {e1, e2, e3}.
-        
+
         .. math::
 
             \left[ e_1 e_2 e_3 \right] = P \left[i j k \right]
@@ -304,17 +304,17 @@ class Dislocation(lattice.Lattice):
         r""" Direction cosine between the diffraction vector `s` and :math:`e_1`. """
         # return s / LA.norm(s) @ self.e1
         return s @ self.reciprocal.M / self.reciprocal.length(s) @ self.e1
-        
+
     def t2(self, s:tuple) -> float:
         r""" Direction cosine between the diffraction vector `s` and :math:`e_2`. """
         # return s / LA.norm(s) @ self.e2
         return s @ self.reciprocal.M / self.reciprocal.length(s) @ self.e2
-        
+
     def t3(self, s:tuple) -> float:
         r""" Direction cosine between the diffraction vector `s` and :math:`e_3`. """
         #return s / LA.norm(s) @ self.e3
         return s @ self.reciprocal.M / self.reciprocal.length(s) @ self.e3
-        
+
     def tau(self, s:np.ndarray) -> np.ndarray:
         r"""
         Direction cosines between diffraction vector `s` and slip reference

@@ -61,9 +61,9 @@ _voigt6 = np.array([ np.concatenate((np.ones_like(_voigt3)*_voigt3[i], _voigt3),
 
 # --- functions
 def generate_index(arg:int) -> tuple:
-    """ 
+    """
     generate indices from `_ELASTIC_RESTRICTIONS`.
-    
+
     Returns
     -------
     tuple (int, int)
@@ -166,7 +166,7 @@ def sijkl_from_cijkl(cijkl):
     dil = (i==l).astype(int)
     djk = (j==k).astype(int)
     A = 1/2 * (dik*djl + dil*djk).reshape(cijkl.shape)
-    ... 
+    ...
 
 # --- classes
 class Stroh():
@@ -232,7 +232,7 @@ class Stroh():
     def cij(self) -> np.ndarray:
         """ Reduced stiffness matrix. """
         return self.apply_mandel(self._cijkl)
-    
+
     @cij.setter
     def cij(self, X) -> None:
         if not X is None:
@@ -426,7 +426,7 @@ class Stroh():
         return tbx.square([(-self.Q,  tbx.O),
                            (-self.R.T, tbx.I)
                            ])
-    
+
     @functools.cached_property
     def _gB(self) -> np.ndarray:
         """
@@ -436,13 +436,13 @@ class Stroh():
         return tbx.square([(self.R, tbx.I),
                            (self.T, tbx.O)
                           ])
-    
+
     @functools.cached_property
     def qz(self):
         """
         Eigenvalue solution by method of qz decomposition, and ordered such that
         conjugate pairs occur [a1, a2, a3, a1*, a2*, a3*].
-        
+
         References:
             https://www.netlib.org/lapack/lug/node56.html
             https://www.netlib.org/lapack/lug/node35.html#1803
@@ -522,7 +522,7 @@ class Stroh():
             self._p   = w[order] # numpy returns ordered pairs, Ting shows ordered conjugates
             self._eta = vl[:, order]
             self._xi  = vr[:, order]
-            self._flag_eig = 0        
+            self._flag_eig = 0
 
     @functools.cached_property
     def p(self) -> np.ndarray:
@@ -555,24 +555,24 @@ class Stroh():
         r"""
         Right eigenvectors (6,6) of :math:`N \xi = p \xi`, see `p`.
         NB scipy.linalg.eig returns column eigenvectors
-        
+
         .. math::
 
             \xi = \begin{bmatrix}
                     a \\ l \\
                   \end{bmatrix}
-                  
+
                 =
-                 
+
             \begin{bmatrix}
                 a_{11} & a_{21} &  a_{31} & \bar{a_{11}} & \bar{a_{21}} & \bar{a_{31}} \\
                 a_{12} & a_{22} &  a_{32} & \bar{a_{12}} & \bar{a_{22}} & \bar{a_{32}} \\
-                a_{13} & a_{23} &  a_{33} & \bar{a_{13}} & \bar{a_{23}} & \bar{a_{33}} \\ 
+                a_{13} & a_{23} &  a_{33} & \bar{a_{13}} & \bar{a_{23}} & \bar{a_{33}} \\
                 l_{11} & l_{21} &  l_{31} & \bar{l_{11}} & \bar{l_{21}} & \bar{l_{31}} \\
                 l_{12} & l_{22} &  l_{32} & \bar{l_{12}} & \bar{l_{22}} & \bar{l_{32}} \\
                 l_{13} & l_{23} &  l_{33} & \bar{l_{13}} & \bar{l_{23}} & \bar{l_{33}} \\
             \end{bmatrix}
-                  
+
 
         Ref:
             Ting, T.C.T. (1996) Elastic Anisotropy. c.f. eqn. 5.5-3 pp. 144
@@ -608,19 +608,19 @@ class Stroh():
         r"""
         Stroh eigenvectors (3,6) solutions to the fundamental elasticity matrix
         obeying
-        
+
         .. math::
-            
-            a_{\alpha+3} = \bar{a_{\alpha}} 
-            
+
+            a_{\alpha+3} = \bar{a_{\alpha}}
+
         The eigenvector `a` represents the direction of the displacement.
-        
+
 
         Returns
         -------
         np.ndarray (3,6) imaginary
             Half the redundant right Stroh eigenvectors
-        
+
         Reference
         ---------
         c.f. Ting eqn. 5.5-4 & 5.3-11
@@ -633,11 +633,11 @@ class Stroh():
         r"""
         Stroh eigenvectors (3,6) solutions to the fundamental elasticity matrix
         obeying
-        
+
         .. math::
-            
+
             b_{\alpha+3} = \bar{b_\alpha}
-        
+
         The eigenvector `l` represents the direction of traction.
 
 
@@ -645,8 +645,8 @@ class Stroh():
         -------
         np.ndarray (3,6) imaginary
             Half the redundant right Stroh eigenvectors
-        
-        
+
+
         Reference
         ---------
         c.f. Ting eqn. 5.5-4 & 5.3-11
@@ -661,15 +661,15 @@ class Stroh():
         (i.e. half the roots of the sextic equation).
         The eigenvector `A` represents the direction of displacement.
         :math:`A = [a1, a2, a3]` (NB column vectors)
-        
+
         NB the degenerate vector `a` is normalized, the half-vector A is not.
-        
+
         Returns
         -------
         np.ndarray (3,3) imaginary
             Unique half of the right Stroh eigenvectors.
-        
-        
+
+
         Reference
         ---------
         c.f. Ting eqn. 5.5-4 & 5.3-11
@@ -684,36 +684,36 @@ class Stroh():
         (i.e. half the roots of the sextic equation).
         The eigenvector `L` represents the direction of traction.
         :math:`B = [b1, b2, b3]` (NB column vectors)
-        
+
         NB the degenerate vector `l` is normalized, the half-vector L is not.
-        
+
         Returns
         -------
         np.ndarray (3,3) imaginary
             Unique half of the right Stroh eigenvectors.
-        
-        
+
+
         Reference
         ---------
         c.f. Ting eqn. 5.5-4 & 5.3-11
         """
         # return self.xi[3:, ::2] # == self.l[:, ::2]
-        return self.xi[3:, :3] #  / LA.norm(self.xi[3:, :3], axis=0) 
-       
+        return self.xi[3:, :3] #  / LA.norm(self.xi[3:, :3], axis=0)
+
     @functools.cached_property
     def P(self) -> np.ndarray:
         r"""
         Stroh eigen values (3,) obeying :math:`p_{\alpha+3} = \bar{p}_{\alpha}`
         (i.e. half the roots of the sextic equation) with positive imaginary
         component.
-        
-        
+
+
         Returns
         -------
         np.ndarray (3,) imaginary
-            Unique half of the right Stroh eigenvalues. 
-        
-        
+            Unique half of the right Stroh eigenvalues.
+
+
         Reference
         ---------
         ...
@@ -723,7 +723,7 @@ class Stroh():
 
     @functools.cached_property
     def M(self) -> np.ndarray:
-        r""" 
+        r"""
         Impedance tensor `M`
         """
         return -1j * self.L @ LA.inv(self.A)
@@ -733,30 +733,30 @@ class Stroh():
 #     def M(self) -> np.ndarray:
 #         r"""
 #         :math:`M_{\alpha i} L_{i \beta} = \partial _{\alpha \beta}`
-#         
-#         
+#
+#
 #         Returns
 #         -------
 #         np.ndarray (3,3) imaginary
-#         
-#         
+#
+#
 #         Reference
 #         ---------
 #         Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631
 #         """
 #         return LA.inv(self.L)
-# 
+#
 #     @functools.cached_property
 #     def B(self) -> np.ndarray:
 #         r"""
 #         :math:`B_{ij} = 1/2 i \sum_{\alpha}(A_{i \alpha} M_{\alpha j} - \bar{A}_{i \alpha} \bar{M}_{\alpha j})`
-# 
-# 
+#
+#
 #         Returns
 #         -------
 #         np.ndarray (3,3) imaginary
-# 
-# 
+#
+#
 #         Reference
 #         ---------
 #         Stroh (1958) Dislocations and cracks in anisotropic elasticity pp. 631

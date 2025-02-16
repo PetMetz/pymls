@@ -10,7 +10,8 @@ import functools
 # 3rd party
 import numpy as np
 from numpy import linalg as LA
-from scipy import spatial
+import scipy as sp
+# from scipy import spatial
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 # from tqdm import tqdm
@@ -35,7 +36,7 @@ def abt(a: np.ndarray, b: np.ndarray, degrees=False) -> float:
 
 
 def square(X) -> np.ndarray:
-    """ 
+    """
     X = [(A1,..., AN), ... , (B1, ..., BN)] -> X(NM, NM)
     i.e. [(row_1), (row_2), ...]
     """
@@ -51,7 +52,7 @@ def float_tol(a, b, sig=None) -> bool:
 
 
 def complex_tol(a, b, sig=None) -> bool:
-    sig = sig or _SMALL ** 0.5 # loss of precision 
+    sig = sig or _SMALL ** 0.5 # loss of precision
     a = np.asarray(a, dtype=complex)
     b = np.asarray(b, dtype=complex)
     return all(np.abs((a - b).ravel()) < sig)
@@ -67,7 +68,7 @@ def vol_from_scalar(a,b,c,al,be,ga) -> float:
 def all_unit_vectors(x) -> bool:
     return all( np.apply_along_axis(is_unit_vector, axis=1, arr=x) )
 
-    
+
 def is_orthogonal(X:np.ndarray) -> bool:
     """ det| X(N,N) | == 1 """
     X = X / LA.norm(X, axis=1)
@@ -117,7 +118,7 @@ def unit_vectors(fn):
         test = np.apply_along_axis(LA.norm, axis=1, arr=rv)
         if any(abs(test - 1) >= _SMALL):
             n  = fn.__name__
-            print(f'Warning: {n} not properly normalized. |ei| = {test[0]:.6f} {test[1]:.6f} {test[2]:.6f}') 
+            print(f'Warning: {n} not properly normalized. |ei| = {test[0]:.6f} {test[1]:.6f} {test[2]:.6f}')
         return rv
     return dec
 
@@ -172,10 +173,10 @@ def map_ijkl(i, j, k, l, index=0) -> tuple:
 
 
 def map_ij(i, j, index=0) -> int:
-    """ 
+    """
     Contraction of 2nd rank matrix into 1st rank vector.
-    
-    11 22 33 23 13 23 
+
+    11 22 33 23 13 23
     1  2  3  4  5  6
 
     Reference
@@ -204,7 +205,7 @@ def contract_ijkl(X: np.ndarray):
 def contract_ij(X: np.ndarray):
     """ contract and arbitrary 2nd rank tensor """
     X = np.asarray(X)
-    ind  = np.indices(X.shape).T 
+    ind  = np.indices(X.shape).T
     IJ = ind.reshape((-1, len(X.shape)))
     I = np.array([map_ij(*e) for e in IJ])
     rv = np.zeros(np.max(I+1, axis=0), dtype=X.dtype)
@@ -229,7 +230,7 @@ def generate_hull(matrix, o=None):
                         o+(0,1,1),
                         ))
     corners = np.transpose(matrix @ corners.T)
-    return spatial.ConvexHull(corners)
+    return sp.spatial.ConvexHull(corners)
 
 
 # FIXME: this is rather inelegant
@@ -263,7 +264,7 @@ def plot_cell(L, o=None, ax=None):
         for pt2 in corners[index != idx]:
             row.append((pt1, pt2))
         segments.append(row)
-    segments = np.array(segments).reshape(-1, 2, 3)
+    segments = np.array(segments).reshape((-1, 2, 3))
 # =============================================================================
 #     # - min dist fails for non orthogonal cells, float point issues
 #     segments = []
@@ -276,7 +277,7 @@ def plot_cell(L, o=None, ax=None):
 # =============================================================================
 # =============================================================================
 #     # - I apparently don't know how convex hulls work
-#     hull = spatial.ConvexHull(corners)
+#     hull = sp.spatial.ConvexHull(corners)
 #     segments = []
 #     for simplex in hull.simplices:
 #         sub = corners[simplex]
@@ -295,7 +296,7 @@ def plot_cell(L, o=None, ax=None):
     ax.set_ylim(minl, maxl)
     ax.set_zlim(minl, maxl)
     return fig, ax
-    
+
 
 def plot_r3(a, b, c, o=None, ax=None, labels=None):
     # - defaults
@@ -355,7 +356,7 @@ def plot_line3(ax, v, o=None, label=None) -> None:
 def rotation_from_axis_angle(vector:np.ndarray, angle:float, degree:bool=True) -> np.ndarray:
     r"""
     .. math::
-        
+
         R(u, \theta) = \cos(\theta) I + \sin(\theta) u_x + (1 - \cos(\theta)) u \otimes u
 
     where :math:`u_x` is the cross product matrix.
@@ -393,7 +394,7 @@ def float_tol_pair_in_pairs(pair:np.ndarray, pairs:np.ndarray) -> np.ndarray:
     """
     True if abs(a0 - b0) <= tol & abs(a1 - b1) <= tol for (ai1, aj2), (bi1, bj2)
     in [(a01, a02), ... (aik, ajl)]
-    
+
     NB this is expected to be called in iteration so no sanitization is performed.
 
     Parameters
@@ -419,7 +420,7 @@ def float_tol_pair_in_pairs(pair:np.ndarray, pairs:np.ndarray) -> np.ndarray:
 def get_unique_pairs(pairs:np.ndarray, mask=False) -> np.ndarray:
     """
     apply float_tol_pair_in_pairs for pair in pairs
-    
+
     Parameters
     ----------
     pairs : np.ndarray
