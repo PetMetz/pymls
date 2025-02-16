@@ -133,9 +133,9 @@ class Lattice():
         """
         abc = np.sqrt(np.diag(x))
         angles = np.array((
-            np.arccos(x[1,2] / np.product(abc[[1,2]])), # arccos(bc cos(alpha) / bc)
-            np.arccos(x[0,2] / np.product(abc[[0,2]])), # arccos(ac cos(beta)  / ac)
-            np.arccos(x[0,1] / np.product(abc[[0,1]]))  # arccos(ab cos(gamma) / ab)
+            np.arccos(x[1,2] / np.prod(abc[[1,2]])), # arccos(bc cos(alpha) / bc)
+            np.arccos(x[0,2] / np.prod(abc[[0,2]])), # arccos(ac cos(beta)  / ac)
+            np.arccos(x[0,1] / np.prod(abc[[0,1]]))  # arccos(ab cos(gamma) / ab)
             )) * 180 / np.pi
         return cls.from_scalar(np.concatenate((abc, angles)))
     

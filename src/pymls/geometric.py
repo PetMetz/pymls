@@ -371,7 +371,7 @@ class Dislocation(lattice.Lattice):
         I = np.indices((3,2,3,2)).T.reshape((-1,4))
         tau = self.tau(s)
         for index in I:
-            rv[tuple(index)] = np.product([tau[i] for i in index])
+            rv[tuple(index)] = np.prod([tau[i] for i in index])
         return rv
 
     def visualize(self) -> tuple:

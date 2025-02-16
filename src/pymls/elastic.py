@@ -254,7 +254,7 @@ class Stroh():
         for index in I:
             i,j,k,l = index
             rv[tuple(index)] = c12*dij(i,j)*dij(k,l) + c44*dij(i,j)*dij(k,l) +\
-                H * np.sum([np.product((P[r,i],P[r,j],P[r,k],P[r,l])) for r in range(3)])
+                H * np.sum([np.prod((P[r,i],P[r,j],P[r,k],P[r,l])) for r in range(3)])
         return rv
 
     @functools.cached_property
